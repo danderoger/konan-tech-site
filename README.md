@@ -81,3 +81,7 @@ Depois abra `http://localhost:8000`. Na Cloudflare Pages funciona sem configura�
 - Se o aparelho ficar lento, o site reduz a resolução e depois a quantidade de partículas.
 - Com movimento reduzido: sem rolagem suave, sem animação automática da abertura e formas sem transição. As demonstrações continuam funcionando pelos botões.
 - Acessibilidade verificada com axe-core sem violações; navegação por teclado em todos os controles.
+
+## Arquivo único para abrir no computador
+
+`scripts/build-offline.mjs` gera `konan-tech-2.0.html`, um arquivo só (scripts, estilos, fonte e imagens dentro dele) que abre com duplo clique, sem servidor. O navegador bloqueia scripts do tipo module e a leitura da logo quando a página abre direto do arquivo, por isso o site normal precisa de um servidor (ou de publicação).
