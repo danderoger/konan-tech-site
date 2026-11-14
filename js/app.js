@@ -1,674 +1,345 @@
-/* Konan Tech v2: comportamento da página.
-   Organiza a abertura, a rolagem suave (Lenis), as animações de rolagem (GSAP ScrollTrigger)
-   e diz ao palco 3D (stage.js) qual forma mostrar em cada capítulo.
-   Textos editáveis ficam em content.js. Formas das partículas ficam em shapes.js. */
+/* Konan Tech 2.0 (versão clara): comportamento da página.
+   O palco 3D carrega depois do conteúdo, para o site abrir rápido. Sem WebGL, tudo funciona com a imagem de reserva. */
 
-import { Stage } from './stage.js';
-import { HERO_SCENES, SOLUTIONS, CHALLENGES, waLink } from './content.js';
+import { WA_DEFAULT, waLink, waContext, HERO_SCENES, FLOW_STEPS, DASH, LAB } from './content.js';
+import { initAI } from './demos/ai.js';
+import { initFlow } from './demos/flow.js';
+import { initDevices } from './demos/devices.js';
+import { initDash } from './demos/dash.js';
+import { initCompare } from './demos/compare.js';
+import { initProjects } from './demos/projects.js';
+import { initLab } from './demos/lab.js';
 
-const D = document;
-const H = D.documentElement;
-const $ = (s, r = D) => r.querySelector(s);
-const $$ = (s, r = D) => Array.from(r.querySelectorAll(s));
-const mq = (q) => window.matchMedia && window.matchMedia(q).matches;
+const D = document, H = D.documentElement;
+const REDUCED = H.classList.contains('rm');
+const FINE = matchMedia('(pointer: fine)').matches;
+const MOBILE = () => innerWidth <= 760;
+/* telas estreitas (celular e tablet em pé) usam o layout empilhado das partículas */
+const NARROW = () => innerWidth <= 760 || (innerWidth <= 1080 && innerWidth / innerHeight < 0.9);
+const q = (s, r = D) => r.querySelector(s);
+const qa = (s, r = D) => [...r.querySelectorAll(s)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-const REDUCED = mq('(prefers-reduced-motion: reduce)');
-const COARSE = mq('(pointer: coarse)');
-const FINE = mq('(pointer: fine)') && !COARSE;
-const gsap = window.gsap;
-const ST = window.ScrollTrigger;
-const HAS_GSAP = !!(gsap && ST);
-const PIN = HAS_GSAP && !REDUCED && !COARSE && window.innerWidth > 1080 && window.innerHeight > 700;
-const isWide = () => window.innerWidth > 1080;
-const CHECK = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+let stage = null, lenis = null, chapter = null;
 
-H.classList.add(PIN ? 'pin' : 'no-pin');
-if (HAS_GSAP) gsap.registerPlugin(ST);
+/* ---------- WhatsApp: todo link [data-wa] recebe a mensagem do contexto ---------- */
+function setWa(a, frase) { a.href = waLink(frase ? waContext(frase) : WA_DEFAULT); }
+qa('[data-wa]').forEach((a) => { if (a.id !== 'lab-send') setWa(a, a.dataset.msg); });
 
-let stage = null;
-let lenis = null;
-let ready = false;
-let chapter = '';
-let heroIdx = 0;
-let heroTimer = null;
-let solIdx = 0;
-
-/* ---------------------------------------------------------------- palco 3D */
-
-function webglOK() {
-  try {
-    const c = D.createElement('canvas');
-    return !!(c.getContext('webgl2') || c.getContext('webgl'));
-  } catch (e) { return false; }
+/* ---------- cabeçalho e menu ---------- */
+const hd = q('#hd');
+const menuBtn = q('#menu-btn');
+function setMenu(open) {
+  hd.classList.toggle('open', open);
+  menuBtn.setAttribute('aria-expanded', String(open));
+  menuBtn.querySelector('.sr').textContent = open ? 'Fechar menu' : 'Abrir menu';
+}
+menuBtn.addEventListener('click', () => setMenu(!hd.classList.contains('open')));
+D.addEventListener('keydown', (e) => { if (e.key === 'Escape' && hd.classList.contains('open')) { setMenu(false); menuBtn.focus(); } });
+const NAV_OF = { solucoes: '#solucoes', ia: '#ia', automacao: '#ia', sistemas: '#ia', dashboards: '#ia', compare: '#ia', projetos: '#projetos', sobre: '#projetos', processo: '#processo', duvidas: '#duvidas' };
+function markNav(name) {
+  const href = NAV_OF[name];
+  qa('.hd-nav > a:not(.btn)').forEach((a) => { const on = a.getAttribute('href') === href; a.classList.toggle('cur', on); if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
 }
 
-async function initStage() {
-  if (!webglOK()) { H.classList.add('no-gl'); return null; }
-  const small = COARSE || window.innerWidth < 760;
-  const lowMem = navigator.deviceMemory && navigator.deviceMemory <= 4;
-  const count = small ? (lowMem ? 9000 : 14000) : (lowMem ? 22000 : 34000);
-  try {
-    const s = new Stage($('#stage'), { count, dpr: small ? 1.5 : 1.75, reduced: REDUCED, bloom: true });
-    await s.init('assets/konan-logo.png');
-    s.setShape(REDUCED ? 'logo' : 'seed', { instant: true });
-    s.setLayout({ x: 0, y: 0, s: 1, o: 0 }, true);
-    return s;
-  } catch (e) {
-    H.classList.add('no-gl');
-    return null;
-  }
+/* ---------- rolagem suave e âncoras ---------- */
+if (!REDUCED && window.Lenis) {
+  lenis = new window.Lenis({ lerp: 0.1, smoothWheel: true, wheelMultiplier: 0.95 });
+  const raf = (t) => { lenis.raf(t); requestAnimationFrame(raf); };
+  requestAnimationFrame(raf);
+  lenis.on('scroll', (e) => { if (stage) stage.velocity(e.velocity * 60); });
 }
-
-/* posição da escultura em cada capítulo: d = computador, m = celular e tablet (fit = largura a encaixar) */
-const LAYOUT = {
-  heroLogo: { d: { x: 1.2, y: 1.45, s: 0.95, o: 1 }, m: { x: 0, y: 2.25, fit: 8.4, o: 1 } },
-  hero3d: { d: { x: 2.75, y: 1.15, s: 0.85, o: 1 }, m: { x: 0, y: 2.0, fit: 5.6, o: 1 } },
-  visao: { d: { x: 0, y: 0, s: 1, o: 0.75 }, m: { x: 0, y: 0, s: 1, o: 0.6 } },
-  sobre: { d: { x: 2.9, y: -0.2, s: 0.95, o: 0.95 }, m: { x: 0, y: 1.2, fit: 5.6, o: 0.4 } },
-  solucoes: { d: { x: 1.65, y: 0.55, s: 0.78, o: 1 }, m: { x: 0, y: 1.9, fit: 6, o: 0.5 } },
-  transformacao: { d: { x: 0, y: -0.2, s: 0.82, o: 1 }, m: { x: 0, y: 0.1, fit: 7.4, o: 0.7 } },
-  projetos: { d: { x: 0, y: -3.1, s: 1, o: 0.85 }, m: { x: 0, y: -3.9, s: 1, o: 0.5 } },
-  processo: { d: { x: 3.2, y: 0, s: 1, o: 0.9 }, m: { x: 1.5, y: 0, fit: 3.6, o: 0.32 } },
-  duvidas: { d: { x: 0, y: 0, s: 1, o: 0.5 }, m: { x: 0, y: 0, s: 1, o: 0.35 } },
-  contato: { d: { x: 2.45, y: 0.1, s: 1, o: 1 }, m: { x: 0, y: -1.4, fit: 8.5, o: 0.55 } },
-  rodape: { d: { x: 0, y: 1.25, s: 0.7, o: 0.55 }, m: { x: 0, y: 3.1, fit: 9.5, o: 0.3 } }
-};
-
-function lay(key) {
-  const l = LAYOUT[key] || LAYOUT.visao;
-  if (isWide()) return l.d;
-  const m = Object.assign({}, l.m);
-  if (m.fit) {
-    const v = stage ? stage.viewWidth() : 0;
-    m.s = Number.isFinite(v) && v > 0 ? Math.min(1, (v * 0.92) / m.fit) : 0.6;
-    delete m.fit;
-  }
-  return m;
+function scrollToTarget(el) {
+  const off = -(hd.offsetHeight + 8);
+  if (lenis) lenis.scrollTo(el, { offset: off, duration: 1.3 });
+  else window.scrollTo({ top: el.getBoundingClientRect().top + scrollY + off, behavior: REDUCED ? 'auto' : 'smooth' });
 }
-
-const SHAPE_OF = { visao: 'dust', sobre: 'sphere', transformacao: 'chaos', projetos: 'terrain', processo: 'helix', duvidas: 'dust', contato: 'vortex', rodape: 'logo' };
-
-function setChapter(name) {
-  if (name === 'rodape' && !isWide()) name = 'contato';
-  if (!name || name === chapter) return;
-  chapter = name;
-  $$('.nav-links a').forEach((a) => a.classList.toggle('on', a.dataset.nav === name));
-  $$('#rail a').forEach((a) => a.classList.toggle('on', a.dataset.go === name));
-  applyChapter();
-}
-
-function applyChapter() {
-  if (!stage || !ready) return;
-  const name = chapter;
-  if (name === 'topo') { startHero(); return; }
-  stopHero();
-  if (name === 'solucoes') { applySol._done = false; applySol(solIdx, false, true); return; }
-  if (name === 'transformacao' && (stage.mode === 'scrub' || PIN)) { stage.setLayout(lay(name)); return; }
-  stage.setShape(SHAPE_OF[name] || 'dust', { dur: 2, spread: 1 });
-  stage.setLayout(lay(name));
-}
-
-/* ciclo de formas da primeira tela */
-function buildHud() {
-  const seg = $('#hud-seg');
-  if (!seg) return;
-  seg.innerHTML = HERO_SCENES.map(() => '<span><i></i></span>').join('');
-}
-
-function hud(i) {
-  const sc = HERO_SCENES[i];
-  scrambleTo($('#hud-cap'), sc.cap);
-  $$('#hud-seg span').forEach((s, k) => {
-    s.className = k < i ? 'done' : '';
-    const bar = s.firstChild;
-    bar.style.animation = 'none';
-    if (k === i) {
-      void bar.offsetWidth;
-      s.className = 'on';
-      bar.style.animation = '';
-      bar.style.animationDuration = sc.hold + 's';
-    }
-  });
-}
-
-function startHero() {
-  stopHero();
-  const run = () => {
-    const sc = HERO_SCENES[heroIdx];
-    stage.setShape(sc.shape, { dur: 2.4, spread: 1.4 });
-    stage.setLayout(lay(sc.shape === 'logo' ? 'heroLogo' : 'hero3d'));
-    hud(heroIdx);
-    if (REDUCED) return;
-    heroTimer = setTimeout(() => {
-      heroIdx = (heroIdx + 1) % HERO_SCENES.length;
-      run();
-    }, sc.hold * 1000);
-  };
-  run();
-}
-
-function stopHero() {
-  clearTimeout(heroTimer);
-  heroTimer = null;
-}
-
-/* ---------------------------------------------------------------- efeitos de texto */
-
-const GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>/+=#%';
-
-function scrambleTo(el, text) {
+D.addEventListener('click', (e) => {
+  const a = e.target.closest('a[href^="#"]');
+  if (!a) return;
+  const id = a.getAttribute('href');
+  const el = id === '#topo' ? D.body : q(id);
   if (!el) return;
-  if (REDUCED) { el.textContent = text; return; }
-  cancelAnimationFrame(el._raf);
-  const from = el.textContent;
-  const len = Math.max(from.length, text.length);
-  const t0 = performance.now();
-  const dur = 420 + text.length * 24;
-  const step = (now) => {
-    const p = Math.min(1, (now - t0) / dur);
-    const rev = Math.floor(p * len);
-    let out = '';
-    for (let i = 0; i < len; i++) {
-      const c = text[i] || '';
-      if (i < rev) out += c;
-      else if (c === ' ') out += ' ';
-      else if (i < rev + 6) out += GLYPHS[(Math.random() * GLYPHS.length) | 0];
-      else out += from[i] || '';
-    }
-    el.textContent = out;
-    if (p < 1) el._raf = requestAnimationFrame(step);
-    else el.textContent = text;
-  };
-  el._raf = requestAnimationFrame(step);
-}
-
-function splitWords(el) {
-  if (!el || el._split) return [];
-  el._split = true;
-  const words = el.textContent.trim().split(/\s+/);
-  el.setAttribute('aria-label', el.textContent.trim());
-  el.innerHTML = words.map((w) => '<span class="w" aria-hidden="true">' + w + '</span>').join(' ');
-  return $$('.w', el);
-}
-
-/* ---------------------------------------------------------------- soluções */
-
-function demoRows(demo) {
-  if (demo.kind === 'rows') return demo.rows.map((r) => '<div class="dr"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>').join('');
-  if (demo.kind === 'steps') return demo.rows.map((r) => '<div class="dr dr-step"><span>' + r + '</span><em class="ok">' + CHECK + '</em></div>').join('');
-  return demo.rows.map((r) => '<div class="dr dr-kpi"><span>' + r[0] + '</span><b data-to="' + r[1] + '" data-suf="' + r[2] + '">0' + r[2] + '</b></div>').join('');
-}
-
-function playRows(host, timers) {
-  const rows = $$('.dr', host);
-  const end = $('.demo-end', host) || $('#demo-end');
-  const gap = REDUCED ? 0 : 280;
-  rows.forEach((r, k) => {
-    timers.push(setTimeout(() => {
-      r.classList.add('in');
-      const b = r.querySelector('b[data-to]');
-      if (b && !b._done) { b._done = true; countUp(b, +b.dataset.to, b.dataset.suf); }
-    }, 160 + k * gap));
-  });
-  if (end) timers.push(setTimeout(() => end.classList.add('in'), 200 + rows.length * gap + 200));
-}
-
-function renderDemo(i) {
-  const S = SOLUTIONS[i];
-  const demo = S.demo;
-  const body = $('#demo-body');
-  const end = $('#demo-end');
-  $('#demo-i').textContent = (i + 1) + ' de ' + SOLUTIONS.length;
-  scrambleTo($('#demo-title'), demo.title);
-  clearTimeout(renderDemo._t);
-  (renderDemo._ts || []).forEach(clearTimeout);
-  renderDemo._ts = [];
-  end.classList.remove('in');
-  end.textContent = demo.end;
-  body.innerHTML = demoRows(demo);
-  playRows($('#demo'), renderDemo._ts);
-}
-
-function countUp(el, to, suf = '', pre = '') {
-  if (REDUCED || !HAS_GSAP) { el.textContent = pre + to + suf; return; }
-  const o = { v: 0 };
-  gsap.to(o, { v: to, duration: 1.4, ease: 'power3.out', onUpdate: () => { el.textContent = pre + Math.round(o.v) + suf; } });
-}
-
-function applySol(i, fromUser, forceStage) {
-  const changed = i !== solIdx || !applySol._done;
-  solIdx = i;
-  applySol._done = true;
-  $$('#sol-list .so').forEach((li, k) => {
-    li.classList.toggle('on', k === i);
-    if (PIN) li.querySelector('.so-h').setAttribute('aria-expanded', k === i ? 'true' : 'false');
-  });
-  $$('#sol-prog i').forEach((d, k) => d.classList.toggle('on', k <= i));
-  if (PIN) { if (changed) renderDemo(i); }
-  else {
-    const m = $$('#sol-list .so')[i].querySelector('.demo-m');
-    if (m && !m._played) { m._played = true; playRows(m, []); }
-  }
-  if (stage && ready && (chapter === 'solucoes' || forceStage)) {
-    stage.setShape(SOLUTIONS[i].shape, { dur: 1.9, spread: 1 });
-    stage.setLayout(lay('solucoes'));
-  }
-}
-
-/* ---------------------------------------------------------------- contato */
-
-let typeTok = 0;
-
-function runConsole(i) {
-  const C = CHALLENGES[i];
-  const tok = ++typeTok;
-  $$('#chips .chip').forEach((b, k) => b.setAttribute('aria-pressed', k === i ? 'true' : 'false'));
-  const msg = 'Olá, vim pelo site da Konan Tech. ' + C.msg.charAt(0).toUpperCase() + C.msg.slice(1);
-  $('#console-msg').textContent = msg;
-  $('#wa-send').href = waLink(msg);
-  const body = $('#console-body');
-  body.innerHTML = '';
-  let li = 0;
-  const next = () => {
-    if (tok !== typeTok || li >= C.lines.length) return;
-    const p = D.createElement('p');
-    p.className = 'cl typing';
-    body.appendChild(p);
-    const text = C.lines[li++];
-    if (REDUCED) { p.textContent = text; p.classList.remove('typing'); next(); return; }
-    let k = 0;
-    const tick = () => {
-      if (tok !== typeTok) return;
-      k += 2;
-      p.textContent = text.slice(0, k);
-      if (k < text.length) setTimeout(tick, 16);
-      else { p.classList.remove('typing'); setTimeout(next, 260); }
-    };
-    tick();
-  };
-  next();
-  if (stage && chapter === 'contato') stage.pulse(0.45, 0);
-}
-
-/* ---------------------------------------------------------------- interface geral */
-
-function initButtons() {
-  $$('.btn-t').forEach((t) => {
-    if (t.firstElementChild) return;
-    t.innerHTML = '<span class="btn-r" data-t="' + t.dataset.t + '">' + t.textContent + '</span>';
-  });
-}
-
-function initMenu() {
-  const burger = $('#burger');
-  const menu = $('#menu');
-  const set = (open) => {
-    menu.classList.toggle('open', open);
-    burger.setAttribute('aria-expanded', open ? 'true' : 'false');
-    burger.setAttribute('aria-label', open ? 'Fechar menu' : 'Abrir menu');
-    if (lenis) open ? lenis.stop() : lenis.start();
-  };
-  burger.addEventListener('click', () => set(!menu.classList.contains('open')));
-  $$('a', menu).forEach((a) => a.addEventListener('click', () => set(false)));
-  D.addEventListener('keydown', (e) => { if (e.key === 'Escape' && menu.classList.contains('open')) { set(false); burger.focus(); } });
-}
-
-function scrollToTarget(hash) {
-  const el = hash === '#topo' ? 0 : $(hash);
-  if (el === null) return;
-  if (lenis) lenis.scrollTo(el, { duration: 1.6, offset: 0 });
-  else if (el === 0) window.scrollTo({ top: 0, behavior: REDUCED ? 'auto' : 'smooth' });
-  else el.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth' });
-}
-
-function initAnchors() {
-  D.addEventListener('click', (e) => {
-    const a = e.target.closest('a[href^="#"]');
-    if (!a) return;
-    const h = a.getAttribute('href');
-    if (h.length < 2) return;
-    e.preventDefault();
-    scrollToTarget(h);
-    if (h !== '#topo') history.replaceState(null, '', h);
-  });
-}
-
-function buildRail() {
-  const rail = $('#rail');
-  rail.innerHTML = $$('main [data-ch]').map((s) => '<a href="#' + s.id + '" data-go="' + s.dataset.ch + '"><i></i><span>' + s.dataset.name + '</span></a>').join('');
-}
-
-function initFaq() {
-  $$('#faq-list .fq').forEach((fq) => {
-    fq.querySelector('.fq-q').addEventListener('click', () => {
-      const open = !fq.classList.contains('open');
-      $$('#faq-list .fq').forEach((o) => { o.classList.remove('open'); o.querySelector('.fq-q').setAttribute('aria-expanded', 'false'); });
-      if (open) { fq.classList.add('open'); fq.querySelector('.fq-q').setAttribute('aria-expanded', 'true'); }
-      setTimeout(() => HAS_GSAP && ST.refresh(), 600);
-    });
-  });
-}
-
-function initChips() {
-  $$('#chips .chip').forEach((b) => b.addEventListener('click', () => runConsole(+b.dataset.i)));
-}
-
-function buildMobileDemos() {
-  $('#sol-list').classList.add('sol-static');
-  $$('#sol-list .so').forEach((li, i) => {
-    const S = SOLUTIONS[i];
-    const d = D.createElement('div');
-    d.className = 'demo demo-m glass';
-    d.setAttribute('aria-hidden', 'true');
-    d.innerHTML = '<div class="demo-top"><span class="demo-live"><i></i>Simulação ilustrativa</span><span class="demo-i">' + (i + 1) + ' de ' + SOLUTIONS.length + '</span></div>' +
-      '<p class="demo-title">' + S.demo.title + '</p><div class="demo-body">' + demoRows(S.demo) + '</div><p class="demo-end">' + S.demo.end + '</p>';
-    li.querySelector('.so-bi').appendChild(d);
-    li.querySelector('.so-h').setAttribute('aria-expanded', 'true');
-  });
-}
-
-function initSolutions() {
-  if (!PIN) { buildMobileDemos(); return; }
-  $$('#sol-list .so-h').forEach((btn, i) => {
-    btn.addEventListener('click', () => {
-      if (PIN && solTrigger) {
-        const st = solTrigger;
-        lenis ? lenis.scrollTo(st.start + ((i + 0.5) / SOLUTIONS.length) * (st.end - st.start), { duration: 1.2 }) : window.scrollTo(0, st.start + ((i + 0.5) / SOLUTIONS.length) * (st.end - st.start));
-      } else applySol(i, true, true);
-    });
-  });
-  applySol(0, false, false);
-}
-
-function initCursor() {
-  if (!FINE || REDUCED || !HAS_GSAP) return;
-  const c = $('#cursor');
-  H.classList.add('has-cursor');
-  const xTo = gsap.quickTo(c, 'x', { duration: 0.35, ease: 'power3' });
-  const yTo = gsap.quickTo(c, 'y', { duration: 0.35, ease: 'power3' });
-  window.addEventListener('pointermove', (e) => { xTo(e.clientX); yTo(e.clientY); }, { passive: true });
-  D.addEventListener('pointerover', (e) => { c.classList.toggle('hov', !!e.target.closest('a, button, .chip, [data-mag]')); });
-  D.addEventListener('pointerleave', () => { c.style.opacity = '0'; });
-  D.addEventListener('pointerenter', () => { c.style.opacity = ''; });
-}
-
-function initMagnetic() {
-  if (!FINE || REDUCED || !HAS_GSAP) return;
-  $$('[data-mag]').forEach((el) => {
-    const xTo = gsap.quickTo(el, 'x', { duration: 0.6, ease: 'elastic.out(1, 0.4)' });
-    const yTo = gsap.quickTo(el, 'y', { duration: 0.6, ease: 'elastic.out(1, 0.4)' });
-    el.addEventListener('pointermove', (e) => {
-      const r = el.getBoundingClientRect();
-      xTo((e.clientX - (r.left + r.width / 2)) * 0.22);
-      yTo((e.clientY - (r.top + r.height / 2)) * 0.32);
-    });
-    el.addEventListener('pointerleave', () => { xTo(0); yTo(0); });
-  });
-}
-
-function initTilt() {
-  if (!FINE || REDUCED) return;
-  $$('.pj').forEach((pj) => {
-    const t = pj.querySelector('.tilt');
-    if (!t) return;
-    pj.addEventListener('pointermove', (e) => {
-      const r = pj.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width - 0.5;
-      const y = (e.clientY - r.top) / r.height - 0.5;
-      t.style.transform = 'rotateY(' + (x * 12).toFixed(2) + 'deg) rotateX(' + (-y * 9).toFixed(2) + 'deg)';
-    });
-    pj.addEventListener('pointerleave', () => { t.style.transform = ''; });
-  });
-}
-
-function initPointer() {
-  if (!stage) return;
-  const ndc = (e) => [(e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1];
-  window.addEventListener('pointermove', (e) => { const p = ndc(e); stage.pointer(p[0], p[1]); }, { passive: true });
-  window.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('a, button, input, .console, .demo, .pj')) return;
-    const p = ndc(e);
-    stage.pulse(p[0], p[1]);
-  }, { passive: true });
-}
-
-function initProjectsObserver() {
-  if (!('IntersectionObserver' in window)) { $$('.pj').forEach((p) => p.classList.add('on')); return; }
-  const io = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) en.target.classList.add('on'); }), { threshold: 0.35 });
-  $$('.pj').forEach((p) => io.observe(p));
-}
-
-/* ---------------------------------------------------------------- rolagem */
-
-let solTrigger = null;
-
-function initScroll() {
-  if (!HAS_GSAP) { fallbackChapters(); return; }
-
-  if (!REDUCED && window.Lenis) {
-    lenis = new window.Lenis({ lerp: 0.1, smoothWheel: true, wheelMultiplier: 0.95 });
-    lenis.on('scroll', (e) => { ST.update(); if (stage) stage.velocity(e.velocity * 60); });
-    gsap.ticker.add((t) => lenis.raf(t * 1000));
-    gsap.ticker.lagSmoothing(0);
-  }
-
-  const nav = $('#nav');
-  const fab = $('#fab');
-  let lastY = 0;
-  ST.create({
-    start: 0, end: 'max',
-    onUpdate: (self) => {
-      const y = self.scroll();
-      $('#progress').style.transform = 'scaleX(' + self.progress.toFixed(4) + ')';
-      nav.classList.toggle('solid', y > 40);
-      const menuOpen = $('#menu').classList.contains('open');
-      nav.classList.toggle('hide', !menuOpen && y > 160 && y > lastY + 2);
-      if (y < lastY - 2) nav.classList.remove('hide');
-      lastY = y;
-      fab.classList.toggle('show', y > window.innerHeight * 0.65);
-    }
-  });
-
-  /* soluções: a seção fica parada e cada trecho da rolagem mostra uma solução */
-  if (PIN) {
-    solTrigger = ST.create({
-      trigger: '#solucoes', start: 'top top', end: () => '+=' + Math.round(window.innerHeight * 0.75 * SOLUTIONS.length),
-      pin: true, anticipatePin: 1,
-      onUpdate: (self) => {
-        const i = Math.min(SOLUTIONS.length - 1, Math.floor(self.progress * SOLUTIONS.length));
-        if (i !== solIdx) applySol(i);
-      }
-    });
-  } else {
-    $$('#sol-list .so').forEach((li, i) => {
-      ST.create({ trigger: li, start: 'top 60%', end: 'bottom 60%', onToggle: (self) => { if (self.isActive) applySol(i, false, false); } });
-    });
-  }
-
-  /* transformação: a rolagem controla a passagem do caos para a ordem */
-  const meter = (p) => {
-    $('#tr-pct').textContent = Math.round(p * 100) + '%';
-    $('#tr-bar').style.transform = 'scaleX(' + p.toFixed(3) + ')';
-    if (PIN) {
-      $('#tr-before').style.opacity = String(Math.max(0.28, 1 - p * 1.1));
-      $('#tr-after').style.opacity = String(Math.min(1, 0.28 + Math.max(0, p - 0.35) * 1.4));
-    } else {
-      $('#tr-before').style.opacity = String(Math.max(0, Math.min(1, 1 - p * 2.2)));
-      $('#tr-after').style.opacity = String(Math.max(0, Math.min(1, (p - 0.5) * 2.2)));
-    }
-  };
-  const trCfg = {
-    trigger: '#transformacao',
-    onEnter: () => stage && ready && stage.beginScrub('chaos', 'panel', 0.3, false),
-    onEnterBack: () => stage && ready && stage.beginScrub('chaos', 'panel', 0.3, true),
-    onLeave: () => stage && stage.endScrub(),
-    onLeaveBack: () => stage && stage.endScrub(),
-    onUpdate: (self) => {
-      const p = Math.min(1, Math.max(0, (self.progress - 0.04) / 0.86));
-      if (stage) stage.scrub(p);
-      meter(Math.max(0, (p - 0.3) / 0.7));
-    }
-  };
-  if (PIN) ST.create(Object.assign(trCfg, { start: 'top top', end: () => '+=' + Math.round(window.innerHeight * 1.6), pin: true, anticipatePin: 1 }));
-  else ST.create(Object.assign(trCfg, { start: 'top top', end: 'bottom bottom' }));
-  meter(0);
-
-  /* projetos: galeria horizontal no computador */
-  if (PIN) {
-    const track = $('#proj-track');
-    const dist = () => Math.max(0, track.scrollWidth - window.innerWidth);
-    gsap.to(track, {
-      x: () => -dist(), ease: 'none',
-      scrollTrigger: { trigger: '#proj-pin', start: 'center center', end: () => '+=' + dist(), pin: true, scrub: 0.8, invalidateOnRefresh: true, anticipatePin: 1 }
-    });
-  }
-
-  /* processo: a linha acende etapa por etapa */
-  gsap.fromTo('#steps-line', { scaleY: 0 }, { scaleY: 1, ease: 'none', scrollTrigger: { trigger: '#steps', start: 'top 65%', end: 'bottom 60%', scrub: true } });
-  $$('#steps .step').forEach((s) => ST.create({ trigger: s, start: 'top 66%', onEnter: () => s.classList.add('on'), onLeaveBack: () => s.classList.remove('on') }));
-
-  /* capítulos: cada seção diz ao palco qual forma mostrar */
-  $$('[data-ch]').forEach((sec) => {
-    const trg = sec.parentElement && sec.parentElement.classList.contains('pin-spacer') ? sec.parentElement : sec;
-    const st = sec.dataset.ch === 'rodape' ? 'top 85%' : 'top 55%';
-    ST.create({ trigger: trg, start: st, end: 'bottom 55%', onToggle: (self) => { if (self.isActive) setChapter(sec.dataset.ch); } });
-  });
-
-  /* revelações */
-  if (!REDUCED) {
-    $$('.h2').forEach((h) => {
-      const w = splitWords(h);
-      gsap.from(w, { opacity: 0, yPercent: 40, filter: 'blur(10px)', duration: 1.1, ease: 'expo.out', stagger: 0.045, scrollTrigger: { trigger: h, start: 'top 82%' } });
-    });
-    const mfw = splitWords($('#mf-t'));
-    gsap.fromTo(mfw, { opacity: 0.12 }, { opacity: 1, ease: 'none', stagger: 0.12, scrollTrigger: { trigger: '#mf-t', start: 'top 78%', end: 'bottom 42%', scrub: true } });
-    gsap.from('.about-txt > p, .quote', { opacity: 0, y: 30, duration: 1.1, ease: 'expo.out', stagger: 0.1, scrollTrigger: { trigger: '.about-txt', start: 'top 70%' } });
-    gsap.from('.principles li', { opacity: 0, y: 30, duration: 1, ease: 'expo.out', stagger: 0.12, scrollTrigger: { trigger: '.principles', start: 'top 85%' } });
-    gsap.from('.ro', { opacity: 0, x: 24, duration: 1.1, ease: 'expo.out', stagger: 0.15, scrollTrigger: { trigger: '.readouts', start: 'top 75%' } });
-    gsap.from('.faq-list .fq', { opacity: 0, y: 20, duration: 0.9, ease: 'expo.out', stagger: 0.06, scrollTrigger: { trigger: '.faq-list', start: 'top 80%' } });
-    gsap.from('.console, .chips .chip', { opacity: 0, y: 26, duration: 1, ease: 'expo.out', stagger: 0.06, scrollTrigger: { trigger: '#contato', start: 'top 65%' } });
-  }
-  $$('[data-count]').forEach((el) => {
-    const to = +el.dataset.count;
-    const pre = el.dataset.pre || '';
-    ST.create({ trigger: el, start: 'top 85%', once: true, onEnter: () => countUp(el, to, '', pre) });
-  });
-
-  window.addEventListener('load', () => ST.refresh());
-  D.fonts && D.fonts.ready.then(() => ST.refresh());
-}
-
-function fallbackChapters() {
-  if (!('IntersectionObserver' in window)) return;
-  const io = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) setChapter(en.target.dataset.ch); }), { rootMargin: '-45% 0px -45% 0px' });
-  $$('[data-ch]').forEach((s) => io.observe(s));
-  window.addEventListener('scroll', () => $('#fab').classList.toggle('show', window.scrollY > window.innerHeight * 0.65), { passive: true });
-}
-
-/* ---------------------------------------------------------------- abertura */
-
-async function boot(stagePromise) {
-  const booted = H.classList.contains('booted');
-  const num = $('#boot-n');
-  const bar = $('#boot-bar');
-  let shown = 0;
-  let target = 8;
-  let done = false;
-  const tick = () => {
-    shown += (target - shown) * 0.09;
-    const v = Math.min(100, Math.round(shown));
-    if (num) num.textContent = String(v).padStart(3, '0');
-    if (bar) bar.style.transform = 'scaleX(' + (shown / 100).toFixed(3) + ')';
-    if (!done) requestAnimationFrame(tick);
-  };
-  if (!REDUCED) requestAnimationFrame(tick);
-  const t0 = performance.now();
-  const minT = REDUCED ? 0 : booted ? 350 : 1700;
-  const fonts = (D.fonts ? D.fonts.ready : Promise.resolve()).then(() => { target = Math.max(target, 38); });
-  const s = await stagePromise;
-  target = 86;
-  await fonts;
-  const wait = minT - (performance.now() - t0);
-  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-  target = 100;
-  if (!REDUCED && !booted) await new Promise((r) => setTimeout(r, 420));
-  done = true;
-  if (num) num.textContent = '100';
-  if (bar) bar.style.transform = 'scaleX(1)';
-  try { sessionStorage.setItem('kt-boot', '1'); } catch (e) {}
-  return s;
-}
-
-function reveal() {
-  const bootEl = $('#boot');
-  if (stage) {
-    stage.start();
-    stage.setLayout(Object.assign({}, lay('heroLogo'), { o: 1 }), true);
-    stage.setShape('logo', { dur: 2.8, spread: 1.6 });
-  }
-  if (REDUCED || !HAS_GSAP) {
-    if (bootEl) bootEl.style.display = 'none';
-    return Promise.resolve();
-  }
-  const tl = gsap.timeline();
-  tl.to(bootEl, { clipPath: 'inset(0 0 100% 0)', duration: 1.1, ease: 'expo.inOut' })
-    .set(bootEl, { display: 'none' })
-    .fromTo('.h1 .li', { yPercent: 110, '--w': '62%', '--wg': 600, opacity: 0 }, { yPercent: 0, '--w': '125%', '--wg': 250, opacity: 1, duration: 1.8, ease: 'expo.out', stagger: 0.12 }, 0.45)
-    .from('.lead, .acts .btn, .hud', { opacity: 0, y: 24, duration: 1.2, ease: 'expo.out', stagger: 0.08 }, 0.9)
-    .from('.nav', { opacity: 0, y: -20, duration: 1, ease: 'expo.out' }, 0.7);
-  return new Promise((r) => tl.eventCallback('onComplete', r));
-}
-
-/* ---------------------------------------------------------------- início */
-
-async function main() {
-  buildHud();
-  buildRail();
-  initButtons();
-  initMenu();
-  initAnchors();
-  initFaq();
-  initChips();
-  initSolutions();
-  initProjectsObserver();
-  const sp = initStage();
-  stage = await boot(sp);
-  window.__ktReady = true;
-  initScroll();
-  window.konan = { stage: () => stage, lenis: () => lenis, chapter: () => chapter };
-  initCursor();
-  initMagnetic();
-  initTilt();
-  initPointer();
-  if (!chapter) setChapter('topo');
-  const intro = reveal();
-  setTimeout(() => {
-    ready = true;
-    heroIdx = 0;
-    applyChapter();
-  }, REDUCED ? 0 : 3200);
-  await intro;
-  if (HAS_GSAP) ST.refresh();
-
-  let rt;
-  window.addEventListener('resize', () => {
-    clearTimeout(rt);
-    rt = setTimeout(() => {
-      if (!stage) return;
-      stage.resize();
-      if (chapter === 'topo') stage.setLayout(lay(HERO_SCENES[heroIdx].shape === 'logo' ? 'heroLogo' : 'hero3d'));
-      else stage.setLayout(lay(chapter));
-    }, 150);
-  });
-  D.addEventListener('visibilitychange', () => {
-    if (!stage) return;
-    if (D.hidden) stage.stop(); else stage.start();
-  });
-}
-
-main().catch(() => {
-  window.__ktReady = true;
-  const b = $('#boot');
-  if (b) b.style.display = 'none';
+  e.preventDefault();
+  setMenu(false);
+  if (id === '#topo') { if (lenis) lenis.scrollTo(0, { duration: 1.3 }); else scrollTo({ top: 0, behavior: REDUCED ? 'auto' : 'smooth' }); }
+  else scrollToTarget(el);
+  if (id !== '#topo') history.replaceState(null, '', id);
 });
 
+/* ---------- capítulos: forma, posição e ambiente do palco ---------- */
+/* d = computador, m = celular: [x, y, escala, opacidade] */
+const CH = {
+  hero: { anchorM: '.hero-vis', d: [3.55, 0.15, 0.7, 1], m: [0, 0, 0.42, 1] },
+  solucoes: { shape: 'streams', d: [1.4, -1.7, 1.0, 0.45], m: [0, -1.5, 0.6, 0.4] },
+  ia: { shape: 'brain', anchorD: '#ia .sec-head', d: [3.4, 0, 0.82, 0.9], m: [0, 0.2, 0.55, 0.3] },
+  automacao: { shape: 'flow', d: [3.3, 1.7, 0.72, 0.5], m: [0, 2.5, 0.46, 0.3] },
+  sistemas: { shape: 'blocks', d: [4.3, 1.5, 0.6, 0.5], m: [0, 2.6, 0.45, 0.3] },
+  dashboards: { shape: 'dashboard', d: [4, 1.6, 0.72, 0.4], m: [0, 2.5, 0.42, 0.3] },
+  compare: { split: true, anchor: '#cmp', d: [0, 0, 1.12, 1], m: [0, 0, 0.5, 1] },
+  projetos: { shape: 'terrain', d: [0, -2.5, 1, 0.65], m: [0, -2.9, 0.6, 0.55] },
+  sobre: { shape: 'sphere', d: [3.6, 0, 0.8, 0.5], m: [0, 2.7, 0.5, 0.2] },
+  processo: { shape: 'helix', d: [4.6, 1.5, 0.45, 0.45], m: [1.75, 0, 0.4, 0.2] },
+  lab: { shape: 'vortex', d: [0, -1.7, 1.1, 0.35], m: [0, -2.3, 0.6, 0.3] },
+  duvidas: { shape: 'network', d: [-4.2, 0, 0.75, 0.35], m: [1.6, -2.8, 0.4, 0.3] },
+  end: { shape: 'logo', anchor: '.end-mark', d: [0, 0, 0.66, 1], m: [0, 0, 0.36, 1] }
+};
+let cmpInvited = false;
+
+function layoutOf(name) {
+  const c = CH[name];
+  const nar = NARROW();
+  const L = nar ? c.m : c.d;
+  const vw = stage.viewWidth();
+  const k = nar ? clamp(vw / 3.7, 1, 1.6) : clamp(vw / 12.9, 0.7, 1.5);
+  const an = anchorOf(c);
+  return { x: L[0] * k, y: an ? anchorY(an) : L[1], s: L[2] * (nar ? k : clamp(k, 0.8, 1.15)), o: L[3] };
+}
+const anchorOf = (c) => c.anchor || (NARROW() ? c.anchorM : c.anchorD) || null;
+/* posição vertical (no mundo 3D) do centro de um elemento da página: a forma acompanha a rolagem */
+function anchorY(sel) {
+  const el = q(sel);
+  if (!el || !stage) return 0;
+  const r = el.getBoundingClientRect();
+  const half = stage.camera.position.z * Math.tan((stage.camera.fov * Math.PI) / 360);
+  return (1 - (r.top + r.bottom) / innerHeight) * half;
+}
+
+function applyChapter(name) {
+  if (!stage || !CH[name]) return;
+  const c = CH[name];
+  if (name === 'hero') { heroShape(); return; }
+  stage.setLayout(layoutOf(name));
+  if (c.split) {
+    stage.beginSplit('chaosA', 'panel');
+    cmp.refresh();
+    if (!cmpInvited) { cmpInvited = true; setTimeout(() => cmp.invite(), 900); }
+  } else stage.setShape(c.shape, { dur: 2.4, spread: 1.1 });
+}
+
+function setChapter(name) {
+  if (name === chapter) return;
+  chapter = name;
+  markNav(name);
+  applyChapter(name);
+}
+
+const chIO = new IntersectionObserver((ents) => {
+  ents.forEach((e) => { if (e.isIntersecting) setChapter(e.target.dataset.ch); });
+}, { rootMargin: '-50% 0px -50% 0px' });
+qa('[data-ch]').forEach((s) => chIO.observe(s));
+
+/* ambiente escuro: cresce enquanto uma seção .dark cobre o centro da tela */
+const darks = qa('.dark');
+const prog = q('#prog');
+const steps = q('#steps');
+const stepItems = qa('.step');
+function onScroll() {
+  const vh = innerHeight;
+  let env = 0;
+  darks.forEach((s) => {
+    const r = s.getBoundingClientRect();
+    const top = r.top + 150, bot = r.bottom - 150;
+    const ov = Math.min(bot, vh * 0.72) - Math.max(top, vh * 0.28);
+    env = Math.max(env, clamp(ov / (vh * 0.44), 0, 1));
+  });
+  if (stage) {
+    stage.setEnv(env);
+    const c = chapter && CH[chapter];
+    const an = c && anchorOf(c);
+    stage.yK = an ? 10 : 2.2;
+    if (an) stage.setLayout({ y: anchorY(an) });
+  }
+  const max = D.documentElement.scrollHeight - vh;
+  prog.style.transform = `scaleX(${max > 0 ? clamp(scrollY / max, 0, 1) : 0})`;
+  hd.classList.toggle('sc', scrollY > 8);
+  H.classList.toggle('fab-on', scrollY > vh * 0.6);
+  const rs = steps.getBoundingClientRect();
+  const f = clamp((vh * 0.8 - rs.top) / (rs.height + vh * 0.2), 0, 1);
+  steps.style.setProperty('--fill', f.toFixed(3));
+  stepItems.forEach((s, i) => s.classList.toggle('lit', f >= i / (stepItems.length - 1) - 0.02));
+}
+let scrollQueued = false;
+addEventListener('scroll', () => { if (!scrollQueued) { scrollQueued = true; requestAnimationFrame(() => { scrollQueued = false; onScroll(); }); } }, { passive: true });
+
+/* ---------- abertura: linha do tempo das partículas e título que muda ---------- */
+const word = q('#hero-word');
+const tlBtns = qa('#tl button');
+const tlPP = q('#tl-pp');
+let heroIdx = REDUCED ? HERO_SCENES.length - 1 : 0, heroT = 0, heroPaused = REDUCED, heroLast = 0;
+
+function setWord(t) {
+  if (REDUCED || !word.animate) { word.textContent = t; return; }
+  word.innerHTML = t.split(' ').map((w) => `<span class="wd">${[...w].map((c) => `<span class="ch">${c}</span>`).join('')}</span>`).join(' ');
+  word.style.setProperty('--bw', word.offsetWidth + 'px');
+  qa('.ch', word).forEach((s, i) => {
+    s.style.setProperty('--bx', -s.offsetLeft + 'px');
+    s.animate([{ opacity: 0, transform: 'translateY(0.38em) rotateX(-70deg)', filter: 'blur(6px)' }, { opacity: 1, transform: 'none', filter: 'blur(0)' }], { duration: 760, delay: i * 24, easing: 'cubic-bezier(.22,.75,.12,1)', fill: 'backwards' });
+  });
+}
+function heroShape() {
+  if (!stage) return;
+  const sc = HERO_SCENES[heroIdx];
+  stage.setShape(sc.shape, { dur: sc.shape === 'logo' ? 3 : 2.4, spread: 1.2 });
+  if (chapter === 'hero' || !chapter) stage.setLayout(heroLayout());
+}
+/* no computador, as partículas ocupam o espaço livre à direita do título, medido na hora */
+function heroLayout() {
+  const L = layoutOf('hero');
+  if (NARROW()) return L;
+  const vw = stage.viewWidth(), half = vw / 2;
+  const rg = D.createRange();
+  let right = q('.hero-sub').getBoundingClientRect().right;
+  ['.hh-a', '#hero-word'].forEach((sel) => { rg.selectNodeContents(q(sel)); right = Math.max(right, rg.getBoundingClientRect().right); });
+  const xr = (right / innerWidth - 0.5) * vw;
+  L.s = clamp((half - xr) / 7, 0.42, 0.75);
+  L.x = (xr + half) / 2 + 0.15;
+  const sc = HERO_SCENES[heroIdx];
+  if (sc.d) Object.assign(L, { x: L.x + sc.d[0], y: sc.d[1], s: L.s * sc.d[2] });
+  return L;
+}
+function heroScene(i) {
+  heroIdx = (i + HERO_SCENES.length) % HERO_SCENES.length;
+  heroT = 0;
+  tlBtns.forEach((b, k) => {
+    b.classList.toggle('cur', k === heroIdx);
+    b.classList.toggle('done', k < heroIdx);
+    b.style.setProperty('--f', 0);
+    if (k === heroIdx) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+  });
+  setWord(HERO_SCENES[heroIdx].word);
+  if (chapter === 'hero' || !chapter) heroShape();
+}
+function heroTick(now) {
+  const dt = Math.min(0.1, (now - heroLast) / 1000 || 0);
+  heroLast = now;
+  if (!heroPaused && (chapter === 'hero' || !chapter) && !D.hidden && stage) {
+    heroT += dt;
+    const dur = HERO_SCENES[heroIdx].dur;
+    tlBtns[heroIdx].style.setProperty('--f', clamp(heroT / dur, 0, 1).toFixed(3));
+    if (heroT >= dur) heroScene(heroIdx + 1);
+  }
+  requestAnimationFrame(heroTick);
+}
+function setPaused(p) {
+  heroPaused = p;
+  tlPP.setAttribute('aria-pressed', String(p));
+  tlPP.querySelector('use').setAttribute('href', p ? '#i-play' : '#i-pause');
+  tlPP.querySelector('.sr').textContent = p ? 'Continuar a animação' : 'Pausar a animação';
+}
+tlBtns.forEach((b, k) => b.addEventListener('click', () => heroScene(k)));
+tlPP.addEventListener('click', () => setPaused(!heroPaused));
+setPaused(heroPaused);
+tlBtns.forEach((b, k) => { b.classList.toggle('cur', k === heroIdx); b.classList.toggle('done', k < heroIdx); });
+if (REDUCED) word.textContent = HERO_SCENES[heroIdx].word;
+requestAnimationFrame(heroTick);
+
+/* ---------- revelações, números e inclinação dos cartões ---------- */
+qa('.sec-head .lead, .sol-c, .ai, .fl, .dv, .db, .cmp-side ul, .pj, .nums li, .step, .pillars li, .lab, .lab-out, .fq, .end .lead, .end .hero-cta, .ab-tx > p, .quote').forEach((e) => e.classList.add('rv'));
+const rvIO = new IntersectionObserver((ents) => {
+  ents.forEach((e) => {
+    if (!e.isIntersecting) return;
+    const el = e.target;
+    const sibs = el.parentElement ? [...el.parentElement.children].filter((c) => c.classList.contains('rv')) : [];
+    el.style.transitionDelay = (Math.max(0, sibs.indexOf(el)) * 70) + 'ms';
+    el.classList.add('in');
+    rvIO.unobserve(el);
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -6% 0px' });
+qa('.rv, [data-w]').forEach((e) => rvIO.observe(e));
+
+function count(el) {
+  const to = +el.dataset.count, pre = el.dataset.pre || '';
+  if (REDUCED) { el.textContent = pre + to; return; }
+  const t0 = performance.now();
+  const tick = (now) => {
+    const k = Math.min(1, (now - t0) / 1600);
+    el.textContent = pre + Math.round(to * (1 - Math.pow(1 - k, 3)));
+    if (k < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+const numIO = new IntersectionObserver((ents) => ents.forEach((e) => { if (e.isIntersecting) { count(e.target); numIO.unobserve(e.target); } }), { threshold: 0.6 });
+qa('[data-count]').forEach((e) => numIO.observe(e));
+
+if (FINE && !REDUCED) {
+  qa('[data-tilt]').forEach((c) => {
+    c.addEventListener('pointermove', (e) => {
+      const r = c.getBoundingClientRect();
+      c.style.setProperty('--ry', (((e.clientX - r.left) / r.width - 0.5) * 7).toFixed(2) + 'deg');
+      c.style.setProperty('--rx', (-((e.clientY - r.top) / r.height - 0.5) * 7).toFixed(2) + 'deg');
+    });
+    c.addEventListener('pointerleave', () => { c.style.setProperty('--rx', '0deg'); c.style.setProperty('--ry', '0deg'); });
+  });
+}
+
+/* ---------- perguntas frequentes ---------- */
+qa('.fq').forEach((f) => {
+  const b = q('.fq-q', f);
+  b.addEventListener('click', () => { const open = !f.classList.contains('open'); f.classList.toggle('open', open); b.setAttribute('aria-expanded', String(open)); });
+});
+
+/* ---------- demonstrações ---------- */
+const ai = initAI(q('#ia'), { reduced: REDUCED });
+const flow = initFlow(q('#automacao'), { steps: FLOW_STEPS, reduced: REDUCED });
+const dev = initDevices(q('#sistemas'), { reduced: REDUCED, fine: FINE });
+const dash = initDash(q('#dashboards'), { DASH, reduced: REDUCED });
+const cmp = initCompare(q('#antes-depois'), { reduced: REDUCED, onMove: (x) => { if (stage) stage.setDivider(x); } });
+initProjects(q('#projetos'), { fine: FINE, reduced: REDUCED, setWa });
+initLab(q('#contato'), { LAB, waLink });
+const DEMOS = [[q('#ai-demo'), ai], [q('#fl-demo'), flow], [q('#dv-demo'), dev], [q('#db-demo'), dash]];
+const demoIO = new IntersectionObserver((ents) => ents.forEach((e) => {
+  const d = DEMOS.find((x) => x[0] === e.target);
+  if (d) { if (e.isIntersecting) d[1].wake(); else d[1].sleep(); }
+}), { threshold: 0.3 });
+DEMOS.forEach((d) => demoIO.observe(d[0]));
+
+/* ---------- palco 3D (carrega depois do conteúdo) ---------- */
+async function initStage() {
+  const canvas = q('#stage');
+  try {
+    const { Stage } = await import('./stage.js');
+    stage = new Stage(canvas, { count: MOBILE() ? 14000 : 30000, dpr: MOBILE() ? 1.6 : 1.75, reduced: REDUCED });
+    await stage.init('assets/konan-logo.png');
+  } catch (err) {
+    stage = null;
+    H.classList.add('no-gl');
+    return;
+  }
+  H.classList.add('gl-on');
+  const first = chapter || 'hero';
+  stage.setShape(first === 'hero' && !REDUCED ? 'seed' : (CH[first].shape || 'logo'), { instant: true });
+  stage.setLayout(Object.assign(first === 'hero' ? heroLayout() : layoutOf(first), { o: 0 }), true);
+  stage.start();
+  onScroll();
+  stage.setEnv(stage.envT, true);
+  setTimeout(() => {
+    stage.setLayout((chapter || 'hero') === 'hero' ? heroLayout() : layoutOf(chapter));
+    if (!chapter || chapter === 'hero') heroScene(heroIdx); else applyChapter(chapter);
+  }, REDUCED ? 0 : 350);
+  if (FINE) {
+    addEventListener('pointermove', (e) => stage.pointer((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), { passive: true });
+  }
+  addEventListener('pointerdown', (e) => {
+    const x = (e.clientX / innerWidth) * 2 - 1, y = -(e.clientY / innerHeight) * 2 + 1;
+    stage.pointer(x, y);
+    if (!e.target.closest('a, button, input, label, textarea, .cmp, dialog')) stage.pulse(x, y);
+  }, { passive: true });
+  D.addEventListener('visibilitychange', () => { if (D.hidden) stage.stop(); else stage.start(); });
+}
+
+let rzT;
+addEventListener('resize', () => {
+  clearTimeout(rzT);
+  rzT = setTimeout(() => {
+    if (stage) { stage.resize(); if (chapter) stage.setLayout(chapter === 'hero' ? heroLayout() : layoutOf(chapter)); cmp.refresh(); }
+    onScroll();
+  }, 120);
+});
+
+window.konan = { stage: () => stage, lenis: () => lenis, chapter: () => chapter, setChapter };
+onScroll();
+markNav('hero');
+const startStage = () => initStage();
+if ('requestIdleCallback' in window) requestIdleCallback(startStage, { timeout: 900 }); else setTimeout(startStage, 200);
+window.__ktReady = true;

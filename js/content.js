@@ -1,96 +1,90 @@
-/* Konan Tech v2: textos que mudam com frequência.
-   Edite aqui sem medo: o resto do site lê estas listas.
-   Regra do projeto: nada de hífens ou travessões nos textos visíveis, e nenhum número inventado. */
+/* Konan Tech 2.0 (versão clara): textos e dados das demonstrações.
+   Os textos fixos das seções ficam no index.html (para o Google ler).
+   Tudo o que aparece nas demonstrações é fictício e está marcado assim na página. */
 
 export const WA_NUMBER = '5561982270780';
 export const WA_DEFAULT = 'Olá, vim pelo site da Konan Tech e quero falar com um especialista.';
-export const waLink = (msg) => 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg || WA_DEFAULT);
+export const waLink = (msg) => `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg || WA_DEFAULT)}`;
+export const waContext = (frase) => `Olá, vim pelo site da Konan Tech: ${frase}`;
 
-/* Cenas da primeira tela: forma das partículas, legenda e duração em segundos */
+/* Abertura: cada etapa da linha do tempo muda a forma das partículas e o fim do título.
+   d (opcional) ajusta a posição no computador: [deslocamento x, y, fator de escala] */
 export const HERO_SCENES = [
-  { shape: 'logo', cap: 'Konan Tech', hold: 6.5 },
-  { shape: 'network', cap: 'Conectando dados', hold: 6 },
-  { shape: 'brain', cap: 'Aprendendo padrões', hold: 6 },
-  { shape: 'streams', cap: 'Organizando informações', hold: 6 },
-  { shape: 'dashboard', cap: 'Gerando indicadores', hold: 6 },
-  { shape: 'city', cap: 'Construindo estruturas', hold: 6 }
+  { shape: 'dust', word: 'dados organizados.', dur: 4.2 },
+  { shape: 'network', word: 'conexões inteligentes.', dur: 4.6 },
+  { shape: 'brain', word: 'decisões com IA.', dur: 4.8 },
+  { shape: 'flow', word: 'fluxos automáticos.', dur: 4.6 },
+  { shape: 'blocks', word: 'sistemas sob medida.', dur: 4.4 },
+  { shape: 'screens', word: 'experiências digitais.', dur: 4.4 },
+  { shape: 'logo', word: 'soluções inteligentes.', dur: 6.5, d: [-0.1, -0.8, 0.78] }
 ];
 
-/* Soluções: cada uma muda a forma das partículas e mostra uma demonstração */
-export const SOLUTIONS = [
-  {
-    id: 'ia', shape: 'network', t: 'Inteligência artificial',
-    d: 'Lê documentos, extrai dados de notas fiscais, classifica lançamentos e responde perguntas sobre as informações da empresa.',
-    ben: 'Menos digitação manual e menos erro nos lançamentos.',
-    tags: ['Leitura de documentos', 'Classificação automática', 'Assistentes inteligentes'],
-    demo: { title: 'Nota fiscal recebida', kind: 'rows', rows: [['Fornecedor', 'Identificado'], ['Valor', 'R$ 1.284,90'], ['Categoria', 'Material elétrico'], ['Centro de custo', 'Obra 02']], end: 'Lançamento pronto para aprovação' }
-  },
-  {
-    id: 'automacao', shape: 'streams', t: 'Automação de processos',
-    d: 'Conecta as ferramentas que a empresa já usa e executa sozinha as tarefas repetidas: avisos, atualizações, relatórios e cobranças.',
-    ben: 'A equipe para de copiar e colar e cuida do que importa.',
-    tags: ['Integrações', 'Rotinas automáticas', 'Mensagens automáticas'],
-    demo: { title: 'Nova ordem de serviço', kind: 'steps', rows: ['Ordem recebida pelo sistema', 'Responsável definido pela rota', 'Cliente avisado no WhatsApp', 'Planilha e painel atualizados'], end: 'Fluxo concluído sem ninguém digitar nada' }
-  },
-  {
-    id: 'sistemas', shape: 'blocks', t: 'Sistemas personalizados',
-    d: 'Plataformas web e aplicativos feitos sob medida para o jeito que a sua empresa trabalha, no escritório ou no campo.',
-    ben: 'A operação inteira em um só lugar, no computador ou no celular.',
-    tags: ['Gestão operacional', 'Controle financeiro', 'Aplicativos de campo'],
-    demo: { title: 'Montando o sistema', kind: 'steps', rows: ['Cadastros de clientes e equipes', 'Ordens de serviço e agenda', 'Financeiro e centros de custo', 'Aplicativo para o campo'], end: 'Módulos escolhidos a partir do seu processo' }
-  },
-  {
-    id: 'dashboards', shape: 'dashboard', t: 'Dashboards e gestão',
-    d: 'Painéis de indicadores atualizados automaticamente a partir dos dados que a empresa já gera.',
-    ben: 'Decisões tomadas com números, não com achismo.',
-    tags: ['Indicadores', 'Relatórios', 'Acompanhamento em tempo real'],
-    demo: { title: 'Painel da operação', kind: 'kpis', rows: [['Ordens concluídas', 94, '%'], ['Serviços hoje', 47, ''], ['Em rota agora', 6, '']], end: 'Atualizado automaticamente' }
-  },
-  {
-    id: 'sites', shape: 'screens', t: 'Sites e experiências digitais',
-    d: 'Sites institucionais e comerciais que apresentam a empresa com clareza e levam o visitante até a conversa.',
-    ben: 'Mais credibilidade e mais pedidos de orçamento.',
-    tags: ['Sites institucionais', 'Páginas comerciais', 'Identidade digital'],
-    demo: { title: 'Publicando o site', kind: 'steps', rows: ['Pronto para celular, tablet e computador', 'Carregamento rápido', 'Contato pelo WhatsApp em um toque', 'Estrutura preparada para o Google'], end: 'Visitante entende e chama' }
-  }
+/* Automação: o que cada etapa faz na simulação (dados fictícios) */
+export const FLOW_STEPS = [
+  { label: 'Pedido do cliente', log: 'Pedido recebido pelo WhatsApp', prev: '<p class="pv-k">WhatsApp da empresa</p><p class="pv-b wa">Oi! Quero 3 cadeiras Lumi para entregar na sexta.</p>' },
+  { label: 'Registra o pedido', log: 'Pedido 2318 registrado com os dados do cliente', prev: '<p class="pv-k">Planilha de pedidos</p><p class="pv-b">Pedido 2318, Marina S., 3 cadeiras Lumi, entrega sexta</p>' },
+  { label: 'Atualiza o sistema', log: 'Estoque reservado e prazo calculado', prev: '<p class="pv-k">Sistema</p><p class="pv-b">Estoque: 12 para 9 unidades. Entrega confirmada para sexta.</p>' },
+  { label: 'Avisa o responsável', log: 'Aviso enviado para a equipe de vendas', prev: '<p class="pv-k">Aviso para Ana, vendas</p><p class="pv-b">Novo pedido 2318 aguardando separação.</p>' },
+  { label: 'Cria a tarefa', log: 'Tarefa de separação criada para hoje, 16h', prev: '<p class="pv-k">Tarefas da equipe</p><p class="pv-b">Separar pedido 2318. Responsável: Ana. Prazo: hoje, 16h.</p>' },
+  { label: 'Atualiza o dashboard', log: 'Indicadores do dia atualizados', prev: '<p class="pv-k">Dashboard</p><p class="pv-b">Pedidos hoje: 19. Faturamento do dia atualizado.</p>' },
+  { label: 'Prepara a resposta', log: 'Resposta pronta para o cliente', prev: '<p class="pv-k">Resposta preparada</p><p class="pv-b me">Olá, Marina! Seu pedido 2318 está confirmado para sexta. Qualquer dúvida, é só chamar.</p>' }
 ];
 
-/* Perguntas frequentes */
-export const FAQ = [
-  ['Preciso saber exatamente o que quero antes de chamar?', 'Não. Basta contar como funciona hoje e o que incomoda. Transformar o problema em solução é o nosso trabalho.'],
-  ['A Konan Tech atende empresas pequenas?', 'Sim. Atendemos principalmente pequenas e médias empresas, com soluções do tamanho da necessidade e sem funcionalidades que ninguém vai usar.'],
-  ['Quanto custa um sistema personalizado?', 'Depende do escopo. Depois da conversa inicial você recebe uma proposta com valor e etapas definidos antes de qualquer desenvolvimento começar.'],
-  ['Posso continuar usando minhas planilhas?', 'Pode. Vários dos nossos sistemas usam o Google Sheets como base, então a equipe continua vendo e conferindo os dados onde já está acostumada.'],
-  ['Como a inteligência artificial entra nos projetos?', 'Quando faz sentido para a operação: leitura automática de notas fiscais, organização de documentos, resumos e assistentes que respondem dúvidas sobre os dados da empresa.'],
-  ['O que acontece depois que o sistema fica pronto?', 'Oferecemos acompanhamento mensal com suporte, ajustes e melhorias contínuas. O sistema evolui junto com a empresa.'],
-  ['Vocês atendem fora de Brasília?', 'Sim. O trabalho é feito online, com reuniões por vídeo, para empresas de todo o Brasil.']
-];
+/* Dashboards: série fictícia de faturamento, com variação por unidade e período */
+export const DASH = {
+  months: ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'],
+  units: { all: 1, a: 0.58, b: 0.42 },
+  cats: ['Produtos', 'Serviços', 'Contratos', 'Outros'],
+  raw: [
+    ['04/11', 'Unidade Norte', 'Pedido 2291', 'Produtos', '1.480,00', 'Pago'],
+    ['04/11', 'Unidade Sul', 'Pedido 2292', 'Serviços', '920,00', 'Pendente'],
+    ['05/11', 'Unidade Norte', 'Pedido 2293', 'Contratos', '3.200,00', 'Pago'],
+    ['05/11', 'Unidade Norte', 'Pedido 2294', 'Produtos', '640,00', 'Pago'],
+    ['06/11', 'Unidade Sul', 'Pedido 2295', 'Produtos', '1.120,00', 'Atrasado'],
+    ['06/11', 'Unidade Sul', 'Pedido 2296', 'Outros', '310,00', 'Pago'],
+    ['07/11', 'Unidade Norte', 'Pedido 2297', 'Serviços', '1.750,00', 'Pago'],
+    ['07/11', 'Unidade Norte', 'Pedido 2297', 'Serviços', '1.750,00', 'Duplicado'],
+    ['08/11', 'Unidade Sul', 'Pedido 2299', 'Contratos', '2.400,00', 'Pendente'],
+    ['08/11', 'Unidade Norte', 'Pedido 2300', 'Produtos', '880,00', 'Pago'],
+    ['09/11', 'Unidade Sul', 'Pedido 2301', 'Produtos', '1.360,00', 'Pago'],
+    ['10/11', 'Unidade Norte', 'Pedido 2302', 'Outros', '450,00', 'Pago']
+  ]
+};
 
-/* Desafios do contato: texto do botão, frase da mensagem e o raciocínio mostrado no console */
-export const CHALLENGES = [
-  {
-    label: 'Minha operação vive em planilhas',
-    msg: 'minha operação vive em planilhas e eu quero organizar tudo em um sistema.',
-    lines: ['Cenário: a operação depende de várias planilhas soltas.', 'Caminho provável: um sistema web com cadastros, controle e painel, a partir dos dados que você já tem.', 'As planilhas podem continuar como base enquanto a equipe se adapta.', 'Próximo passo: uma conversa para mapear o processo de hoje.']
-  },
-  {
-    label: 'Perco tempo com tarefas repetidas',
-    msg: 'minha equipe perde tempo com tarefas repetidas que poderiam ser automáticas.',
-    lines: ['Cenário: tarefas manuais que se repetem todos os dias.', 'Caminho provável: automações que conectam as ferramentas que você já usa.', 'Exemplos: avisos no WhatsApp, planilhas que se atualizam sozinhas, relatórios prontos.', 'Próximo passo: listar as tarefas que mais tomam tempo da equipe.']
-  },
-  {
-    label: 'Quero usar inteligência artificial',
-    msg: 'quero entender como usar inteligência artificial na minha empresa.',
-    lines: ['Cenário: interesse em aplicar inteligência artificial na rotina.', 'Onde costuma fazer sentido: leitura de documentos, organização de dados e assistentes internos.', 'A inteligência artificial entra onde gera resultado, não como enfeite.', 'Próximo passo: entender seus documentos e suas rotinas.']
-  },
-  {
-    label: 'Preciso de um site que traga clientes',
-    msg: 'preciso de um site profissional que traga novos clientes.',
-    lines: ['Cenário: a presença digital não está trazendo clientes.', 'Caminho provável: um site rápido, claro e pensado para gerar contatos.', 'O conteúdo é escrito para o seu cliente entender e chamar.', 'Próximo passo: conversar sobre o seu público e os seus serviços.']
-  },
-  {
-    label: 'Tenho outra ideia',
-    msg: 'tenho uma ideia de solução e quero entender como tirar do papel.',
-    lines: ['Cenário: uma ideia que precisa sair do papel.', 'Caminho provável: desenhar a primeira versão útil e testar cedo com quem vai usar.', 'Você acompanha cada etapa e decide junto.', 'Próximo passo: contar a ideia em poucas linhas.']
-  }
-];
+/* Diagnóstico: o que mostramos para cada resposta */
+export const LAB = {
+  dores: [
+    {
+      frase: 'tudo vive em planilhas',
+      blocos: [['Hoje', 'Planilhas soltas e controles paralelos'], ['Base única', 'Cadastros e controles em um sistema web, aproveitando os dados que você já tem'], ['Painel', 'Indicadores atualizados sem montar relatório à mão']],
+      passo: 'Começaríamos mapeando as planilhas de hoje e quem usa cada uma.'
+    },
+    {
+      frase: 'a equipe perde tempo com tarefas repetidas',
+      blocos: [['Gatilho', 'Um pedido, um formulário ou uma mensagem chega'], ['Automação', 'Registros, avisos e tarefas acontecem sozinhos'], ['Resultado', 'A equipe só confere e decide']],
+      passo: 'Começaríamos listando as tarefas que mais tomam tempo da equipe.'
+    },
+    {
+      frase: 'digitamos notas e documentos à mão',
+      blocos: [['Entrada', 'Foto, PDF ou XML enviados pelo WhatsApp ou email'], ['Inteligência artificial', 'Leitura dos campos com conferência por regras'], ['Planilha ou sistema', 'Lançamento pronto para aprovação']],
+      passo: 'Começaríamos com uma amostra dos seus documentos para testar a leitura.'
+    },
+    {
+      frase: 'não sei o que a equipe em campo está fazendo',
+      blocos: [['Aplicativo', 'A equipe atualiza cada ordem pelo celular, até sem internet'], ['Painel do gestor', 'Status, rota e atrasos em tempo real'], ['Avisos', 'O cliente e o gestor são avisados sem ligação']],
+      passo: 'Começaríamos acompanhando um dia da operação para desenhar o aplicativo.'
+    },
+    {
+      frase: 'não tenho indicadores confiáveis',
+      blocos: [['Dados', 'Junção das fontes que já existem, sem duplicidade'], ['Dashboard', 'Indicadores, comparativos e alertas em um só lugar'], ['Rotina', 'Relatório pronto para a reunião da semana']],
+      passo: 'Começaríamos definindo os cinco números que mais importam para você.'
+    },
+    {
+      frase: 'preciso de um site que traga clientes',
+      blocos: [['Conteúdo', 'Texto escrito para o seu cliente entender o que você faz'], ['Site', 'Rápido, claro e completo no celular'], ['Contato', 'WhatsApp a um toque de qualquer página']],
+      passo: 'Começaríamos conversando sobre o seu público e os seus serviços.'
+    }
+  ],
+  areas: ['obras e construção', 'serviços em campo', 'comércio e vendas', 'administrativo e financeiro', 'outra área'],
+  times: ['até 5 pessoas', '6 a 20 pessoas', '21 a 50 pessoas', 'mais de 50 pessoas']
+};

@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Konan Tech, tecnologia que transforma negócios</title>
-<meta name="description" content="A Konan Tech desenvolve sistemas inteligentes, automações e experiências digitais que transformam processos em resultados. Fale com um especialista.">
+<title>Konan Tech, sistemas, automação e inteligência artificial para empresas</title>
+<meta name="description" content="A Konan Tech desenvolve sistemas sob medida, automações, dashboards e soluções com inteligência artificial que transformam processos em resultados. Fale com um especialista pelo WhatsApp.">
 <link rel="canonical" href="https://www.konantech.com.br/">
-<meta name="theme-color" content="#000000">
-<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#ffffff">
+<meta name="color-scheme" content="light">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:site_name" content="Konan Tech">
 <meta property="og:url" content="https://www.konantech.com.br/">
-<meta property="og:title" content="Konan Tech, tecnologia que transforma negócios">
-<meta property="og:description" content="Sistemas inteligentes, automações e experiências digitais que transformam processos em resultados.">
+<meta property="og:title" content="Konan Tech, inteligência em movimento">
+<meta property="og:description" content="Sistemas sob medida, automações, dashboards e inteligência artificial que transformam processos em resultados.">
 <meta property="og:image" content="https://www.konantech.com.br/assets/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -21,110 +21,505 @@
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <link rel="preload" href="assets/fonts/archivo-latin-wdth-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="js/vendor/three.min.js">
 <link rel="stylesheet" href="css/main.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Konan Tech","url":"https://www.konantech.com.br/","logo":"https://www.konantech.com.br/assets/konan-logo.png","description":"Soluções digitais, desenvolvimento de sistemas, inteligência artificial e automação de processos para empresas.","telephone":"+5561982270780","areaServed":"BR","contactPoint":{"@type":"ContactPoint","telephone":"+5561982270780","contactType":"sales","availableLanguage":"Portuguese"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","name":"Konan Tech","url":"https://www.konantech.com.br/","logo":"https://www.konantech.com.br/assets/konan-logo-dark.png","description":"Soluções digitais, desenvolvimento de sistemas, inteligência artificial e automação de processos para empresas.","telephone":"+5561982270780","areaServed":"BR","contactPoint":{"@type":"ContactPoint","telephone":"+5561982270780","contactType":"sales","availableLanguage":"Portuguese"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Preciso saber exatamente o que quero antes de chamar?","acceptedAnswer":{"@type":"Answer","text":"Não. Basta contar como funciona hoje e o que incomoda. Transformar o problema em solução é o nosso trabalho."}},{"@type":"Question","name":"A Konan Tech atende empresas pequenas?","acceptedAnswer":{"@type":"Answer","text":"Sim. Atendemos principalmente pequenas e médias empresas, com soluções do tamanho da necessidade e sem funcionalidades que ninguém vai usar."}},{"@type":"Question","name":"Quanto custa um sistema personalizado?","acceptedAnswer":{"@type":"Answer","text":"Depende do escopo. Depois da conversa inicial você recebe uma proposta com valor e etapas definidos antes de qualquer desenvolvimento começar."}},{"@type":"Question","name":"Posso continuar usando minhas planilhas?","acceptedAnswer":{"@type":"Answer","text":"Pode. Vários dos nossos sistemas usam o Google Sheets como base, então a equipe continua vendo e conferindo os dados onde já está acostumada."}},{"@type":"Question","name":"Como a inteligência artificial entra nos projetos?","acceptedAnswer":{"@type":"Answer","text":"Quando faz sentido para a operação: leitura automática de notas fiscais, organização de documentos, resumos e assistentes que respondem dúvidas sobre os dados da empresa."}},{"@type":"Question","name":"O que acontece depois que o sistema fica pronto?","acceptedAnswer":{"@type":"Answer","text":"Oferecemos acompanhamento mensal com suporte, ajustes e melhorias contínuas. O sistema evolui junto com a empresa."}},{"@type":"Question","name":"Vocês atendem fora de Brasília?","acceptedAnswer":{"@type":"Answer","text":"Sim. O trabalho é feito online, com reuniões por vídeo, para empresas de todo o Brasil."}}]}]}</script>
 <script>
   (function (d) {
     d.classList.add('js');
-    try { if (sessionStorage.getItem('kt-boot')) d.classList.add('booted'); } catch (e) {}
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('rm');
-    setTimeout(function () { if (!window.__ktReady) d.classList.add('boot-fail'); }, 7000);
+    setTimeout(function () { if (!window.__ktReady) d.classList.remove('js'); }, 4000);
   })(document.documentElement);
 </script>
 </head>
 <body>
-
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 19V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8z M8 9h8 M8 12.5h5"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14 M16 5v14"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3 M4.5 4.5v3.8h3.8"/></symbol>
+  <symbol id="i-step" viewBox="0 0 24 24"><path d="M6 6l6 6-6 6 M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12 M18 6L6 18"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6.5 3.5h3l1.5 4.5-2 1.5a11 11 0 0 0 5.5 5.5l1.5-2 4.5 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 4.5 5.5a2 2 0 0 1 2-2z"/></symbol>
+</svg>
 <canvas class="stage" id="stage" aria-hidden="true"></canvas>
-<div class="grain" aria-hidden="true"></div>
-
-<div class="boot" id="boot" aria-hidden="true">
-  <div class="boot-in">
-    <p class="boot-l">Inicializando o núcleo de partículas</p>
-    <p class="boot-n"><span id="boot-n">000</span></p>
-    <div class="boot-bar"><i id="boot-bar"></i></div>
-  </div>
-</div>
-
+<div class="light" aria-hidden="true"><i class="l1"></i><i class="l2"></i><i class="l3"></i></div>
 <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+<div class="prog" id="prog" aria-hidden="true"></div>
 
-<header class="nav" id="nav">
-  <a class="brand" href="#topo" aria-label="Konan Tech, voltar ao início"><img src="assets/konan-logo.png" alt="Konan Tech" width="146" height="22"></a>
-  <nav class="nav-links" aria-label="Seções do site">
-    <a href="#solucoes" data-nav="solucoes">Soluções</a>
-    <a href="#transformacao" data-nav="transformacao">Transformação</a>
-    <a href="#projetos" data-nav="projetos">Projetos</a>
-    <a href="#processo" data-nav="processo">Processo</a>
-    <a href="#contato" data-nav="contato">Contato</a>
-  </nav>
-  <a class="btn btn-pri btn-sm nav-cta" data-wa href="https://wa.me/5561982270780?text=Ol%C3%A1%2C%20vim%20pelo%20site%20da%20Konan%20Tech%20e%20quero%20falar%20com%20um%20especialista." target="_blank" rel="noopener"><span class="btn-t" data-t="Fale com um especialista">Fale com um especialista</span></a>
-  <button type="button" class="burger" id="burger" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu"><span></span><span></span></button>
+<header class="hd" id="hd">
+  <div class="hd-in">
+    <a class="hd-logo" href="#topo" aria-label="Konan Tech, voltar ao início"><img src="assets/konan-logo-dark.png" alt="Konan Tech" width="208" height="32"></a>
+    <nav class="hd-nav" id="nav" aria-label="Seções do site">
+      <a href="#solucoes">Soluções</a>
+      <a href="#ia">Demonstrações</a>
+      <a href="#projetos">Projetos</a>
+      <a href="#processo">Como trabalhamos</a>
+      <a href="#duvidas">Dúvidas</a>
+      <a class="btn btn-pri nav-wa" data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>Falar no WhatsApp</span></a>
+    </nav>
+    <a class="btn btn-pri btn-sm hd-cta" data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>WhatsApp</span></a>
+    <button class="hd-menu" id="menu-btn" type="button" aria-expanded="false" aria-controls="nav"><span class="sr">Abrir menu</span><i></i><i></i></button>
+  </div>
 </header>
 
-<div class="menu" id="menu">
-  <nav class="menu-in" aria-label="Menu">
-    <a href="#solucoes">Soluções</a>
-    <a href="#transformacao">Transformação</a>
-    <a href="#projetos">Projetos</a>
-    <a href="#processo">Processo</a>
-    <a href="#contato">Contato</a>
-  </nav>
-  <a class="btn btn-pri menu-cta" data-wa href="https://wa.me/5561982270780?text=Ol%C3%A1%2C%20vim%20pelo%20site%20da%20Konan%20Tech%20e%20quero%20falar%20com%20um%20especialista." target="_blank" rel="noopener"><span class="btn-t" data-t="Fale com um especialista">Fale com um especialista</span></a>
-</div>
-
-<nav class="rail" id="rail" aria-label="Capítulos da página"></nav>
-<div class="progress" aria-hidden="true"><i id="progress"></i></div>
-
 <main id="conteudo">
-
-<section class="ch hero" id="topo" data-ch="topo" data-name="Início">
-  <img class="hero-poster" src="assets/hero-poster.jpg" alt="" aria-hidden="true" width="1600" height="1000" loading="lazy">
-  <div class="wrap hero-in">
-    <h1 class="h1" aria-label="Tecnologia que transforma negócios.">
-      <span class="l" aria-hidden="true"><span class="li metal">Tecnologia</span></span>
-      <span class="l" aria-hidden="true"><span class="li metal">que transforma</span></span>
-      <span class="l" aria-hidden="true"><span class="li metal">negócios.</span></span>
-    </h1>
-    <div class="hero-foot">
-      <p class="lead">Desenvolvemos sistemas inteligentes, automações e experiências digitais que transformam processos em resultados.</p>
-      <div class="acts">
-        <a class="btn btn-pri" data-wa data-mag href="https://wa.me/5561982270780?text=Ol%C3%A1%2C%20vim%20pelo%20site%20da%20Konan%20Tech%20e%20quero%20falar%20com%20um%20especialista." target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8z M8 9h8 M8 12.5h5"/></svg><span class="btn-t" data-t="Fale com um especialista">Fale com um especialista</span></a>
-        <a class="btn btn-sec" data-mag href="#solucoes"><span class="btn-t" data-t="Conheça nossas soluções">Conheça nossas soluções</span></a>
+<section class="hero" id="topo" data-ch="hero" aria-labelledby="hero-h">
+  <img class="hero-poster" src="assets/hero-poster.jpg" alt="" width="1600" height="900" aria-hidden="true">
+  <div class="wrap hero-g">
+    <div class="hero-tx">
+      <h1 class="hero-h" id="hero-h"><span class="hh-a">Transformamos processos em</span> <span class="hh-b" id="hero-word" aria-hidden="true">soluções inteligentes.</span><span class="sr">soluções inteligentes, com sistemas, automação e inteligência artificial.</span></h1>
+      <p class="hero-sub">Sistemas, automações, dashboards e inteligência artificial desenvolvidos para a forma como a sua empresa trabalha.</p>
+      <div class="hero-cta">
+        <a class="btn btn-pri btn-lg" data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>Fale com um especialista</span></a>
+        <a class="btn btn-ghost btn-lg" href="#solucoes"><span>Conhecer as soluções</span></a>
       </div>
     </div>
   </div>
-  <div class="hud" aria-hidden="true">
-    <p class="hud-cap" id="hud-cap">Konan Tech</p>
-    <div class="hud-seg" id="hud-seg"></div>
-    <p class="hud-tip">Mova o cursor ou toque para interagir</p>
+  <div class="hero-vis" aria-hidden="true"></div>
+  <div class="wrap tl-wrap">
+    <ol class="tl" id="tl" aria-label="Etapas da animação de abertura">
+      <li><button type="button" data-i="0">Dados soltos</button></li>
+      <li><button type="button" data-i="1">Conexões</button></li>
+      <li><button type="button" data-i="2">Inteligência</button></li>
+      <li><button type="button" data-i="3">Automação</button></li>
+      <li><button type="button" data-i="4">Sistema</button></li>
+      <li><button type="button" data-i="5">Experiência</button></li>
+      <li><button type="button" data-i="6">Konan Tech</button></li>
+    </ol>
+    <button class="tl-pp" id="tl-pp" type="button" aria-pressed="false"><svg class="ic"><use href="#i-pause"/></svg><span class="sr">Pausar a animação</span></button>
   </div>
 </section>
 
-<section class="ch mf" id="visao" data-ch="visao" data-name="Visão" aria-label="Nossa visão">
+<section class="sec sol" id="solucoes" data-ch="solucoes" aria-labelledby="sol-h">
   <div class="wrap">
-    <p class="mf-t" id="mf-t">Seu negócio tem um problema. Nós desenvolvemos a solução, do jeito que a sua empresa funciona.</p>
+    <div class="sec-head">
+      <h2 class="h2" id="sol-h" data-w>Seu negócio tem um problema. Nós desenvolvemos a solução.</h2>
+      <p class="lead">Do jeito que a sua empresa funciona, sem funcionalidades que ninguém vai usar. Escolha uma frente e veja uma demonstração funcionando.</p>
+    </div>
+    <div class="sol-grid">
+      <a class="sol-c glass" href="#ia" data-tilt>
+        <span class="sol-g g-ai" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        <h3>Inteligência artificial</h3>
+        <p>Leitura de documentos, classificação de dados e assistentes que trabalham com as informações da empresa.</p>
+        <span class="sol-l">Ver demonstração</span>
+      </a>
+      <a class="sol-c glass" href="#automacao" data-tilt>
+        <span class="sol-g g-fl" aria-hidden="true"><i></i><i></i><i></i></span>
+        <h3>Automação de processos</h3>
+        <p>Tarefas repetidas que passam a acontecer sozinhas: registros, avisos, tarefas e respostas.</p>
+        <span class="sol-l">Ver demonstração</span>
+      </a>
+      <a class="sol-c glass" href="#sistemas" data-tilt>
+        <span class="sol-g g-sy" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <h3>Sistemas sob medida</h3>
+        <p>Painel para o gestor e aplicativo para a equipe, feitos a partir do processo que já existe.</p>
+        <span class="sol-l">Ver demonstração</span>
+      </a>
+      <a class="sol-c glass" href="#dashboards" data-tilt>
+        <span class="sol-g g-db" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        <h3>Dashboards e indicadores</h3>
+        <p>Os números da operação reunidos em um painel claro, atualizado e fácil de acompanhar.</p>
+        <span class="sol-l">Ver demonstração</span>
+      </a>
+      <a class="sol-c glass" href="#projetos" data-tilt>
+        <span class="sol-g g-ws" aria-hidden="true"><i></i><i></i><i></i></span>
+        <h3>Sites e presença digital</h3>
+        <p>Sites rápidos e claros, pensados para o seu cliente entender o que você faz e chamar.</p>
+        <span class="sol-l">Ver projetos</span>
+      </a>
+    </div>
   </div>
 </section>
 
-<section class="ch about" id="sobre" data-ch="sobre" data-name="Quem somos">
-  <div class="wrap about-grid">
-    <div class="about-txt">
-      <h2 class="h2" data-scramble>Tecnologia com os pés na operação.</h2>
-      <p class="p-lg">A Konan Tech é uma empresa brasileira de soluções digitais, desenvolvimento de sistemas e automação de processos. Transformamos problemas reais das empresas em soluções tecnológicas práticas.</p>
+<section class="sec demo dark" id="ia" data-ch="ia" data-env="dark" aria-labelledby="ia-h">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="sec-k">Inteligência artificial</p>
+      <h2 class="h2" id="ia-h" data-w>Uma nota fiscal entra. Uma despesa organizada sai.</h2>
+      <p class="lead">Acompanhe, etapa por etapa, como a inteligência artificial lê um documento, entende o que importa e deixa tudo pronto para aprovação.</p>
+    </div>
+    <div class="ai" id="ai-demo">
+      <div class="ai-docw">
+        <article class="ai-doc" id="ai-doc" aria-label="Nota fiscal fictícia usada na demonstração">
+          <p class="ai-stamp">Documento fictício</p>
+          <header class="ai-dh">
+            <div><p class="ai-t">Nota fiscal de venda</p><p class="ai-s">Nº 000.481, série 1</p></div>
+            <div class="ai-qr" aria-hidden="true"></div>
+          </header>
+          <div class="ai-blk">
+            <p class="ai-lb">Emitente</p>
+            <p class="ai-v" data-f="fornecedor">Elétrica Horizonte Materiais Ltda</p>
+            <p class="ai-sm">Rua das Indústrias, 120, Brasília, DF</p>
+          </div>
+          <div class="ai-row2">
+            <div class="ai-blk"><p class="ai-lb">Data de emissão</p><p class="ai-v" data-f="data">12/11/2026</p></div>
+            <div class="ai-blk"><p class="ai-lb">Destinatário</p><p class="ai-v">Sua Empresa Ltda</p></div>
+          </div>
+          <table class="ai-tb" data-f="itens">
+            <thead><tr><th>Item</th><th>Qtd.</th><th>Valor</th></tr></thead>
+            <tbody>
+              <tr><td>Cabo flexível 2,5 mm</td><td>100 m</td><td>R$ 389,00</td></tr>
+              <tr><td>Disjuntor 32 A</td><td>6 un.</td><td>R$ 171,60</td></tr>
+              <tr><td>Eletroduto corrugado</td><td>50 m</td><td>R$ 124,50</td></tr>
+              <tr><td>Quadro de distribuição</td><td>1 un.</td><td>R$ 599,80</td></tr>
+            </tbody>
+          </table>
+          <div class="ai-tot"><p class="ai-lb">Valor total</p><p class="ai-v ai-big" data-f="valor">R$ 1.284,90</p></div>
+          <span class="ai-beam" aria-hidden="true"></span>
+        </article>
+      </div>
+      <div class="ai-proc">
+        <ol class="ai-steps" id="ai-steps">
+          <li><button type="button" data-s="0"><b>Receber</b><span>O documento chega por WhatsApp, email ou upload, como foto, PDF ou XML.</span></button></li>
+          <li><button type="button" data-s="1"><b>Identificar</b><span>O sistema reconhece o tipo de documento. Se for imagem, faz a leitura do texto (OCR).</span></button></li>
+          <li><button type="button" data-s="2"><b>Extrair</b><span>Um modelo de linguagem encontra fornecedor, data, itens e valor. Regras conferem se a soma dos itens bate com o total.</span></button></li>
+          <li><button type="button" data-s="3"><b>Classificar</b><span>A despesa recebe categoria e centro de custo, seguindo as regras da sua empresa.</span></button></li>
+          <li><button type="button" data-s="4"><b>Organizar</b><span>Os dados entram na planilha ou no sistema, com o documento original anexado.</span></button></li>
+          <li><button type="button" data-s="5"><b>Encaminhar</b><span>O responsável recebe um aviso para aprovar. Nada é pago sem uma pessoa conferir.</span></button></li>
+        </ol>
+        <div class="ai-out" id="ai-out" aria-live="polite">
+          <div class="ai-card">
+            <p class="ai-ch">Despesa identificada</p>
+            <dl class="ai-dl">
+              <div data-o="fornecedor"><dt>Fornecedor</dt><dd>Elétrica Horizonte</dd></div>
+              <div data-o="data"><dt>Data</dt><dd>12/11/2026</dd></div>
+              <div data-o="itens"><dt>Itens</dt><dd>4 itens, soma conferida</dd></div>
+              <div data-o="valor"><dt>Valor</dt><dd>R$ 1.284,90</dd></div>
+              <div data-o="categoria"><dt>Categoria</dt><dd>Materiais elétricos</dd></div>
+              <div data-o="centro"><dt>Centro de custo</dt><dd>Obra Residencial Aurora</dd></div>
+            </dl>
+          </div>
+          <div class="ai-sheet" data-o="planilha">
+            <p class="ai-ch">Planilha de despesas</p>
+            <div class="ai-r"><span>10/11</span><span>Cimento</span><span>R$ 640,00</span></div>
+            <div class="ai-r"><span>11/11</span><span>Hidráulica</span><span>R$ 912,30</span></div>
+            <div class="ai-r ai-new"><span>12/11</span><span>Elétrica</span><span>R$ 1.284,90</span></div>
+          </div>
+          <div class="ai-msg" data-o="aprovacao">
+            <p class="ai-ch">Aviso para o gestor</p>
+            <p>Nova despesa de <b>R$ 1.284,90</b> da Elétrica Horizonte aguardando sua aprovação.</p>
+            <p class="ai-btns"><span>Aprovar</span><span>Ver nota</span></p>
+          </div>
+        </div>
+        <div class="ctl" role="group" aria-label="Controles da demonstração de inteligência artificial">
+          <button type="button" class="cb" id="ai-play" aria-pressed="false"><svg class="ic"><use href="#i-pause"/></svg><span>Pausar</span></button>
+          <button type="button" class="cb" id="ai-reset"><svg class="ic"><use href="#i-redo"/></svg><span>Reiniciar</span></button>
+          <button type="button" class="cb" id="ai-explore" aria-pressed="false"><svg class="ic"><use href="#i-step"/></svg><span>Explorar etapa por etapa</span></button>
+          <span class="ctl-nav" hidden><button type="button" class="cb cb-i" id="ai-prev"><svg class="ic"><use href="#i-back"/></svg><span class="sr">Etapa anterior</span></button><button type="button" class="cb cb-i" id="ai-next"><svg class="ic"><use href="#i-next"/></svg><span class="sr">Próxima etapa</span></button></span>
+        </div>
+      </div>
+    </div>
+    <p class="note">Dados fictícios. As partículas ao fundo são uma ilustração. O processamento real combina leitura do documento, um modelo de linguagem e regras de validação definidas com a sua equipe.</p>
+    <div class="demo-cta"><a class="btn btn-pri" data-wa data-msg="vi a demonstração de leitura de notas fiscais com inteligência artificial e quero algo assim na minha empresa." href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>Quero isso na minha empresa</span></a></div>
+  </div>
+</section>
+
+<section class="sec demo" id="automacao" data-ch="automacao" aria-labelledby="fl-h">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="sec-k">Automação de processos</p>
+      <h2 class="h2" id="fl-h" data-w>Um pedido chega. O resto acontece sozinho.</h2>
+      <p class="lead">Escolha as etapas que fazem sentido para a sua operação e simule um pedido. Cada etapa ligada é uma tarefa que a equipe deixa de fazer à mão.</p>
+    </div>
+    <div class="fl glass" id="fl-demo">
+      <div class="fl-pick" role="group" aria-label="Etapas do fluxo">
+        <button type="button" class="chip on" data-k="0" aria-pressed="true" disabled>Pedido do cliente</button>
+        <button type="button" class="chip on" data-k="1" aria-pressed="true">Registra o pedido</button>
+        <button type="button" class="chip on" data-k="2" aria-pressed="true">Atualiza o sistema</button>
+        <button type="button" class="chip on" data-k="3" aria-pressed="true">Avisa o responsável</button>
+        <button type="button" class="chip on" data-k="4" aria-pressed="true">Cria a tarefa</button>
+        <button type="button" class="chip on" data-k="5" aria-pressed="true">Atualiza o dashboard</button>
+        <button type="button" class="chip on" data-k="6" aria-pressed="true">Prepara a resposta</button>
+      </div>
+      <div class="fl-board">
+        <div class="fl-track" id="fl-track"><svg class="fl-svg" id="fl-svg" aria-hidden="true"></svg></div>
+        <div class="fl-side">
+          <div class="fl-prev" id="fl-prev" aria-live="polite"><p class="fl-idle">Clique em simular para ver um pedido percorrer o fluxo.</p></div>
+          <ol class="fl-log" id="fl-log" aria-label="Registro da simulação"></ol>
+        </div>
+      </div>
+      <div class="ctl">
+        <button type="button" class="cb cb-pri" id="fl-run"><svg class="ic"><use href="#i-play"/></svg><span>Simular pedido</span></button>
+        <button type="button" class="cb" id="fl-reset"><svg class="ic"><use href="#i-redo"/></svg><span>Reiniciar</span></button>
+        <p class="fl-sum" id="fl-sum"></p>
+      </div>
+    </div>
+    <p class="note">Simulação com dados fictícios. Na prática, o fluxo conecta as ferramentas que você já usa, como WhatsApp, planilhas e o seu sistema.</p>
+    <div class="demo-cta"><a class="btn btn-pri" data-wa data-msg="vi a simulação de automação e quero automatizar tarefas da minha empresa." href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>Quero automatizar minha operação</span></a></div>
+  </div>
+</section>
+
+<section class="sec demo" id="sistemas" data-ch="sistemas" aria-labelledby="dv-h">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="sec-k">Sistemas sob medida</p>
+      <h2 class="h2" id="dv-h" data-w>O gestor no painel. A equipe no celular. Tudo conectado.</h2>
+      <p class="lead">Navegue pelas telas de um sistema de exemplo. O que muda no painel aparece no aplicativo da equipe, e o contrário também.</p>
+    </div>
+    <div class="dv" id="dv-demo">
+      <div class="dv-tabs" role="tablist" aria-label="Telas do sistema de exemplo">
+        <button type="button" role="tab" id="dvt-0" aria-controls="dvp-0" aria-selected="true" data-v="0">Visão geral</button>
+        <button type="button" role="tab" id="dvt-1" aria-controls="dvp-1" aria-selected="false" data-v="1" tabindex="-1">Ordens de serviço</button>
+        <button type="button" role="tab" id="dvt-2" aria-controls="dvp-2" aria-selected="false" data-v="2" tabindex="-1">Equipe em campo</button>
+        <button type="button" role="tab" id="dvt-3" aria-controls="dvp-3" aria-selected="false" data-v="3" tabindex="-1">Relatórios</button>
+      </div>
+      <div class="dv-scene" id="dv-scene">
+        <div class="dv-rig" id="dv-rig">
+          <div class="lap3">
+            <div class="lap3-lid"><div class="lap3-scr">
+              <div class="ux">
+                <div class="ux-side"><b>Operação</b><i class="on"></i><i></i><i></i><i></i></div>
+                <div class="ux-views">
+                  <div class="ux-v on" role="tabpanel" id="dvp-0" aria-labelledby="dvt-0">
+                    <p class="ux-h">Visão geral de hoje</p>
+                    <div class="ux-k"><p><span>Ordens do dia</span><b>48</b></p><p><span>Concluídas</span><b>31</b></p><p><span>Em rota</span><b>12</b></p><p><span>Atrasadas</span><b class="warn">2</b></p></div>
+                    <div class="ux-2"><div class="ux-card"><span>Ordens por hora</span><div class="ux-bars"><i style="--h:30%"></i><i style="--h:52%"></i><i style="--h:74%"></i><i style="--h:66%"></i><i style="--h:88%"></i><i style="--h:58%"></i><i style="--h:41%"></i></div></div><div class="ux-card"><span>Status</span><div class="ux-donut" style="--a:64"></div></div></div>
+                  </div>
+                  <div class="ux-v" role="tabpanel" id="dvp-1" aria-labelledby="dvt-1">
+                    <p class="ux-h">Ordens de serviço</p>
+                    <div class="ux-tb">
+                      <p><b>OS 1042</b><span>Cozinha planejada</span><em class="st st-r">Em rota</em></p>
+                      <p><b>OS 1043</b><span>Armário de quarto</span><em class="st st-ok">Concluída</em></p>
+                      <p><b>OS 1044</b><span>Painel de TV</span><em class="st">Agendada</em></p>
+                      <p><b>OS 1045</b><span>Home office</span><em class="st st-w">Cliente ausente</em></p>
+                      <p><b>OS 1046</b><span>Rack e estante</span><em class="st">Agendada</em></p>
+                    </div>
+                  </div>
+                  <div class="ux-v" role="tabpanel" id="dvp-2" aria-labelledby="dvt-2">
+                    <p class="ux-h">Equipe em campo</p>
+                    <div class="ux-map"><i class="pin p1"></i><i class="pin p2"></i><i class="pin p3"></i><i class="pin p4"></i><svg viewBox="0 0 300 140" aria-hidden="true"><path d="M20 110 C80 40, 140 120, 190 60 S 270 30, 285 80"/></svg></div>
+                    <div class="ux-team"><p><b>Equipe 1</b><span>3 de 5 concluídas</span></p><p><b>Equipe 2</b><span>em rota, chega 10h40</span></p></div>
+                  </div>
+                  <div class="ux-v" role="tabpanel" id="dvp-3" aria-labelledby="dvt-3">
+                    <p class="ux-h">Relatório da semana</p>
+                    <svg class="ux-line" viewBox="0 0 300 110" aria-hidden="true"><path class="a" d="M0 90 L50 70 L100 76 L150 48 L200 52 L250 30 L300 22"/><path class="b" d="M0 96 L50 88 L100 84 L150 72 L200 70 L250 60 L300 58"/></svg>
+                    <div class="ux-k ux-k3"><p><span>Ordens</span><b>236</b></p><p><span>No prazo</span><b>94%</b></p><p><span>Retrabalho</span><b>3</b></p></div>
+                  </div>
+                </div>
+              </div>
+            </div></div>
+            <div class="lap3-base"></div>
+          </div>
+          <div class="ph3">
+            <div class="ph3-scr">
+              <div class="pv on" data-v="0"><p class="pv-d">Quinta, 13 de novembro</p><p class="pv-h">Olá, Carlos</p><div class="pv-sum"><p><b>6</b><span>para hoje</span></p><p><b>4</b><span>feitas</span></p></div><p class="pv-n">Nova ordem atribuída: Painel de TV, 14h00</p></div>
+              <div class="pv" data-v="1"><p class="pv-h">Minhas ordens</p><div class="pv-l"><p class="ok"><b>Armário de quarto</b><span>08h00, concluída</span></p><p class="on"><b>Cozinha planejada</b><span>10h30, em rota</span></p><p><b>Painel de TV</b><span>14h00</span></p></div><p class="pv-btn">Iniciar montagem</p></div>
+              <div class="pv" data-v="2"><p class="pv-h">Rota de hoje</p><div class="pv-map"><svg viewBox="0 0 120 120" aria-hidden="true"><path d="M15 100 C40 60, 70 95, 80 55 S 105 25, 108 15"/></svg><i></i></div><p class="pv-n">Próxima parada a 12 minutos</p></div>
+              <div class="pv" data-v="3"><p class="pv-h">Minha semana</p><div class="pv-bars"><i style="--h:40%"></i><i style="--h:65%"></i><i style="--h:55%"></i><i style="--h:80%"></i><i style="--h:70%"></i></div><p class="pv-n">23 ordens concluídas</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="note dv-note">Telas ilustrativas com dados fictícios. Cada sistema é desenhado a partir do processo da sua empresa.</p>
+    </div>
+    <div class="demo-cta"><a class="btn btn-pri" data-wa data-msg="vi a demonstração de sistemas e quero um painel e um aplicativo para a minha equipe." href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>Quero um sistema assim</span></a></div>
+  </div>
+</section>
+
+<section class="sec demo" id="dashboards" data-ch="dashboards" aria-labelledby="db-h">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="sec-k">Dashboards e indicadores</p>
+      <h2 class="h2" id="db-h" data-w>Dos dados soltos ao painel que mostra o caminho.</h2>
+      <p class="lead">Veja uma tabela bruta virar indicadores, comparativos, alertas e projeção. Mude os filtros e acompanhe o painel se recalcular.</p>
+    </div>
+    <div class="db glass" id="db-demo">
+      <div class="db-bar">
+        <div class="seg" role="group" aria-label="Período">
+          <button type="button" data-p="30" aria-pressed="false">30 dias</button>
+          <button type="button" data-p="90" aria-pressed="true">90 dias</button>
+          <button type="button" data-p="365" aria-pressed="false">12 meses</button>
+        </div>
+        <div class="seg" role="group" aria-label="Unidade">
+          <button type="button" data-u="all" aria-pressed="true">Todas</button>
+          <button type="button" data-u="a" aria-pressed="false">Unidade Norte</button>
+          <button type="button" data-u="b" aria-pressed="false">Unidade Sul</button>
+        </div>
+        <button type="button" class="cb" id="db-mode" aria-pressed="false"><span>Ver dados brutos</span></button>
+      </div>
+      <div class="db-body" id="db-body">
+        <div class="db-raw" id="db-raw" aria-hidden="true"></div>
+        <div class="db-board" id="db-board">
+          <div class="db-kpis" id="db-kpis"></div>
+          <div class="db-row">
+            <figure class="db-card db-line"><figcaption>Faturamento e projeção</figcaption><svg id="db-line" viewBox="0 0 600 220" role="img" aria-label="Gráfico de faturamento com projeção"></svg></figure>
+            <figure class="db-card db-cmp"><figcaption>Comparativo com o período anterior</figcaption><svg id="db-bars" viewBox="0 0 320 220" role="img" aria-label="Comparativo por categoria"></svg></figure>
+          </div>
+          <div class="db-row db-row2">
+            <div class="db-card db-alerts"><p class="db-ct">Alertas</p><ul id="db-alerts"></ul></div>
+            <div class="db-card db-rep"><p class="db-ct">Relatório</p><p id="db-rep-t">Resumo pronto para enviar à diretoria.</p><button type="button" class="cb" id="db-rep"><span>Gerar relatório</span></button></div>
+          </div>
+        </div>
+      </div>
+      <p class="db-tag">Dados fictícios</p>
+    </div>
+    <div class="demo-cta"><a class="btn btn-pri" data-wa data-msg="vi a demonstração de dashboards e quero acompanhar os números da minha empresa em um painel." href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>Quero um painel com os meus números</span></a></div>
+  </div>
+</section>
+
+<section class="sec cmp-sec" id="antes-depois" data-ch="compare" aria-labelledby="cmp-h">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 class="h2" id="cmp-h" data-w>Arraste e veja a operação se organizar.</h2>
+      <p class="lead">À esquerda, o dia a dia sem sistema. À direita, a mesma operação com tudo conectado.</p>
+    </div>
+  </div>
+  <div class="cmp" id="cmp" style="--p:50%">
+    <div class="cmp-side cmp-a">
+      <p class="cmp-t">Antes</p>
+      <ul>
+        <li style="--r:-4deg;--x:2%">Planilhas desconectadas</li>
+        <li style="--r:3deg;--x:18%">Retrabalho todos os dias</li>
+        <li style="--r:-2deg;--x:6%">Informações duplicadas</li>
+        <li style="--r:5deg;--x:22%">Difícil acompanhar resultados</li>
+        <li style="--r:-6deg;--x:10%">Falta de indicadores</li>
+      </ul>
+    </div>
+    <div class="cmp-side cmp-b">
+      <p class="cmp-t">Depois</p>
+      <ul>
+        <li><svg class="ic"><use href="#i-check"/></svg>Dashboard com a operação inteira</li>
+        <li><svg class="ic"><use href="#i-check"/></svg>Informações centralizadas</li>
+        <li><svg class="ic"><use href="#i-check"/></svg>Fluxos automatizados</li>
+        <li><svg class="ic"><use href="#i-check"/></svg>Indicadores claros</li>
+        <li><svg class="ic"><use href="#i-check"/></svg>Mais controle da operação</li>
+      </ul>
+    </div>
+    <div class="cmp-h" id="cmp-h-ctl" role="slider" tabindex="0" aria-label="Comparar antes e depois" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="Metade antes, metade depois"><span class="cmp-k" aria-hidden="true"><svg class="ic"><use href="#i-back"/></svg><svg class="ic"><use href="#i-next"/></svg></span></div>
+  </div>
+</section>
+
+<section class="sec pj-sec" id="projetos" data-ch="projetos" aria-labelledby="pj-h">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 class="h2" id="pj-h" data-w>Projetos reais, cada um no seu estágio.</h2>
+      <p class="lead">Sistemas em operação, em implantação e em testes, e sites entregues. Abra cada projeto para ver o problema, a solução e as telas.</p>
+    </div>
+    <div class="pj-grid" id="pj-grid">
+      <article class="pj" data-p="obra-em-dia">
+        <button type="button" class="pj-open" aria-haspopup="dialog"><span class="sr">Abrir apresentação do projeto Obra em Dia</span></button>
+        <div class="pj-vis pv-lap" aria-hidden="true"><div class="mini mini-fin"><i></i><i></i><i></i><b></b><b></b><b></b><b></b><b></b></div></div>
+        <p class="stg stg-im"><i></i>Em implantação</p>
+        <h3>Obra em Dia</h3>
+        <p class="pj-k">Gestão financeira e acompanhamento de obras</p>
+        <div class="pj-more" hidden>
+          <p class="pm-p"><b>O problema.</b> Lançamentos financeiros, notas e a evolução de cada obra ficavam espalhados, e a visão do todo dependia de juntar planilhas.</p>
+          <p class="pm-s"><b>A solução.</b> Uma plataforma que reúne lançamentos financeiros, indicadores e a evolução de cada obra em um só lugar, com inteligência artificial ajudando nos lançamentos.</p>
+          <ul><li>Controle financeiro por obra</li><li>Indicadores e evolução por etapa</li><li>Inteligência artificial nos lançamentos</li></ul>
+          <p class="pm-n">Telas ilustrativas. O sistema está em implantação.</p>
+        </div>
+      </article>
+      <article class="pj" data-p="montacerto">
+        <button type="button" class="pj-open" aria-haspopup="dialog"><span class="sr">Abrir apresentação do projeto MontaCerto</span></button>
+        <div class="pj-vis pv-ph" aria-hidden="true"><div class="mini mini-mc"><i class="ok"></i><i class="on"></i><i></i><i></i><b></b></div></div>
+        <p class="stg stg-op"><i></i>Em operação diária</p>
+        <h3>MontaCerto</h3>
+        <p class="pj-k">Gestão de equipes de montagem de móveis</p>
+        <div class="pj-more" hidden>
+          <p class="pm-p"><b>O problema.</b> Coordenar montadores, ordens de serviço e planilhas que não conversavam entre si, todos os dias.</p>
+          <p class="pm-s"><b>A solução.</b> Aplicativo para os montadores em campo e painel para o gestor acompanhar as ordens de serviço do dia, da distribuição até a conclusão.</p>
+          <ul><li>Painel do gestor e aplicativo do montador</li><li>Status de cada ordem em tempo real</li><li>Distribuição por região e rota do dia</li><li>Notificações e funcionamento sem internet</li><li>Mais de 200 atendimentos organizados por dia</li></ul>
+          <p class="pm-n">Telas ilustrativas. As telas reais pertencem ao cliente.</p>
+        </div>
+      </article>
+      <article class="pj" data-p="ultra-obra">
+        <button type="button" class="pj-open" aria-haspopup="dialog"><span class="sr">Abrir apresentação do projeto Ultra Obra</span></button>
+        <div class="pj-vis pv-scan" aria-hidden="true"><div class="mini mini-scan"><i></i><i></i><i></i><i></i><span></span></div></div>
+        <p class="stg stg-te"><i></i>Em testes</p>
+        <h3>Ultra Obra</h3>
+        <p class="pj-k">Despesas de obra lançadas com inteligência artificial</p>
+        <div class="pj-more" hidden>
+          <p class="pm-p"><b>O problema.</b> Cada despesa da obra precisava ser digitada à mão, e a diretoria não tinha visão rápida dos gastos.</p>
+          <p class="pm-s"><b>A solução.</b> A equipe envia foto da nota ou um áudio, a inteligência artificial preenche os campos e tudo vai para uma planilha do Google Sheets que a diretoria acompanha.</p>
+          <ul><li>Leitura de notas fiscais por foto</li><li>Lançamento por voz</li><li>Integração com Google Sheets</li><li>Perfis para quem envia e para quem só acompanha</li></ul>
+          <p class="pm-n">Telas ilustrativas. O sistema está em testes.</p>
+        </div>
+      </article>
+      <article class="pj pj-img" data-p="via-opus">
+        <button type="button" class="pj-open" aria-haspopup="dialog"><span class="sr">Abrir apresentação do projeto Via Opus</span></button>
+        <div class="pj-vis pv-shot"><img src="assets/projetos/viaopus-inicio.webp" alt="Página inicial do site da Via Opus" width="1200" height="750" loading="lazy" decoding="async"></div>
+        <p class="stg stg-en"><i></i>Entregue</p>
+        <h3>Via Opus</h3>
+        <p class="pj-k">Site institucional de construtora</p>
+        <div class="pj-more" hidden>
+          <p class="pm-p"><b>O desafio.</b> Apresentar a construtora com clareza e transformar visitas em pedidos de orçamento.</p>
+          <p class="pm-s"><b>A solução.</b> Um site institucional com estrutura pensada para gerar contatos, apresentação dos serviços e versão completa para celular.</p>
+          <ul><li>Site institucional</li><li>Estrutura pensada para gerar contatos</li><li>Versão completa para celular</li></ul>
+          <div class="pm-g"><img src="assets/projetos/viaopus-inicio.webp" alt="Página inicial do site da Via Opus" width="1200" height="750" loading="lazy"><img src="assets/projetos/viaopus-estrutura.webp" alt="Seção de serviços do site da Via Opus" width="1200" height="750" loading="lazy"><img src="assets/projetos/viaopus-maquete.webp" alt="Seção de projetos do site da Via Opus" width="1200" height="750" loading="lazy"><img class="pm-m" src="assets/projetos/viaopus-celular.webp" alt="Site da Via Opus no celular" width="390" height="664" loading="lazy"></div>
+          <p class="pm-n">Capturas do site publicado.</p>
+        </div>
+      </article>
+      <article class="pj" data-p="caca-ruidos">
+        <button type="button" class="pj-open" aria-haspopup="dialog"><span class="sr">Abrir apresentação do projeto Caça Ruídos</span></button>
+        <div class="pj-vis pv-cr" aria-hidden="true"><div class="mini mini-cr"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        <p class="stg stg-en"><i></i>Entregue</p>
+        <h3>Caça Ruídos</h3>
+        <p class="pj-k">Site e comunicação digital para empresa de acústica</p>
+        <div class="pj-more" hidden>
+          <p class="pm-p"><b>O desafio.</b> Explicar um serviço técnico de forma simples e manter uma comunicação constante com os clientes.</p>
+          <p class="pm-s"><b>A solução.</b> Site institucional e cuidado com o Instagram e a comunicação, com identidade visual própria.</p>
+          <ul><li>Site institucional</li><li>Instagram e comunicação</li><li>Identidade visual aplicada</li></ul>
+          <p class="pm-n">Composição ilustrativa.</p>
+        </div>
+      </article>
+      <article class="pj pj-you">
+        <h3>O próximo projeto pode ser o da sua empresa.</h3>
+        <p class="pj-k">Conte o que trava a sua operação. A primeira conversa é sem compromisso.</p>
+        <a class="btn btn-pri" href="#contato"><span>Montar o meu diagnóstico</span></a>
+      </article>
+    </div>
+  </div>
+  <dialog class="pj-dlg" id="pj-dlg" aria-labelledby="pjd-h">
+    <div class="pjd">
+      <button type="button" class="pjd-x" id="pjd-x"><svg class="ic"><use href="#i-close"/></svg><span class="sr">Fechar</span></button>
+      <div class="pjd-vis" id="pjd-vis"></div>
+      <div class="pjd-tx">
+        <p class="stg" id="pjd-stg"></p>
+        <h3 id="pjd-h"></h3>
+        <p class="pj-k" id="pjd-k"></p>
+        <div id="pjd-body"></div>
+        <a class="btn btn-pri" id="pjd-wa" data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>Quero algo parecido</span></a>
+      </div>
+      <div class="pjd-nav"><button type="button" class="cb cb-i" id="pjd-prev"><svg class="ic"><use href="#i-back"/></svg><span class="sr">Projeto anterior</span></button><button type="button" class="cb cb-i" id="pjd-next"><svg class="ic"><use href="#i-next"/></svg><span class="sr">Próximo projeto</span></button></div>
+    </div>
+  </dialog>
+</section>
+
+<section class="sec about" id="sobre" data-ch="sobre" aria-labelledby="ab-h">
+  <div class="wrap ab-g">
+    <div class="ab-tx">
+      <h2 class="h2" id="ab-h" data-w>Tecnologia com os pés na operação.</h2>
+      <p class="lead">A Konan Tech é uma empresa brasileira de soluções digitais, desenvolvimento de sistemas e automação de processos.</p>
       <p>Nascemos dentro da operação. Antes da primeira linha de código, coordenamos equipes, ordens de serviço e indicadores no dia a dia de uma empresa de montagem. Por isso começamos sempre pelo processo e só depois escolhemos a tecnologia.</p>
       <figure class="quote">
         <blockquote>Eu coordenava montadores, ordens de serviço e planilhas que não conversavam entre si. O MontaCerto nasceu desse dia a dia, e é assim que tratamos cada projeto.</blockquote>
         <figcaption><b>Dande Roger</b><span>Fundador e desenvolvedor da Konan Tech</span></figcaption>
       </figure>
     </div>
-    <ul class="readouts" aria-label="Números do MontaCerto e da Konan Tech">
-      <li class="ro ro1"><span class="ro-n"><span data-count="200" data-pre="+">+200</span></span><span class="ro-l">atendimentos organizados por dia no MontaCerto</span></li>
-      <li class="ro ro2"><span class="ro-n"><span data-count="30">30</span></span><span class="ro-l">montadores usando o aplicativo em campo</span></li>
-      <li class="ro ro3"><span class="ro-n"><span data-count="5">5</span></span><span class="ro-l">projetos desenvolvidos, entre sistemas e sites</span></li>
+    <ul class="nums" aria-label="Números do MontaCerto e da Konan Tech">
+      <li><b data-count="200" data-pre="+">+200</b><span>atendimentos organizados por dia no MontaCerto</span></li>
+      <li><b data-count="30">30</b><span>montadores usando o aplicativo em campo</span></li>
+      <li><b data-count="5">5</b><span>projetos desenvolvidos, entre sistemas e sites</span></li>
     </ul>
   </div>
+</section>
+
+<section class="sec proc" id="processo" data-ch="processo" aria-labelledby="pr-h">
   <div class="wrap">
-    <ul class="principles">
+    <div class="sec-head">
+      <h2 class="h2" id="pr-h" data-w>Como trabalhamos, do primeiro contato ao sistema em uso.</h2>
+      <p class="lead">Você sabe o que vai receber, quanto custa e quando fica pronto antes de começarmos.</p>
+    </div>
+    <ol class="steps" id="steps">
+      <li class="step"><span class="step-n">1</span><h3>Diagnóstico</h3><p>Conversamos sobre a operação, entendemos o problema e mapeamos onde a tecnologia gera mais resultado.</p></li>
+      <li class="step"><span class="step-n">2</span><h3>Planejamento</h3><p>Você recebe uma proposta com escopo, etapas, prazos e valor definidos antes de começar.</p></li>
+      <li class="step"><span class="step-n">3</span><h3>Desenvolvimento</h3><p>Construímos em ciclos curtos, com versões de teste para a equipe usar e opinar.</p></li>
+      <li class="step"><span class="step-n">4</span><h3>Acompanhamento</h3><p>Depois da entrega seguimos juntos com suporte, ajustes e melhorias contínuas.</p></li>
+    </ol>
+    <ul class="pillars">
       <li><h3>Processo antes do código</h3><p>Entendemos como a empresa funciona hoje antes de propor qualquer tela.</p></li>
       <li><h3>Entregas em etapas</h3><p>Partes do sistema entram em uso cedo, para ajustarmos com a operação real.</p></li>
       <li><h3>Parceria depois da entrega</h3><p>Suporte, ajustes e melhorias contínuas enquanto a empresa cresce.</p></li>
@@ -132,263 +527,106 @@
   </div>
 </section>
 
-<section class="ch sol" id="solucoes" data-ch="solucoes" data-name="Soluções">
-  <div class="wrap sol-grid">
-    <div class="sol-head">
-      <h2 class="h2" data-scramble>Veja a tecnologia trabalhando.</h2>
-      <p class="sub">Cinco frentes com um objetivo: tirar o trabalho repetido das pessoas e colocar a informação certa na mão de quem decide.</p>
+<section class="sec lab-sec" id="contato" data-ch="lab" aria-labelledby="lab-h">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 class="h2" id="lab-h" data-w>Monte o diagnóstico do seu desafio.</h2>
+      <p class="lead">Três perguntas rápidas. No fim, a mensagem fica pronta para enviar pelo WhatsApp, direto para quem desenvolve.</p>
     </div>
-    <ul class="sol-list" id="sol-list">
-      <li class="so" data-i="0"><button type="button" class="so-h" aria-expanded="true"><span class="so-t">Inteligência artificial</span><span class="so-x" aria-hidden="true"></span></button>
-        <div class="so-b"><div class="so-bi"><p>Lê documentos, extrai dados de notas fiscais, classifica lançamentos e responde perguntas sobre as informações da empresa.</p><p class="so-ben">Menos digitação manual e menos erro nos lançamentos.</p><p class="tags"><span>Leitura de documentos</span><span>Classificação automática</span><span>Assistentes inteligentes</span></p></div></div></li>
-      <li class="so" data-i="1"><button type="button" class="so-h" aria-expanded="false"><span class="so-t">Automação de processos</span><span class="so-x" aria-hidden="true"></span></button>
-        <div class="so-b"><div class="so-bi"><p>Conecta as ferramentas que a empresa já usa e executa sozinha as tarefas repetidas: avisos, atualizações, relatórios e cobranças.</p><p class="so-ben">A equipe para de copiar e colar e cuida do que importa.</p><p class="tags"><span>Integrações</span><span>Rotinas automáticas</span><span>Mensagens automáticas</span></p></div></div></li>
-      <li class="so" data-i="2"><button type="button" class="so-h" aria-expanded="false"><span class="so-t">Sistemas personalizados</span><span class="so-x" aria-hidden="true"></span></button>
-        <div class="so-b"><div class="so-bi"><p>Plataformas web e aplicativos feitos sob medida para o jeito que a sua empresa trabalha, no escritório ou no campo.</p><p class="so-ben">A operação inteira em um só lugar, no computador ou no celular.</p><p class="tags"><span>Gestão operacional</span><span>Controle financeiro</span><span>Aplicativos de campo</span></p></div></div></li>
-      <li class="so" data-i="3"><button type="button" class="so-h" aria-expanded="false"><span class="so-t">Dashboards e gestão</span><span class="so-x" aria-hidden="true"></span></button>
-        <div class="so-b"><div class="so-bi"><p>Painéis de indicadores atualizados automaticamente a partir dos dados que a empresa já gera.</p><p class="so-ben">Decisões tomadas com números, não com achismo.</p><p class="tags"><span>Indicadores</span><span>Relatórios</span><span>Acompanhamento em tempo real</span></p></div></div></li>
-      <li class="so" data-i="4"><button type="button" class="so-h" aria-expanded="false"><span class="so-t">Sites e experiências digitais</span><span class="so-x" aria-hidden="true"></span></button>
-        <div class="so-b"><div class="so-bi"><p>Sites institucionais e comerciais que apresentam a empresa com clareza e levam o visitante até a conversa.</p><p class="so-ben">Mais credibilidade e mais pedidos de orçamento.</p><p class="tags"><span>Sites institucionais</span><span>Páginas comerciais</span><span>Identidade digital</span></p></div></div></li>
-    </ul>
-    <div class="demo glass" id="demo" aria-hidden="true">
-      <div class="demo-top"><span class="demo-live"><i></i>Simulação ilustrativa</span><span class="demo-i" id="demo-i">1 de 5</span></div>
-      <p class="demo-title" id="demo-title">Nota fiscal recebida</p>
-      <div class="demo-body" id="demo-body"></div>
-      <p class="demo-end" id="demo-end"></p>
-    </div>
-    <div class="sol-prog" id="sol-prog" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-  </div>
-</section>
-
-<section class="ch tr" id="transformacao" data-ch="transformacao" data-name="Transformação">
-  <div class="wrap tr-grid">
-    <div class="tr-head">
-      <h2 class="h2" data-scramble>Do improviso ao controle.</h2>
-      <p class="sub tr-sub">Role a página e veja a mesma operação sair do caos e virar informação.</p>
-    </div>
-    <div class="tr-card tr-before" id="tr-before">
-      <h3>Antes</h3>
-      <ul><li>Planilhas duplicadas e ninguém sabe qual é a certa</li><li>Fotos de notas perdidas no grupo de mensagens</li><li>Relatório montado à mão no fim do mês</li></ul>
-    </div>
-    <div class="tr-card tr-after" id="tr-after">
-      <h3>Depois</h3>
-      <ul><li>Um painel único com a operação do dia</li><li>Lançamentos automáticos a partir dos documentos</li><li>Indicadores atualizados para decidir com segurança</li></ul>
-    </div>
-    <div class="tr-meter" aria-hidden="true"><span>Organizando a operação</span><b id="tr-pct">0%</b><i><em id="tr-bar"></em></i></div>
-  </div>
-</section>
-
-<section class="ch proj" id="projetos" data-ch="projetos" data-name="Projetos">
-  <div class="wrap proj-head">
-    <h2 class="h2" data-scramble>Projetos que mostram do que somos capazes.</h2>
-    <p class="sub">Cada projeto demonstra uma capacidade que podemos levar para a sua empresa. O estágio de cada um é real.</p>
-  </div>
-  <div class="proj-pin" id="proj-pin">
-    <div class="proj-track" id="proj-track">
-
-      <article class="pj">
-        <div class="pj-tx">
-          <p class="stg stg-im"><i></i>Em implantação</p>
-          <h3 class="pj-h">Obra em Dia</h3>
-          <p class="pj-k">Gestão financeira e acompanhamento de obras</p>
-          <p class="pj-d">Plataforma que reúne lançamentos financeiros, indicadores e a evolução de cada obra em um só lugar, com inteligência artificial ajudando nos lançamentos.</p>
-          <ul class="caps"><li>Controle financeiro por obra</li><li>Indicadores e evolução por etapa</li><li>Inteligência artificial nos lançamentos</li></ul>
-        </div>
-        <div class="pj-dev" aria-hidden="true">
-          <div class="tilt">
-            <div class="lap"><div class="lap-scr"><div class="ui">
-              <div class="ui-side"><b>Obra em Dia</b><i class="on"></i><i></i><i></i><i></i><i></i></div>
-              <div class="ui-main">
-                <div class="ui-top"><span>Visão geral da obra</span><em class="ui-ai">IA lançou 3 notas hoje</em></div>
-                <div class="ui-kpis"><p><span>Orçado</span><b>R$ 480 mil</b></p><p><span>Realizado</span><b>R$ 312 mil</b></p><p><span>Saldo</span><b class="pos">R$ 168 mil</b></p></div>
-                <div class="ui-row">
-                  <div class="ui-card"><span class="ui-ct">Gastos por mês</span><div class="ui-bars"><i style="--h:40%"></i><i style="--h:62%"></i><i style="--h:48%"></i><i style="--h:74%"></i><i style="--h:58%"></i><i class="hi" style="--h:86%"></i></div></div>
-                  <div class="ui-card"><span class="ui-ct">Evolução por etapa</span>
-                    <p class="ui-pg"><span>Fundação</span><em><i style="--w:100%"></i></em></p>
-                    <p class="ui-pg"><span>Estrutura</span><em><i style="--w:72%"></i></em></p>
-                    <p class="ui-pg"><span>Instalações</span><em><i style="--w:41%"></i></em></p>
-                    <p class="ui-pg"><span>Acabamento</span><em><i style="--w:12%"></i></em></p>
-                  </div>
-                </div>
-              </div>
-            </div></div><div class="lap-base"></div></div>
+    <div class="lab-g">
+      <form class="lab glass" id="lab" novalidate>
+        <fieldset>
+          <legend><span>1</span>O que mais trava a operação hoje?</legend>
+          <div class="opts">
+            <label class="opt"><input type="radio" name="dor" value="0"><span>Tudo vive em planilhas</span></label>
+            <label class="opt"><input type="radio" name="dor" value="1"><span>Perco tempo com tarefas repetidas</span></label>
+            <label class="opt"><input type="radio" name="dor" value="2"><span>Digitamos notas e documentos à mão</span></label>
+            <label class="opt"><input type="radio" name="dor" value="3"><span>Não sei o que a equipe em campo está fazendo</span></label>
+            <label class="opt"><input type="radio" name="dor" value="4"><span>Não tenho indicadores confiáveis</span></label>
+            <label class="opt"><input type="radio" name="dor" value="5"><span>Preciso de um site que traga clientes</span></label>
           </div>
-          <p class="dev-cap">Tela ilustrativa</p>
-        </div>
-      </article>
-
-      <article class="pj">
-        <div class="pj-tx">
-          <p class="stg stg-op"><i></i>Em operação diária</p>
-          <h3 class="pj-h">MontaCerto</h3>
-          <p class="pj-k">Gestão de equipes de montagem de móveis</p>
-          <p class="pj-d">Aplicativo para os montadores em campo e painel para o gestor acompanhar as ordens de serviço do dia, da distribuição até a conclusão.</p>
-          <ul class="caps"><li>Aplicativo para equipes de campo</li><li>Painel do gestor em tempo real</li><li>Mais de 200 atendimentos organizados por dia</li></ul>
-        </div>
-        <div class="pj-dev" aria-hidden="true">
-          <div class="tilt">
-            <div class="phone"><div class="phone-scr">
-              <div class="mc">
-                <div><span class="mc-d">Quinta, 13 de novembro</span><b class="mc-tt">Minhas ordens</b>
-                  <div class="mc-sum"><p><b>6</b><span>para hoje</span></p><p><b>4</b><span>concluídas</span></p></div></div>
-                <div class="mc-l">
-                  <div class="mc-i"><span class="dot ok"></span><p><b>Armário de quarto</b><span>08h00, concluída</span></p></div>
-                  <div class="mc-i on"><span class="dot ac"></span><p><b>Cozinha planejada</b><span>10h30, em rota</span></p></div>
-                  <div class="mc-i"><span class="dot"></span><p><b>Painel de TV</b><span>14h00, agendada</span></p></div>
-                  <div class="mc-i"><span class="dot"></span><p><b>Rack e estante</b><span>16h00, agendada</span></p></div>
-                </div>
-                <div class="mc-btn">Iniciar montagem</div>
-              </div>
-            </div></div>
-            <span class="chip-float glass"><i></i>Painel do gestor atualizado</span>
+        </fieldset>
+        <fieldset>
+          <legend><span>2</span>Em que área?</legend>
+          <div class="opts">
+            <label class="opt"><input type="radio" name="area" value="0"><span>Obras e construção</span></label>
+            <label class="opt"><input type="radio" name="area" value="1"><span>Serviços em campo</span></label>
+            <label class="opt"><input type="radio" name="area" value="2"><span>Comércio e vendas</span></label>
+            <label class="opt"><input type="radio" name="area" value="3"><span>Administrativo e financeiro</span></label>
+            <label class="opt"><input type="radio" name="area" value="4"><span>Outra</span></label>
           </div>
-          <p class="dev-cap">Tela ilustrativa</p>
-        </div>
-      </article>
-
-      <article class="pj">
-        <div class="pj-tx">
-          <p class="stg stg-te"><i></i>Em testes</p>
-          <h3 class="pj-h">Ultra Obra</h3>
-          <p class="pj-k">Sistema financeiro com inteligência artificial</p>
-          <p class="pj-d">Lançamento automático de despesas de obra: a inteligência artificial lê a nota fiscal, preenche os campos e envia tudo para uma planilha que a diretoria acompanha.</p>
-          <ul class="caps"><li>Leitura automática de notas fiscais</li><li>Integração com Google Sheets</li><li>Transparência para a diretoria</li></ul>
-        </div>
-        <div class="pj-dev" aria-hidden="true">
-          <div class="tilt">
-            <div class="uo">
-              <div class="phone"><div class="phone-scr">
-                <div class="scan"><div class="scan-doc"><i></i><i></i><i class="s"></i><i></i><i></i><i class="s"></i><i></i></div><span class="scan-c c1"></span><span class="scan-c c2"></span><span class="scan-c c3"></span><span class="scan-c c4"></span><span class="scan-ln"></span></div>
-                <div class="scan-res"><span class="acl">Lido pela inteligência artificial</span><p><span>Valor</span><b>R$ 1.284,90</b></p><p><span>Categoria</span><b>Elétrica</b></p><p><span>Fornecedor</span><b>Identificado</b></p></div>
-              </div></div>
-              <div class="sheet glass">
-                <p class="sheet-h">Planilha da obra</p>
-                <div class="sheet-r"><span>11/11</span><span>Cimento</span><span>R$ 640,00</span></div>
-                <div class="sheet-r"><span>12/11</span><span>Hidráulica</span><span>R$ 912,30</span></div>
-                <div class="sheet-r nw"><span>13/11</span><span>Elétrica</span><span>R$ 1.284,90</span></div>
-              </div>
-            </div>
+        </fieldset>
+        <fieldset>
+          <legend><span>3</span>Quantas pessoas na equipe?</legend>
+          <div class="opts">
+            <label class="opt"><input type="radio" name="time" value="0"><span>Até 5</span></label>
+            <label class="opt"><input type="radio" name="time" value="1"><span>6 a 20</span></label>
+            <label class="opt"><input type="radio" name="time" value="2"><span>21 a 50</span></label>
+            <label class="opt"><input type="radio" name="time" value="3"><span>Mais de 50</span></label>
           </div>
-          <p class="dev-cap">Tela ilustrativa</p>
-        </div>
-      </article>
-
-      <article class="pj">
-        <div class="pj-tx">
-          <p class="stg stg-en"><i></i>Entregues</p>
-          <h3 class="pj-h">Sites empresariais</h3>
-          <p class="pj-k">Via Opus e Caça Ruídos</p>
-          <p class="pj-d">Sites institucionais para empresas de engenharia, construção e acústica, com comunicação clara e foco em gerar contatos. Para a Caça Ruídos, também cuidamos do Instagram e da comunicação.</p>
-          <ul class="caps"><li>Sites institucionais</li><li>Identidade e comunicação digital</li><li>Estrutura pensada para gerar contatos</li></ul>
-        </div>
-        <div class="pj-dev" aria-hidden="true">
-          <div class="tilt">
-            <div class="ws">
-              <div class="bw bw1"><div class="bw-bar"><i></i><i></i><i></i><span>Via Opus</span></div><div class="bw-u"><span class="w-n"></span><span class="w-h"></span><span class="w-t"></span><span class="w-t s"></span><span class="w-b"></span></div></div>
-              <div class="bw bw2"><div class="bw-bar"><i></i><i></i><i></i><span>Caça Ruídos</span></div><div class="bw-u w2"><span class="w-n"></span><span class="w-h"></span><span class="w-t"></span><span class="w-t s"></span><span class="w-b"></span></div></div>
-            </div>
-          </div>
-          <p class="dev-cap">Composição ilustrativa</p>
-        </div>
-      </article>
-
-      <article class="pj pj-end">
-        <div class="pj-tx">
-          <h3 class="pj-h">O próximo projeto pode ser o da sua empresa.</h3>
-          <p class="pj-d">Conte o que trava a sua operação. A primeira conversa é sem compromisso e você fala direto com quem desenvolve.</p>
-          <a class="btn btn-pri" data-mag href="#contato"><span class="btn-t" data-t="Contar o meu desafio">Contar o meu desafio</span></a>
-        </div>
-      </article>
-
-    </div>
-  </div>
-</section>
-
-<section class="ch proc" id="processo" data-ch="processo" data-name="Processo">
-  <div class="wrap proc-grid">
-    <div class="proc-head">
-      <h2 class="h2" data-scramble>Do diagnóstico ao acompanhamento.</h2>
-      <p class="sub">Um processo claro, com você acompanhando cada etapa e sem surpresas no caminho.</p>
-    </div>
-    <ol class="steps" id="steps">
-      <li class="step"><span class="step-n">01</span><div><h3>Diagnóstico</h3><p>Conversamos sobre a operação, entendemos o problema e mapeamos onde a tecnologia gera mais resultado.</p></div></li>
-      <li class="step"><span class="step-n">02</span><div><h3>Planejamento</h3><p>Você recebe uma proposta com escopo, etapas, prazos e valor definidos antes de começar.</p></div></li>
-      <li class="step"><span class="step-n">03</span><div><h3>Desenvolvimento</h3><p>Construímos em ciclos curtos, com versões de teste para a equipe usar e opinar.</p></div></li>
-      <li class="step"><span class="step-n">04</span><div><h3>Acompanhamento</h3><p>Depois da entrega seguimos juntos com suporte, ajustes e melhorias contínuas.</p></div></li>
-      <li class="steps-line" aria-hidden="true"><i id="steps-line"></i></li>
-    </ol>
-  </div>
-</section>
-
-<section class="ch faq" id="duvidas" data-ch="duvidas" data-name="Dúvidas">
-  <div class="wrap faq-grid">
-    <div class="faq-side">
-      <h2 class="h2" data-scramble>Perguntas antes da primeira conversa.</h2>
-      <a class="btn btn-sec" data-wa data-mag href="https://wa.me/5561982270780?text=Ol%C3%A1%2C%20vim%20pelo%20site%20da%20Konan%20Tech%20e%20quero%20falar%20com%20um%20especialista." target="_blank" rel="noopener"><span class="btn-t" data-t="Tirar outra dúvida no WhatsApp">Tirar outra dúvida no WhatsApp</span></a>
-    </div>
-    <div class="faq-list" id="faq-list">
-      <div class="fq open"><button type="button" class="fq-q" aria-expanded="true"><span>Preciso saber exatamente o que quero antes de chamar?</span><i aria-hidden="true"></i></button><div class="fq-a"><div><p>Não. Basta contar como funciona hoje e o que incomoda. Transformar o problema em solução é o nosso trabalho.</p></div></div></div>
-      <div class="fq"><button type="button" class="fq-q" aria-expanded="false"><span>A Konan Tech atende empresas pequenas?</span><i aria-hidden="true"></i></button><div class="fq-a"><div><p>Sim. Atendemos principalmente pequenas e médias empresas, com soluções do tamanho da necessidade e sem funcionalidades que ninguém vai usar.</p></div></div></div>
-      <div class="fq"><button type="button" class="fq-q" aria-expanded="false"><span>Quanto custa um sistema personalizado?</span><i aria-hidden="true"></i></button><div class="fq-a"><div><p>Depende do escopo. Depois da conversa inicial você recebe uma proposta com valor e etapas definidos antes de qualquer desenvolvimento começar.</p></div></div></div>
-      <div class="fq"><button type="button" class="fq-q" aria-expanded="false"><span>Posso continuar usando minhas planilhas?</span><i aria-hidden="true"></i></button><div class="fq-a"><div><p>Pode. Vários dos nossos sistemas usam o Google Sheets como base, então a equipe continua vendo e conferindo os dados onde já está acostumada.</p></div></div></div>
-      <div class="fq"><button type="button" class="fq-q" aria-expanded="false"><span>Como a inteligência artificial entra nos projetos?</span><i aria-hidden="true"></i></button><div class="fq-a"><div><p>Quando faz sentido para a operação: leitura automática de notas fiscais, organização de documentos, resumos e assistentes que respondem dúvidas sobre os dados da empresa.</p></div></div></div>
-      <div class="fq"><button type="button" class="fq-q" aria-expanded="false"><span>O que acontece depois que o sistema fica pronto?</span><i aria-hidden="true"></i></button><div class="fq-a"><div><p>Oferecemos acompanhamento mensal com suporte, ajustes e melhorias contínuas. O sistema evolui junto com a empresa.</p></div></div></div>
-      <div class="fq"><button type="button" class="fq-q" aria-expanded="false"><span>Vocês atendem fora de Brasília?</span><i aria-hidden="true"></i></button><div class="fq-a"><div><p>Sim. O trabalho é feito online, com reuniões por vídeo, para empresas de todo o Brasil.</p></div></div></div>
-    </div>
-  </div>
-</section>
-
-<section class="ch contact" id="contato" data-ch="contato" data-name="Contato">
-  <div class="wrap ct-grid">
-    <div class="ct-txt">
-      <h2 class="h2 h2-xl" data-scramble>Vamos construir a próxima solução da sua empresa?</h2>
-      <p class="sub">Escolha o desafio mais parecido com o seu. A gente organiza a mensagem e você envia pelo WhatsApp, direto para quem desenvolve.</p>
-      <div class="chips" id="chips" role="group" aria-label="Escolha o seu desafio">
-        <button type="button" class="chip" data-i="0" aria-pressed="false">Minha operação vive em planilhas</button>
-        <button type="button" class="chip" data-i="1" aria-pressed="false">Perco tempo com tarefas repetidas</button>
-        <button type="button" class="chip" data-i="2" aria-pressed="false">Quero usar inteligência artificial</button>
-        <button type="button" class="chip" data-i="3" aria-pressed="false">Preciso de um site que traga clientes</button>
-        <button type="button" class="chip" data-i="4" aria-pressed="false">Tenho outra ideia</button>
+        </fieldset>
+        <label class="lab-free"><span>Quer contar em uma frase? <em>(opcional)</em></span><textarea id="lab-txt" rows="2" maxlength="280" placeholder="Ex.: hoje controlamos as obras em três planilhas diferentes"></textarea></label>
+      </form>
+      <div class="lab-out glass" id="lab-out">
+        <p class="lab-oh">Seu diagnóstico</p>
+        <div class="arch" id="arch" aria-live="polite"><p class="arch-idle">Responda as perguntas e veja como começaríamos.</p></div>
+        <p class="lab-first" id="lab-first"></p>
+        <div class="lab-msg"><p class="lab-mh">Mensagem no WhatsApp</p><p id="lab-msg">Olá, vim pelo site da Konan Tech e quero falar com um especialista.</p></div>
+        <a class="btn btn-pri btn-wide" id="lab-send" data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>Enviar pelo WhatsApp</span></a>
+        <p class="tel">Ou ligue para <a href="tel:+5561982270780">(61) 98227 0780</a></p>
       </div>
     </div>
-    <div class="console glass" id="console">
-      <div class="console-top"><span class="console-dot"></span><span>Konan, análise do desafio</span><span class="console-tag">Simulação</span></div>
-      <div class="console-body" id="console-body" aria-live="polite"><p class="cl cl-idle">Escolha um desafio e veja como começaríamos.</p></div>
-      <div class="console-msg"><p class="cm-h">Sua mensagem no WhatsApp</p><p id="console-msg">Olá, vim pelo site da Konan Tech e quero falar com um especialista.</p></div>
-      <a class="btn btn-pri btn-wide" id="wa-send" data-mag href="https://wa.me/5561982270780?text=Ol%C3%A1%2C%20vim%20pelo%20site%20da%20Konan%20Tech%20e%20quero%20falar%20com%20um%20especialista." target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8z M8 9h8 M8 12.5h5"/></svg><span class="btn-t" data-t="Enviar pelo WhatsApp">Enviar pelo WhatsApp</span></a>
-      <p class="tel">Ou ligue para <a href="tel:+5561982270780">(61) 98227-0780</a></p>
+  </div>
+</section>
+
+<section class="sec faq-sec" id="duvidas" data-ch="duvidas" aria-labelledby="fq-h">
+  <div class="wrap faq-g">
+    <h2 class="h2" id="fq-h" data-w>Dúvidas frequentes</h2>
+    <div class="faq" id="faq">
+      <div class="fq"><h3><button type="button" class="fq-q" aria-expanded="false"><span>Preciso saber exatamente o que quero antes de chamar?</span><i aria-hidden="true"></i></button></h3><div class="fq-a"><div><p>Não. Basta contar como funciona hoje e o que incomoda. Transformar o problema em solução é o nosso trabalho.</p></div></div></div>
+      <div class="fq"><h3><button type="button" class="fq-q" aria-expanded="false"><span>A Konan Tech atende empresas pequenas?</span><i aria-hidden="true"></i></button></h3><div class="fq-a"><div><p>Sim. Atendemos principalmente pequenas e médias empresas, com soluções do tamanho da necessidade e sem funcionalidades que ninguém vai usar.</p></div></div></div>
+      <div class="fq"><h3><button type="button" class="fq-q" aria-expanded="false"><span>Quanto custa um sistema personalizado?</span><i aria-hidden="true"></i></button></h3><div class="fq-a"><div><p>Depende do escopo. Depois da conversa inicial você recebe uma proposta com valor e etapas definidos antes de qualquer desenvolvimento começar.</p></div></div></div>
+      <div class="fq"><h3><button type="button" class="fq-q" aria-expanded="false"><span>Posso continuar usando minhas planilhas?</span><i aria-hidden="true"></i></button></h3><div class="fq-a"><div><p>Pode. Vários dos nossos sistemas usam o Google Sheets como base, então a equipe continua vendo e conferindo os dados onde já está acostumada.</p></div></div></div>
+      <div class="fq"><h3><button type="button" class="fq-q" aria-expanded="false"><span>Como a inteligência artificial entra nos projetos?</span><i aria-hidden="true"></i></button></h3><div class="fq-a"><div><p>Quando faz sentido para a operação: leitura automática de notas fiscais, organização de documentos, resumos e assistentes que respondem dúvidas sobre os dados da empresa.</p></div></div></div>
+      <div class="fq"><h3><button type="button" class="fq-q" aria-expanded="false"><span>O que acontece depois que o sistema fica pronto?</span><i aria-hidden="true"></i></button></h3><div class="fq-a"><div><p>Oferecemos acompanhamento mensal com suporte, ajustes e melhorias contínuas. O sistema evolui junto com a empresa.</p></div></div></div>
+      <div class="fq"><h3><button type="button" class="fq-q" aria-expanded="false"><span>Vocês atendem fora de Brasília?</span><i aria-hidden="true"></i></button></h3><div class="fq-a"><div><p>Sim. O trabalho é feito online, com reuniões por vídeo, para empresas de todo o Brasil.</p></div></div></div>
     </div>
   </div>
 </section>
 
+<section class="sec end dark" id="fim" data-ch="end" data-env="dark" aria-labelledby="end-h">
+  <div class="wrap end-in">
+    <div class="end-mark" aria-hidden="true"></div>
+    <h2 class="h2 h2-xl" id="end-h" data-w>Vamos construir a próxima solução da sua empresa?</h2>
+    <p class="lead">A primeira conversa é sem compromisso e você fala direto com quem desenvolve.</p>
+    <div class="hero-cta">
+      <a class="btn btn-pri btn-lg" data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>Falar no WhatsApp</span></a>
+      <a class="btn btn-ghost btn-lg" href="tel:+5561982270780"><svg class="ic"><use href="#i-phone"/></svg><span>(61) 98227 0780</span></a>
+    </div>
+  </div>
+</section>
 </main>
 
-<footer class="ft" id="rodape" data-ch="rodape" data-name="Konan Tech">
+<footer class="ft dark" id="rodape" data-env="dark">
   <div class="wrap">
     <div class="ft-g">
       <div class="ft-brand">
-        <a href="#topo" aria-label="Konan Tech, voltar ao início"><img src="assets/konan-logo.png" alt="Konan Tech" width="180" height="28" loading="lazy"></a>
-        <p>Soluções digitais, desenvolvimento de sistemas e automação de processos para empresas.</p>
+        <a href="#topo" aria-label="Konan Tech, voltar ao início"><img src="assets/konan-logo.png" alt="Konan Tech" width="182" height="28" loading="lazy"></a>
+        <p>Soluções digitais, desenvolvimento de sistemas, inteligência artificial e automação de processos para empresas.</p>
       </div>
       <div>
         <h3>Navegação</h3>
-        <ul><li><a href="#sobre">Quem somos</a></li><li><a href="#solucoes">Soluções</a></li><li><a href="#projetos">Projetos</a></li><li><a href="#processo">Processo</a></li></ul>
+        <ul><li><a href="#solucoes">Soluções</a></li><li><a href="#ia">Demonstrações</a></li><li><a href="#projetos">Projetos</a></li><li><a href="#processo">Como trabalhamos</a></li><li><a href="#contato">Diagnóstico</a></li></ul>
       </div>
       <div>
         <h3>Contato</h3>
-        <ul><li><a data-wa href="https://wa.me/5561982270780?text=Ol%C3%A1%2C%20vim%20pelo%20site%20da%20Konan%20Tech%20e%20quero%20falar%20com%20um%20especialista." target="_blank" rel="noopener">WhatsApp (61) 98227-0780</a></li><li>Base em Brasília, DF</li><li>Atendimento online em todo o Brasil</li></ul>
+        <ul><li><a data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener">WhatsApp (61) 98227 0780</a></li><li>Base em Brasília, DF</li><li>Atendimento online em todo o Brasil</li></ul>
       </div>
     </div>
     <div class="ft-b"><span>© 2026 Konan Tech. Todos os direitos reservados.</span><a href="#topo">Voltar ao topo</a></div>
   </div>
+  <a class="fab" id="fab" data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener" aria-label="Falar no WhatsApp"><svg class="ic"><use href="#i-chat"/></svg></a>
 </footer>
-
-<a class="fab" id="fab" data-wa href="https://wa.me/5561982270780?text=Ol%C3%A1%2C%20vim%20pelo%20site%20da%20Konan%20Tech%20e%20quero%20falar%20com%20um%20especialista." target="_blank" rel="noopener" aria-label="Falar no WhatsApp"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8z M8 9h8 M8 12.5h5"/></svg></a>
-
-<div class="cursor" id="cursor" aria-hidden="true"><i></i></div>
-
-<script defer src="js/vendor/gsap.min.js"></script>
-<script defer src="js/vendor/ScrollTrigger.min.js"></script>
 <script defer src="js/vendor/lenis.min.js"></script>
 <script type="module" src="js/app.js"></script>
 </body>

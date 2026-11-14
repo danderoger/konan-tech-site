@@ -1,16 +1,17 @@
-/* Konan Tech v2: formas 3D das partículas.
+/* Konan Tech 2.0 (versão clara): formas 3D das partículas.
    Cada função recebe a quantidade de partículas (n) e devolve:
-   { pos: Float32Array(n*3), col: Float32Array(n*3), links?: Float32Array, opts }
-   As cores são hexadecimais da paleta; o palco converte para o espaço de cor correto.
+   { pos: Float32Array(n*3), col: Float32Array(n*4), links?: Float32Array, opts }
+   col guarda r, g, b e a força de cada ponto (vira opacidade no fundo claro e brilho no escuro).
+   Os nomes da paleta vêm da versão escura: "white" é a tinta principal, "steel" é o tom fraco.
    Para criar uma forma nova: escreva uma função aqui e registre em SHAPES no fim do arquivo. */
 
 export const PAL = {
-  white: 0xf4f8fc,
-  silver: 0xc9d1db,
-  steel: 0x7d8794,
-  ion: 0x3ea6ff,
-  plasma: 0xa8e6ff,
-  deep: 0x0d4f8f
+  white: 0x10243a,
+  silver: 0x3a5675,
+  steel: 0xa9bcd0,
+  ion: 0x258cf8,
+  plasma: 0x2cc5f0,
+  deep: 0x6e5bf5
 };
 
 /* gerador pseudoaleatório com semente, para as formas serem sempre iguais */
@@ -44,7 +45,7 @@ function mixHex(a, b, t) {
 /* utilitário para preencher os arrays */
 function makeBuf(n) {
   const pos = new Float32Array(n * 3);
-  const col = new Float32Array(n * 3);
+  const col = new Float32Array(n * 4);
   let i = 0;
   return {
     pos, col,
@@ -52,8 +53,7 @@ function makeBuf(n) {
     push(x, y, z, c, k) {
       if (i >= n) return false;
       pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z;
-      const m = k === undefined ? 1 : k;
-      col[i * 3] = c[0] * m; col[i * 3 + 1] = c[1] * m; col[i * 3 + 2] = c[2] * m;
+      col[i * 4] = c[0]; col[i * 4 + 1] = c[1]; col[i * 4 + 2] = c[2]; col[i * 4 + 3] = k === undefined ? 1 : k;
       i++;
       return true;
     },
@@ -99,9 +99,9 @@ export function logo(n, px) {
     const x = (px[k] - 0.5) * W, y = px[k + 1] * W, lum = px[k + 2], blue = px[k + 3] > 0.5;
     const z = (r() - 0.5) * 0.12;
     const c = blue ? mixHex(PAL.ion, PAL.plasma, r() * 0.5) : mixHex(PAL.steel, PAL.white, Math.min(1, lum * 1.15));
-    b.push(x + (r() - 0.5) * 0.006, y + (r() - 0.5) * 0.006, z, c, blue ? 1.25 : 1);
+    b.push(x + (r() - 0.5) * 0.006, y + (r() - 0.5) * 0.006, z, c, blue ? 1.1 : 0.55 + lum * 0.6);
   }
-  return { pos: b.pos, col: b.col, opts: { face: true, fit: 7.2, gain: 0.27 } };
+  return { pos: b.pos, col: b.col, opts: { face: true, fit: 7.2, gain: 0.62 } };
 }
 
 /* 2. Rede neural em camadas, com ligações que pulsam */
@@ -139,7 +139,7 @@ export function network(n) {
   }
   const links = new Float32Array(edges.length * 6);
   edges.forEach((E, k) => links.set([...E[0], ...E[1]], k * 6));
-  return { pos: b.pos, col: b.col, links, opts: { spin: 0.14, tiltX: 0.18, gain: 0.42 } };
+  return { pos: b.pos, col: b.col, links, opts: { spin: 0.14, tiltX: 0.18, gain: 0.55 } };
 }
 
 /* 3. Cérebro digital: dois hemisférios com sulcos, cerebelo e sinapses */
@@ -216,7 +216,7 @@ export function streams(n) {
     const edge = 1 - Math.abs(x) / 4.2;
     b.push(x, y + gauss(r) * 0.025, z + gauss(r) * 0.025, hexRgb(s.c), 0.45 + edge * 0.8);
   }
-  return { pos: b.pos, col: b.col, opts: { wave: 1, spin: 0, tiltX: 0.25, rotY: -0.35, gain: 0.34 } };
+  return { pos: b.pos, col: b.col, opts: { wave: 1, spin: 0, tiltX: 0.25, rotY: -0.35, gain: 0.5 } };
 }
 
 /* 5. Painel de indicadores em 3D: barras, linha de tendência, anel e piso */
@@ -368,17 +368,18 @@ export function vortex(n) {
     const a = r() * Math.PI * 2, rr = r() * 4.6;
     b.push(Math.cos(a) * rr, gauss(r) * 0.25, Math.sin(a) * rr, hexRgb(PAL.steel), 0.3);
   }
-  return { pos: b.pos, col: b.col, opts: { spin: 0.22, tiltX: 1.05, gain: 0.42 } };
+  return { pos: b.pos, col: b.col, opts: { spin: 0.22, tiltX: 1.05, gain: 0.5 } };
 }
 
-/* 10. Poeira: campo calmo para leitura */
+/* 10. Dados soltos: nuvem de pontos sem ordem, usada no começo da abertura */
 export function dust(n) {
   const r = rng(101);
   const b = makeBuf(n);
   while (!b.full()) {
-    b.push((r() - 0.5) * 16, (r() - 0.5) * 9, (r() - 0.5) * 9 - 1, r() < 0.15 ? hexRgb(PAL.ion) : hexRgb(PAL.steel), 0.35 + r() * 0.5);
+    const u = r();
+    b.push(gauss(r) * 1.6, gauss(r) * 1.08, gauss(r) * 1.15 - 0.2, u < 0.14 ? hexRgb(PAL.ion) : u < 0.55 ? hexRgb(PAL.silver) : hexRgb(PAL.steel), 0.35 + r() * 0.6);
   }
-  return { pos: b.pos, col: b.col, opts: { spin: 0.02, gain: 0.6 } };
+  return { pos: b.pos, col: b.col, opts: { spin: 0.05, gain: 0.55 } };
 }
 
 /* 11. Caos: papéis, planilhas e mensagens soltas no espaço */
@@ -442,7 +443,7 @@ export function panel(n) {
     const row = Math.floor(r() * 5);
     b.push(-3.25 + r() * 6.6, -1.75 + row * 0.42, -0.01, hexRgb(PAL.steel), 0.28);
   }
-  return { pos: b.pos, col: b.col, opts: { face: true, gain: 0.4 } };
+  return { pos: b.pos, col: b.col, opts: { face: true, gain: 0.6 } };
 }
 
 /* 13. Piso de dados: malha ondulante sob os projetos */
@@ -531,4 +532,79 @@ export function seed(n) {
   return { pos: b.pos, col: b.col, opts: { gain: 0.3 } };
 }
 
-export const SHAPES = { logo, network, brain, streams, dashboard, city, sphere, helix, vortex, dust, chaos, panel, terrain, screens, blocks, seed };
+/* 16. Fluxo de automação: etapas ligadas por canais, com pulsos correndo entre elas */
+export function flow(n) {
+  const r = rng(181);
+  const b = makeBuf(n);
+  const K = 7;
+  const N = [];
+  for (let i = 0; i < K; i++) {
+    const t = i / (K - 1);
+    N.push([-4 + t * 8, Math.sin(t * Math.PI * 1.6 + 0.4) * 1.05, Math.cos(t * Math.PI * 1.3) * 0.9]);
+  }
+  const E = [];
+  for (let i = 0; i < K - 1; i++) E.push([N[i], N[i + 1], 1]);
+  E.push([N[1], N[3], 0.5], [N[2], N[5], 0.5], [N[3], N[6], 0.4]);
+  while (b.i < n * 0.36) {
+    const k = Math.floor(r() * K), P = N[k];
+    if (r() < 0.62) { const e = rectEdgePoint(r, 0, 0, 0.78, 0.56); b.push(P[0] + e[0], P[1] + e[1], P[2] + gauss(r) * 0.01, hexRgb(k === K - 1 ? PAL.ion : PAL.white), 0.95); }
+    else { const row = Math.floor(r() * 3); b.push(P[0] - 0.28 + r() * (0.56 - row * 0.14), P[1] + 0.12 - row * 0.12, P[2], row ? hexRgb(PAL.steel) : hexRgb(PAL.ion), row ? 0.8 : 1.1); }
+  }
+  while (b.i < n * 0.86) {
+    const e = E[Math.floor(r() * E.length)];
+    const t = r();
+    const lift = Math.sin(t * Math.PI) * 0.22 * (e[2] < 1 ? -1.8 : 1);
+    b.push(e[0][0] + (e[1][0] - e[0][0]) * t + gauss(r) * 0.018, e[0][1] + (e[1][1] - e[0][1]) * t + lift + gauss(r) * 0.018, e[0][2] + (e[1][2] - e[0][2]) * t + gauss(r) * 0.018, e[2] < 1 ? hexRgb(PAL.deep) : mixHex(PAL.ion, PAL.plasma, r()), e[2] < 1 ? 0.5 : 0.75);
+  }
+  while (!b.full()) {
+    const P = N[Math.floor(r() * K)];
+    const a = r() * Math.PI * 2, rr = 0.55 + r() * 0.5;
+    b.push(P[0] + Math.cos(a) * rr * 0.9, P[1] + Math.sin(a) * rr * 0.7, P[2] + (r() - 0.5) * 0.3, hexRgb(PAL.steel), 0.4);
+  }
+  const L = [];
+  E.forEach((e) => {
+    const S = 6;
+    for (let k = 0; k < S; k++) {
+      const t0 = k / S, t1 = (k + 1) / S;
+      const f = (t) => [e[0][0] + (e[1][0] - e[0][0]) * t, e[0][1] + (e[1][1] - e[0][1]) * t + Math.sin(t * Math.PI) * 0.22 * (e[2] < 1 ? -1.8 : 1), e[0][2] + (e[1][2] - e[0][2]) * t];
+      L.push(...f(t0), ...f(t1));
+    }
+  });
+  return { pos: b.pos, col: b.col, links: new Float32Array(L), opts: { swing: 0.22, tiltX: 0.18, gain: 0.6 } };
+}
+
+/* 17. Caos alinhado: os mesmos pontos do painel, espalhados em fragmentos soltos.
+   Cada ponto fica perto da sua posição horizontal no painel, por isso o comparador consegue dividir o mundo numa linha. */
+export function chaosA(n, P) {
+  if (!P) return chaos(n);
+  const r = rng(171);
+  const pos = new Float32Array(n * 3), col = new Float32Array(n * 4);
+  const CX = 8, CY = 4, W = 7.6, H = 4.4;
+  const cells = [];
+  for (let k = 0; k < CX * CY; k++) cells.push({ ax: (r() - 0.5) * 1.7, ay: (r() - 0.5) * 1.9, az: (r() - 0.5) * 1.1, dx: (r() - 0.5) * 0.5, dy: (r() - 0.5) * 1.5, dz: (r() - 0.5) * 2.8, s: 0.8 + r() * 0.55, kind: Math.floor(r() * 4) });
+  for (let i = 0; i < n; i++) {
+    const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2];
+    const cx = Math.min(CX - 1, Math.max(0, Math.floor(((x + W / 2) / W) * CX)));
+    const cy = Math.min(CY - 1, Math.max(0, Math.floor(((y + H / 2) / H) * CY)));
+    const C = cells[cy * CX + cx];
+    const ccx = -W / 2 + (cx + 0.5) * (W / CX), ccy = -H / 2 + (cy + 0.5) * (H / CY);
+    let X, Y, Z;
+    if (r() < 0.09) { X = x + (r() - 0.5) * 0.7; Y = (r() - 0.5) * 3.8; Z = (r() - 0.5) * 4; }
+    else {
+      let lx = (x - ccx) * C.s, ly = (y - ccy) * C.s, lz = z;
+      let c1 = Math.cos(C.ax), s1 = Math.sin(C.ax);
+      [ly, lz] = [ly * c1 - lz * s1, ly * s1 + lz * c1];
+      c1 = Math.cos(C.ay); s1 = Math.sin(C.ay);
+      [lx, lz] = [lx * c1 + lz * s1, -lx * s1 + lz * c1];
+      c1 = Math.cos(C.az); s1 = Math.sin(C.az);
+      [lx, ly] = [lx * c1 - ly * s1, lx * s1 + ly * c1];
+      X = ccx + C.dx + lx; Y = ccy * 1.05 + C.dy * 0.7 + ly; Z = C.dz + lz;
+    }
+    pos[i * 3] = X; pos[i * 3 + 1] = Y; pos[i * 3 + 2] = Z;
+    const c = C.kind === 3 ? mixHex(PAL.silver, PAL.deep, 0.5) : C.kind === 2 ? hexRgb(PAL.steel) : mixHex(PAL.silver, PAL.steel, r() * 0.6);
+    col[i * 4] = c[0]; col[i * 4 + 1] = c[1]; col[i * 4 + 2] = c[2]; col[i * 4 + 3] = 0.5 + r() * 0.35;
+  }
+  return { pos, col, opts: { face: true, gain: 0.62 } };
+}
+
+export const SHAPES = { logo, network, brain, streams, dashboard, city, sphere, helix, vortex, dust, chaos, panel, terrain, screens, blocks, seed, flow, chaosA };
