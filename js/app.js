@@ -19,7 +19,7 @@ const demos = {};
 
 /* ---------- WhatsApp: todo link [data-wa] recebe a mensagem do contexto ---------- */
 function setWa(a, frase) { a.href = waLink(frase ? waContext(frase) : WA_DEFAULT); }
-qa('[data-wa]').forEach((a) => { if (a.id !== 'lab-send') setWa(a, a.dataset.msg); });
+qa('[data-wa]').forEach((a) => setWa(a, a.dataset.msg));
 
 /* ---------- cabeçalho, menu e trilho de capítulos ---------- */
 const hd = q('#hd');

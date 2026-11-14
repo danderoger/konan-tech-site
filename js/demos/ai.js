@@ -93,7 +93,7 @@ export function initAI(root, ctx) {
         if (t !== token) { bed.classList.remove('scanning'); rej(new Error('cancelado')); return; }
         if (!paused) acc += now - last;
         last = now;
-        const k = Math.min(1, acc / 1700);
+        const k = Math.min(1, acc / 1300);
         const dr = doc.getBoundingClientRect(), br = bed.getBoundingClientRect();
         const y = dr.top - br.top + dr.height * k;
         bed.style.setProperty('--scan', y + 'px');
@@ -129,13 +129,13 @@ export function initAI(root, ctx) {
       { transform: `translate(${x0}px, ${y0 - 14}px) scale(1)`, opacity: 1, offset: 0.2 },
       { transform: `translate(${(x0 + x1) / 2}px, ${Math.min(y0, y1) - 60}px) scale(1.05)`, opacity: 1, offset: 0.6 },
       { transform: `translate(${x1}px, ${y1}px) scale(0.9)`, opacity: 0.9 }
-    ], { duration: 720, easing: 'cubic-bezier(.5,.05,.25,1)', fill: 'forwards' });
-    try { await Promise.race([anim.finished, wait(900, t)]); } finally { tok.remove(); }
+    ], { duration: 600, easing: 'cubic-bezier(.5,.05,.25,1)', fill: 'forwards' });
+    try { await Promise.race([anim.finished, wait(760, t)]); } finally { tok.remove(); }
   }
 
   async function typeIn(input, value, t, instant) {
     if (instant || reduced) { input.value = value; return; }
-    const ms = Math.min(420, 14 * value.length + 80);
+    const ms = Math.min(320, 10 * value.length + 60);
     await new Promise((res, rej) => {
       let acc = 0, last = performance.now();
       const tick = (now) => {
@@ -202,12 +202,12 @@ export function initAI(root, ctx) {
     setStep(k);
     if (k === 0) {
       stat(AI_STEPS[0]);
-      if (!instant && !reduced) { doc.classList.remove('enter'); void doc.offsetWidth; doc.classList.add('enter'); await wait(1050, t); }
+      if (!instant && !reduced) { doc.classList.remove('enter'); void doc.offsetWidth; doc.classList.add('enter'); await wait(800, t); }
     } else if (k === 1) {
       stat('Identificando o documento e lendo o texto');
       if (!instant && !reduced) await sweep(t);
       stat(`${d.kind} identificado. Texto lido.`);
-      if (!instant) await wait(350, t);
+      if (!instant) await wait(250, t);
     } else if (k === 2) {
       stat('Extraindo os campos');
       const v = values();
@@ -215,24 +215,24 @@ export function initAI(root, ctx) {
         const el = doc.querySelector(`[data-f="${f}"]`);
         el.classList.add('lit');
         boxFor(el, label);
-        if (!instant) { pulseAt(el); await wait(260, t); await fly(v[f], el, F(f), t); }
+        if (!instant) { pulseAt(el); await wait(180, t); await fly(v[f], el, F(f), t); }
         await typeIn(F(f), v[f], t, instant);
         F(f).closest('.fld').classList.add('got');
-        if (!instant) await wait(120, t);
+        if (!instant) await wait(70, t);
       }
       extracted = true;
       stat(AI_STEPS[2]);
     } else if (k === 3) {
       stat('Aplicando as regras da empresa');
       for (const [n, val] of [['categoria', d.cat], ['centro', d.centro]]) {
-        if (!instant) await wait(380, t);
+        if (!instant) await wait(280, t);
         F(n).value = val;
         F(n).closest('.fld').classList.add('got');
       }
       stat(AI_STEPS[3]);
     } else if (k === 4) {
       stat('Conferindo os valores');
-      if (!instant) await wait(500, t);
+      if (!instant) await wait(350, t);
       runChecks();
       stat(AI_STEPS[4]);
     } else if (k === 5) {
@@ -249,7 +249,7 @@ export function initAI(root, ctx) {
       for (let k = from; k <= 5; k++) {
         await runStep(k, t, false);
         if (explore) return;
-        if (k < 5) await wait(420, t);
+        if (k < 5) await wait(300, t);
       }
     } catch (e) { /* cancelado */ }
   }

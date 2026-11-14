@@ -54,7 +54,7 @@ export function initAuto(root, ctx) {
       { transform: 'none', opacity: 1, borderRadius: '6px' },
       { transform: `translate(${(b.left - a.left) * 0.5}px, ${(b.top - a.top) * 0.5 - 30}px) rotate(-2deg)`, opacity: 1, offset: 0.5 },
       { transform: `translate(${b.left - a.left}px, ${b.top - a.top}px) scale(${(b.width / a.width).toFixed(3)}, ${(b.height / a.height).toFixed(3)})`, opacity: 0.15, borderRadius: '14px' }
-    ], { duration: 760, easing: 'cubic-bezier(.65,0,.25,1)', fill: 'forwards' });
+    ], { duration: 650, easing: 'cubic-bezier(.65,0,.25,1)', fill: 'forwards' });
     try { await anim.finished; } catch (e) { /* interrompido */ }
     g.remove();
     if (t === token) to.classList.add('in');
@@ -67,28 +67,28 @@ export function initAuto(root, ctx) {
     run.disabled = true;
     const mi = [...man.children], ni = [...nodes.children];
     try {
-      await Promise.all(mi.map((li, i) => ghost(li, ni[i], A.man[i], i * 200, t)));
-      await wait(250, t);
+      await Promise.all(mi.map((li, i) => ghost(li, ni[i], A.man[i], i * 150, t)));
+      await wait(180, t);
       const fr = flowEl.getBoundingClientRect();
       pkt.style.opacity = 1;
       let clock = 0;
       for (let j = 0; j < ni.length; j++) {
         const r = ni[j].getBoundingClientRect();
         pkt.style.setProperty('--py', (r.top - fr.top + r.height / 2 - 6) + 'px');
-        await wait(reduced ? 0 : 420, t);
+        await wait(reduced ? 0 : 330, t);
         ni[j].classList.add('hit');
         pulseAt(ni[j]);
         const human = !!A.auto[j][2];
         if (human) {
           log.insertAdjacentHTML('beforeend', `<li><b>+${clock.toFixed(1).replace('.', ',')} s</b>Aguardando a decisão de uma pessoa</li>`);
-          await wait(900, t);
+          await wait(700, t);
           clock += 1.1;
           log.insertAdjacentHTML('beforeend', `<li><b>+${clock.toFixed(1).replace('.', ',')} s</b>Aprovado com um toque</li>`);
         } else {
           log.insertAdjacentHTML('beforeend', `<li><b>+${clock.toFixed(1).replace('.', ',')} s</b>${esc(A.auto[j][0])}</li>`);
           clock += 0.3 + ((j * 7) % 5) / 10;
         }
-        await wait(380, t);
+        await wait(300, t);
         ni[j].classList.remove('hit');
       }
       pkt.style.opacity = 0;
