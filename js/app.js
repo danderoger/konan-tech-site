@@ -70,8 +70,8 @@ D.addEventListener('click', (e) => {
 /* d = computador, m = celular: [x, y, escala, opacidade]. anchor segue um elemento na vertical; ax também na horizontal. */
 const CH = {
   hero: { anchorM: '.hero-vis', d: [3.4, 0.15, 0.7, 1], m: [0, 0, 0.42, 1] },
-  solucoes: { shape: 'blocks', d: [4.0, -0.1, 0.62, 0.95], m: [0, 2.4, 0.4, 0.32] },
-  projetos: { shape: 'city', anchorD: '#pj-stage', ax: true, d: [0, 0, 0.9, 0.55], m: [0, 2.6, 0.42, 0.3] },
+  solucoes: { shape: 'blocks', d: [4.0, -0.1, 0.62, 0.95], m: [0, 2.7, 0.4, 0.22] },
+  projetos: { shape: 'city', anchorD: '#pj-stage', ax: true, d: [0, 0, 0.9, 0.55], m: [0, 3.3, 0.4, 0.12] },
   ia: { shape: 'brain', anchorD: '#ai-bed', d: [3.0, 0, 0.92, 0.95], m: [0, 0.2, 0.55, 0.45] },
   automacao: { shape: 'flow', anchorD: '#au', d: [0.6, 0, 0.95, 0.42], m: [0, 2.4, 0.42, 0.28] },
   sistemas: { ctl: 'universe' },
