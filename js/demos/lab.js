@@ -1,6 +1,8 @@
 /* Diagnóstico: três perguntas montam a sugestão e a mensagem do WhatsApp. */
 
-export function initLab(root, { LAB, waLink } = {}) {
+import { LAB, waLink } from '../content.js';
+
+export function initLab(root) {
   const form = root.querySelector('#lab');
   const arch = root.querySelector('#arch');
   const first = root.querySelector('#lab-first');
@@ -23,7 +25,7 @@ export function initLab(root, { LAB, waLink } = {}) {
     if (area !== null) m += ` Área: ${LAB.areas[area]}.`;
     if (time !== null) m += ` Equipe: ${LAB.times[time]}.`;
     if (txt) m += ` ${txt}${/[.!?]$/.test(txt) ? '' : '.'}`;
-    m += dor !== null ? ' Quero conversar sobre uma solução.' : ' Quero falar com um especialista.';
+    m += dor !== null ? ' Quero conversar sobre uma solução.' : ' Quero conversar sobre uma solução para a minha empresa.';
     msgEl.textContent = m;
     send.href = waLink(m);
   }
