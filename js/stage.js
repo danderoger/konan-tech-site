@@ -16,7 +16,7 @@ import { SHAPES } from './shapes.js';
 
 const TAU = Math.PI * 2;
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-const damp = (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt));
+const damp = (a, b, k, dt) => (Number.isFinite(a) ? a + (b - a) * (1 - Math.exp(-k * dt)) : b);
 
 const VERT = /* glsl */`
 attribute vec3 aTo;
@@ -394,7 +394,7 @@ export class Stage {
   }
 
   setLayout(l, instant) {
-    Object.assign(this.tgt, l);
+    for (const k in l) if (Number.isFinite(l[k])) this.tgt[k] = l[k];
     if (instant || this.reduced) Object.assign(this.cur, this.tgt);
     if (this.reduced) this.render();
   }
@@ -415,11 +415,13 @@ export class Stage {
   /* largura visível no plano z = 0, para encaixar formas no celular */
   viewWidth() {
     const h = 2 * this.camera.position.z * Math.tan((this.camera.fov * Math.PI) / 360);
-    return h * this.camera.aspect;
+    const a = this.camera.aspect;
+    return h * (Number.isFinite(a) && a > 0 ? a : window.innerWidth / Math.max(1, window.innerHeight) || 1);
   }
 
   resize(force) {
     const w = window.innerWidth, h = window.innerHeight;
+    if (!w || !h) { this._w = 0; return; }
     if (!force && this._w === w && Math.abs(this._h - h) < 140) return;
     this._w = w; this._h = h;
     this.renderer.setSize(w, h, false);
@@ -460,6 +462,7 @@ export class Stage {
   }
 
   update(dt) {
+    if (!this._w) this.resize(true);
     this.time += dt;
     const u = this.u;
     if (this.mode === 'time') this.morphT = Math.min(this.morphT + dt, 1e3);

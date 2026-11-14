@@ -78,7 +78,11 @@ function lay(key) {
   const l = LAYOUT[key] || LAYOUT.visao;
   if (isWide()) return l.d;
   const m = Object.assign({}, l.m);
-  if (m.fit) { m.s = stage ? Math.min(1, (stage.viewWidth() * 0.92) / m.fit) : 0.5; delete m.fit; }
+  if (m.fit) {
+    const v = stage ? stage.viewWidth() : 0;
+    m.s = Number.isFinite(v) && v > 0 ? Math.min(1, (v * 0.92) / m.fit) : 0.6;
+    delete m.fit;
+  }
   return m;
 }
 
