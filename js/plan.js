@@ -255,7 +255,8 @@ class Painter {
     nt.textContent = 'N';
     const [sx, sy, sl] = g.scale;
     for (let i = 0; i < 4; i++) S('rect', { x: sx + (sl / 4) * i, y: sy - 4, width: sl / 4, height: 6, class: i % 2 ? 'sc-w' : 'sc-b' }, F);
-    const st = S('text', { x: sx + sl + 8, y: sy + 2, class: 'small', 'font-size': g.fs.small }, F);
+    /* na folha em pé, "Sem escala" fica embaixo da barra (ao lado ela encosta na área de fora) */
+    const st = this.orient === 'land' ? S('text', { x: sx + sl + 8, y: sy + 2, class: 'small', 'font-size': g.fs.small }, F) : S('text', { x: sx, y: sy + 16, class: 'small', 'font-size': g.fs.small }, F);
     st.textContent = 'Sem escala';
     if (g.note) {
       const nt2 = S('text', { x: g.note[0], y: g.note[1], class: 'small', 'font-size': g.fs.small - 0.5 }, F);
@@ -466,35 +467,42 @@ class Painter {
       const [x0, y0, x1, y1] = areaRect(r);
       const notes = D.marks[r] || [];
       const W = x1 - x0 - pad * 2;
-      let ny = y0 + pad + fs.room + fs.note * 0.95 + 4;
-      notes.forEach((d) => {
-        const lines = this.wrap(d.nota, W - 4, fs.note, 'note-t');
-        out.notes[d.k] = { x: x0 + pad, y: ny, r, lines };
-        ny += lines.length * fs.note * 1.12 + fs.note * 0.18;
-      });
-      const notesBottom = notes.length ? ny - fs.note * 0.9 : y0 + pad + fs.room + 4;
       const mods = D.mods.filter((m) => MODULOS[m].room === r);
+      /* com duas notas e dois módulos na mesma área, as notas ficam um pouco menores */
+      const nfs = notes.length > 1 && mods.length > 1 ? fs.note * 0.88 : fs.note;
+      let ny = y0 + pad + fs.room + nfs * 0.95 + 4;
+      notes.forEach((d) => {
+        const lines = this.wrap(d.nota, W - 4, nfs, 'note-t');
+        out.notes[d.k + '@' + r] = { x: x0 + pad, y: ny, r, lines, fsz: nfs };
+        ny += lines.length * nfs * 1.12 + nfs * 0.18;
+      });
+      const notesBottom = notes.length ? ny - nfs * 0.9 : y0 + pad + fs.room + 4;
       if (!mods.length) return;
-      const lh = fs.mod * 1.16, mp = fs.mod * 0.55, mr = fs.mod * 0.62;
-      const lineW = (w) => w - mp * 2 - mr * 2 - 4;
-      const stack = () => {
+      /* módulos empilhados de baixo para cima; se não couberem, letra menor; por último, lado a lado */
+      const stack = (k) => {
+        const fz = fs.mod * k, lh = fz * 1.16, mp = fz * 0.55, mr = fs.mod * 0.62;
         let y = y1 - pad;
         const res = [];
         for (let i = mods.length - 1; i >= 0; i--) {
-          const lines = this.wrap(MODULOS[mods[i]].nome, lineW(W), fs.mod, 'mod-t');
+          const lines = this.wrap(MODULOS[mods[i]].nome, W - mp * 2 - mr * 2 - 4, fz, 'mod-t');
           const h = lines.length * lh + mp * 1.5;
           y -= h;
-          res[i] = { x: x0 + pad, y, w: W, h, lines };
-          y -= fs.mod * 0.4;
+          res[i] = { x: x0 + pad, y, w: W, h, lines, fsz: fz };
+          y -= fz * 0.4;
         }
         return res;
       };
-      let res = stack();
+      let res = stack(1);
       if (mods.length > 1 && res[0].y < notesBottom + 2) {
-        const gap = fs.mod * 0.5, w = (W - gap * (mods.length - 1)) / mods.length;
-        const ls = mods.map((m) => this.wrap(MODULOS[m].nome, lineW(w), fs.mod, 'mod-t'));
-        const h = Math.max(...ls.map((l) => l.length)) * lh + mp * 1.5;
-        res = mods.map((m, i) => ({ x: x0 + pad + i * (w + gap), y: y1 - pad - h, w, h, lines: ls[i] }));
+        const small = stack(0.86);
+        if (small[0].y >= notesBottom + 2) res = small;
+        else {
+          const fz = fs.mod * 0.9, lh = fz * 1.16, mp = fz * 0.55, mr = fs.mod * 0.62;
+          const gap = fs.mod * 0.5, w = (W - gap * (mods.length - 1)) / mods.length;
+          const ls = mods.map((m) => this.wrap(MODULOS[m].nome, w - mp * 2 - mr * 2 - 4, fz, 'mod-t'));
+          const h = Math.max(...ls.map((l) => l.length)) * lh + mp * 1.5;
+          res = mods.map((m, i) => ({ x: x0 + pad + i * (w + gap), y: y1 - pad - h, w, h, lines: ls[i], fsz: fz }));
+        }
       }
       mods.forEach((m, i) => { out.mods[m] = res[i]; });
     });
@@ -502,7 +510,7 @@ class Painter {
       const [sx0, sy0, sx1, sy1] = g.sign;
       out.mods.site = { x: sx0, y: sy0, w: sx1 - sx0, h: sy1 - sy0, lines: [MODULOS.site.nome], sign: true };
     }
-    if (D.marks.street) out.notes.presenca = { x: g.streetNote[0], y: g.streetNote[1], r: 'street', street: true, lines: [DOR.presenca.nota] };
+    if (D.marks.street) out.notes['presenca@street'] = { x: g.streetNote[0], y: g.streetNote[1], r: 'street', street: true, lines: [DOR.presenca.nota] };
     return out;
   }
 
@@ -557,7 +565,8 @@ class Painter {
       want.set('cloud:' + r, () => this._cloud(r, this.revAt[r]));
     });
     Object.keys(this.revAt).forEach((r) => { if (!D.marks[r]) delete this.revAt[r]; });
-    D.dores.forEach((d) => { if (L.notes[d.k]) want.set('note:' + d.k, () => this._note(d, L.notes[d.k])); });
+    /* uma nota por área marcada (planilhas aparece na diretoria e no financeiro) */
+    Object.keys(L.notes).forEach((nk) => want.set('note:' + nk, () => this._note(DOR[nk.split('@')[0]], L.notes[nk])));
     D.mods.forEach((m) => {
       if (m === 'base') { want.set('base', () => this._base()); return; }
       const b = L.mods[m];
@@ -577,8 +586,8 @@ class Painter {
       const it = this.items.get(key);
       if (!it) { this.items.set(key, make()); return; }
       if (key.startsWith('note:')) {
-        const k = key.slice(5), p = L.notes[k];
-        if (it.sig !== p.lines.join('|')) { it.g.remove(); this.items.set(key, this._note(DOR[k], p, true)); }
+        const nk = key.slice(5), p = L.notes[nk];
+        if (it.sig !== p.lines.join('|') + (p.fsz || '')) { it.g.remove(); this.items.set(key, this._note(DOR[nk.split('@')[0]], p, true)); }
         else it.g.style.transform = `translate(${f1(p.x)}px, ${f1(p.y)}px)`;
       }
       else if (key.startsWith('mod:')) {
@@ -616,22 +625,23 @@ class Painter {
     const fs = this.geo.fs;
     const gg = S('g', { class: 'mk-note mv' }, this.gMarks);
     gg.style.transform = `translate(${f1(p.x)}px, ${f1(p.y)}px)`;
-    const size = p.street ? fs.small + 0.5 : fs.note;
+    const size = p.street ? fs.small + 0.5 : (p.fsz || fs.note);
     p.lines.forEach((l, i) => {
       const t = S('text', { x: 0, y: f1(i * size * 1.12), 'font-size': size, class: 'note-t' }, gg);
       t.textContent = l;
       if (!quick) this.a(t, [{ opacity: 0, transform: 'translateX(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 460, delay: 420 + i * 60 });
     });
-    return { g: gg, sig: p.lines.join('|') };
+    return { g: gg, sig: p.lines.join('|') + (p.fsz || '') };
   }
 
-  _modSig(b) { return [b.x, b.y, b.w, b.h, b.lines.join('|')].map(String).join(';'); }
+  _modSig(b) { return [b.x, b.y, b.w, b.h, b.fsz, b.lines.join('|')].map(String).join(';'); }
 
   _mod(m, b, quick) {
     const fs = this.geo.fs;
     const gg = S('g', { class: 'mk-mod' + (b.sign ? ' sign' : '') }, this.gMods);
-    const lh = fs.mod * 1.16, mp = fs.mod * 0.55;
-    const fsz = b.sign ? fs.small + 0.5 : fs.mod;
+    const fz = b.fsz || fs.mod;
+    const lh = fz * 1.16, mp = fz * 0.55;
+    const fsz = b.sign ? fs.small + 0.5 : fz;
     const r = S('rect', { x: f1(b.x), y: f1(b.y), width: f1(b.w), height: f1(b.h), rx: 3, class: 'mod-r', fill: `url(#hatch${this.sfx})` }, gg);
     const tx = b.x + mp;
     b.lines.forEach((l, i) => {

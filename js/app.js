@@ -571,6 +571,9 @@ addEventListener('resize', () => {
 });
 
 /* ---------- começo: planta por link, ou o exemplo ---------- */
+/* a planta mede os textos com a fonte: quando ela termina de carregar, a folha é refeita */
+const fontsReady = D.fonts && D.fonts.status !== 'loaded' ? D.fonts.ready : Promise.resolve();
+const fontsOrTimeout = Promise.race([fontsReady, new Promise((r) => setTimeout(r, 2500))]);
 const hashPlan = /^#planta=(.+)$/.exec(location.hash);
 if (hashPlan) {
   const st = decodeState(hashPlan[1]);
@@ -583,11 +586,11 @@ if (hashPlan) {
   apply();
   msg('Esta planta chegou por link. Você pode ajustar as respostas e mandar de volta pelo WhatsApp.');
   nextStep();
+  fontsOrTimeout.then(() => plan.relayout(true));
 } else {
   apply();
   /* o exemplo espera a fonte carregar, para a planta medir os textos com a letra certa */
-  const fontsReady = D.fonts && D.fonts.status !== 'loaded' ? D.fonts.ready : Promise.resolve();
-  Promise.race([fontsReady, new Promise((r) => setTimeout(r, 2500))]).then(() => {
+  fontsOrTimeout.then(() => {
     plan.relayout(true);
     setTimeout(() => { if (scrollY < innerHeight * 0.6 && !D.hidden) runExample(); }, REDUCED ? 200 : 700);
   });
