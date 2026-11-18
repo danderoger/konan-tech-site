@@ -1,11 +1,14 @@
-/* Simulador de automação: o visitante escolhe o ramo e vê cada etapa manual voar até o fluxo automático.
-   Depois, um pedido percorre o fluxo e o registro mostra cada passo. Tudo é simulação. */
+/* Detalhe 2: automações. O visitante escolhe o ramo e vê cada etapa manual voar até o fluxo automático.
+   Depois, um pedido percorre o fluxo e o registro mostra cada passo. Tudo é simulação.
+   Começa no ramo da planta do visitante (setRamo), até ele escolher outro. */
 
 import { AUTO } from '../content.js';
 
 const ICON = { WhatsApp: 'i-chat', IA: 'i-scan', Planilha: 'i-grid', Sistema: 'i-cpu', Pessoa: 'i-user', Painel: 'i-bars', Aviso: 'i-bell', Email: 'i-mail', Aplicativo: 'i-mobile', Tarefa: 'i-check' };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+/* conta como visto quando boa parte aparece, ou quando ocupa mais da metade da tela (blocos altos no celular) */
+const seenEnough = (e, t) => e.isIntersecting && (e.intersectionRatio >= t || e.intersectionRect.height >= innerHeight * 0.5);
 export function initAuto(root, ctx) {
   const D = document;
   const box = root.querySelector('#au');
@@ -18,7 +21,7 @@ export function initAuto(root, ctx) {
   const sum = root.querySelector('#au-sum');
   const run = root.querySelector('#au-run');
   const reduced = ctx.reduced;
-  let ri = 0, token = 0, seen = false;
+  let ri = ctx.autoRamo ? ctx.autoRamo() : 0, token = 0, seen = false, user = false;
 
   const wait = (ms, t) => new Promise((res, rej) => setTimeout(() => (t === token ? res() : rej(new Error('cancelado'))), reduced ? 0 : ms));
 
@@ -106,23 +109,24 @@ export function initAuto(root, ctx) {
     if (go) setTimeout(automate, reduced ? 0 : 350);
   }
   pick.forEach((b, k) => {
-    b.addEventListener('click', () => choose(k, true));
+    b.addEventListener('click', () => { user = true; choose(k, true); });
     b.addEventListener('keydown', (e) => {
       const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
       if (!d) return;
       e.preventDefault();
       const n = (k + d + pick.length) % pick.length;
       pick[n].focus();
+      user = true;
       choose(n, true);
     });
   });
   run.addEventListener('click', automate);
   root.querySelector('#au-reset').addEventListener('click', () => { run.querySelector('span').textContent = 'Automatizar este processo'; render(); });
 
-  render();
+  choose(ri, false);
   const io = new IntersectionObserver((ents) => ents.forEach((e) => {
-    if (e.isIntersecting && !seen) { seen = true; setTimeout(automate, reduced ? 0 : 900); io.disconnect(); }
-  }), { threshold: 0.45 });
+    if (seenEnough(e, 0.45) && !seen) { seen = true; setTimeout(automate, reduced ? 0 : 900); io.disconnect(); }
+  }), { threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] });
   io.observe(box);
-  return {};
+  return { setRamo(k) { if (!user && k !== ri) choose(k, seen); } };
 }

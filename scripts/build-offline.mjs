@@ -2,14 +2,14 @@
 // Por quê: ao abrir pelo arquivo (file://), o navegador bloqueia scripts do tipo module
 // e impede a leitura da logo pelas partículas. Aqui tudo vira um script comum e as imagens
 // ficam dentro do próprio arquivo.
-// Uso: ESBUILD_BIN=/caminho/esbuild node scripts/build-offline.mjs saida/konan-tech-2.0.html
+// Uso: ESBUILD_BIN=/caminho/esbuild node scripts/build-offline.mjs saida/konan-tech-5.0.html
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join, extname } from 'node:path';
 import { tmpdir } from 'node:os';
 
 const root = new URL('..', import.meta.url).pathname;
-const out = process.argv[2] || join(root, 'dist-offline', 'konan-tech-2.0.html');
+const out = process.argv[2] || join(root, 'dist-offline', 'konan-tech-5.0.html');
 const esbuild = process.env.ESBUILD_BIN || 'esbuild';
 mkdirSync(dirname(out), { recursive: true });
 
@@ -24,7 +24,8 @@ const tmpJs = join(tmpdir(), `konan-bundle-${process.pid}.js`);
 execFileSync(esbuild, [join(root, 'js/app.js'), '--bundle', '--format=iife', '--minify', '--target=es2020', `--outfile=${tmpJs}`, '--log-level=warning'], { stdio: 'inherit' });
 let js = readFileSync(tmpJs, 'utf8');
 const lenis = readFileSync(join(root, 'js/vendor/lenis.min.js'), 'utf8');
-js = js.split('assets/konan-logo.png').join(uri('assets/konan-logo.png'));
+// imagens usadas pelo JavaScript (logo das partículas e logo do carimbo da planta)
+for (const rel of ['assets/konan-logo-dark.png', 'assets/konan-logo.png']) js = js.split(rel).join(uri(rel));
 js = `${lenis}\n;${js}`.replace(/<\/script/gi, '<\\/script');
 
 // 2) CSS com a fonte embutida

@@ -9,6 +9,8 @@ const parseBrl = (s) => { const t = String(s).replace(/[^\d,.-]/g, '').replace(/
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const FIELDS = [['fornecedor', 'Fornecedor'], ['data', 'Data'], ['itens', 'Itens'], ['total', 'Total']];
 
+/* conta como visto quando boa parte aparece, ou quando ocupa mais da metade da tela (blocos altos no celular) */
+const seenEnough = (e, t) => e.isIntersecting && (e.intersectionRatio >= t || e.intersectionRect.height >= innerHeight * 0.5);
 export function initAI(root, ctx) {
   const D = document;
   const box = root.querySelector('#ai');
@@ -311,11 +313,13 @@ export function initAI(root, ctx) {
   resetForm();
   let autoPaused = false;
   const io = new IntersectionObserver((ents) => ents.forEach((e) => {
-    awake = e.isIntersecting;
+    const was = awake;
+    awake = seenEnough(e, 0.35);
+    if (awake === was && started) return;
     if (awake && !started) { play(0); return; }
     if (!awake && started && !explore && !paused && step < 5) { autoPaused = true; setPaused(true); }
     if (awake && autoPaused) { autoPaused = false; setPaused(false); }
-  }), { threshold: 0.35 });
+  }), { threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] });
   io.observe(box);
   return {};
 }

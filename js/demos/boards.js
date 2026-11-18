@@ -1,72 +1,69 @@
-/* Portfólio imersivo: lista com prévia grande e cada projeto em tela cheia.
-   A tela cheia tem rolagem própria (não depende da posição da página) e abre também por link direto: #projeto-nome. */
+/* Projetos como pranchas: cada projeto real numa folha com a maquete das telas.
+   As pranchas mais parecidas com a planta do visitante sobem para o começo e ganham uma etiqueta azul.
+   Cada projeto abre em tela cheia com rolagem própria e também por link direto: #projeto-nome. */
 
-import { STAGE_STEPS } from '../content.js';
+import { STAGE_STEPS, PROJ_TAGS, MODULOS, RAMOS } from '../content.js';
+import { lc1 } from '../plan.js';
 
-export function initCases(root, ctx) {
+export function initBoards(root, ctx) {
   const D = document, H = D.documentElement;
-  const items = [...root.querySelectorAll('.pj')];
-  const stageBox = root.querySelector('#pj-stage');
-  const capK = root.querySelector('#pj-cap-k');
-  const openBtn = root.querySelector('#pj-open');
+  const list = root.querySelector('#boards');
+  const items = [...root.querySelectorAll('.board')];
   const dlg = root.querySelector('#cv');
   const cin = dlg.querySelector('#cv-in');
   const $ = (id) => dlg.querySelector('#' + id);
-  let cur = -1, viewing = 0, opener = null, closing = false;
+  let viewing = 0, opener = null, closing = false;
 
-  const vis = (i) => items[i].querySelector('template.pj-vis').content.cloneNode(true);
-  const host = (i) => { const h = D.createElement('div'); h.className = 'mk-host'; h.append(vis(i)); return h; };
+  const vis = (li) => li.querySelector('template.pj-vis').content.cloneNode(true);
+  const host = (li) => { const h = D.createElement('div'); h.className = 'mk-host'; h.append(vis(li)); return h; };
 
-  /* prévia grande ao lado da lista (computador) */
-  function select(i) {
-    if (i === cur) return;
-    cur = i;
-    items.forEach((li, k) => li.classList.toggle('on', k === i));
-    const slide = D.createElement('div');
-    slide.className = 'pj-slide' + (ctx.reduced ? '' : ' in');
-    slide.append(host(i));
-    stageBox.querySelectorAll('.pj-slide').forEach((s) => { s.classList.remove('in'); s.classList.add('out'); setTimeout(() => s.remove(), 520); });
-    stageBox.append(slide);
-    capK.textContent = items[i].querySelector('.pj-k').textContent;
-    openBtn.setAttribute('aria-label', 'Abrir projeto ' + items[i].querySelector('.pj-n').textContent);
-    if (ctx.onProject) ctx.onProject(items[i].dataset.shape);
-  }
-
-  items.forEach((li, i) => {
+  items.forEach((li) => {
+    /* o espaço da miniatura já existe no HTML (a página não pula quando ela aparece) */
+    let th = li.querySelector('.bd-thumb');
+    if (!th) { th = D.createElement('div'); th.className = 'bd-thumb'; th.setAttribute('aria-hidden', 'true'); li.prepend(th); }
+    th.append(vis(li));
     const btn = li.querySelector('.pj-btn');
     btn.setAttribute('aria-controls', 'cv');
-    btn.addEventListener('mouseenter', () => select(i));
-    btn.addEventListener('focus', () => select(i));
-    btn.addEventListener('click', (e) => open(i, e));
-    const om = D.createElement('span');
-    om.className = 'pj-open-m';
-    om.innerHTML = '<svg class="ic" aria-hidden="true"><use href="#i-open"/></svg>Abrir projeto';
-    btn.append(om);
-    const th = host(i);
-    th.className = 'pj-thumb';
-    th.setAttribute('aria-hidden', 'true');
-    th.addEventListener('click', (e) => open(i, e));
-    li.append(th);
+    btn.setAttribute('aria-label', 'Abrir projeto ' + li.querySelector('.pj-n').textContent);
+    btn.addEventListener('click', (e) => open(items.indexOf(li), e));
   });
-  select(0);
-  openBtn.addEventListener('click', (e) => open(cur, e));
-  stageBox.addEventListener('click', (e) => open(cur, e));
-  stageBox.style.cursor = 'pointer';
-  if (ctx.fine && !ctx.reduced) {
-    stageBox.addEventListener('pointermove', (e) => {
-      const r = stageBox.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
-      stageBox.style.setProperty('--gx', ((x + 0.5) * 100).toFixed(1) + '%');
-      const s = stageBox.querySelector('.pj-slide:last-child');
-      if (s) s.style.transform = `rotateY(${(x * 7).toFixed(2)}deg) rotateX(${(-y * 6).toFixed(2)}deg)`;
+
+  /* ordem pelas partes em comum com a planta */
+  function rank(st, Dv) {
+    const mods = Dv && Dv.any && !st.example ? Dv.mods : [];
+    const ramo = Dv && Dv.any && !st.example ? st.ramo : null;
+    const scored = items.map((li, i) => {
+      const tag = PROJ_TAGS[li.dataset.p] || { ramos: [], mods: [] };
+      const common = tag.mods.filter((m) => mods.includes(m));
+      const sameRamo = !!ramo && tag.ramos.includes(ramo);
+      const like = li.querySelector('.bd-like');
+      if (common.length) { like.textContent = 'Parecido com a sua planta: ' + lc1(MODULOS[common[0]].nome); like.hidden = false; }
+      else if (sameRamo) { like.textContent = 'Mesmo ramo da sua planta: ' + lc1(RAMOS[ramo].nome); like.hidden = false; }
+      else like.hidden = true;
+      return { li, i, s: common.length * 2 + (sameRamo ? 1 : 0) };
     });
-    stageBox.addEventListener('pointerleave', () => { const s = stageBox.querySelector('.pj-slide:last-child'); if (s) s.style.transform = ''; });
+    scored.sort((a, b) => b.s - a.s || a.i - b.i);
+    const order = scored.map((x) => x.li);
+    const same = order.every((li, k) => list.children[k] === li);
+    if (same) return;
+    /* troca de lugar com uma transição curta (as pranchas deslizam para a nova posição) */
+    const first = new Map(order.map((li) => [li, li.getBoundingClientRect()]));
+    order.forEach((li) => list.append(li));
+    if (ctx.reduced) return;
+    order.forEach((li) => {
+      const a = first.get(li), b = li.getBoundingClientRect();
+      const dx = a.left - b.left, dy = a.top - b.top;
+      if (Math.abs(dx) + Math.abs(dy) < 2 || !li.animate) return;
+      li.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 650, easing: 'cubic-bezier(.22,.75,.12,1)' });
+    });
   }
 
   /* visualizador em tela cheia */
+  const cur = () => [...list.children];
   function fill(i) {
-    viewing = (i + items.length) % items.length;
-    const li = items[viewing];
+    const arr = cur();
+    viewing = (i + arr.length) % arr.length;
+    const li = arr[viewing];
     const name = li.querySelector('.pj-n').textContent;
     const stg = li.querySelector('.stg');
     const st = $('cv-stg');
@@ -76,7 +73,7 @@ export function initCases(root, ctx) {
     $('cv-k').textContent = li.querySelector('.pj-k').textContent;
     const v = $('cv-vis');
     v.innerHTML = '';
-    v.append(host(viewing));
+    v.append(host(li));
     const more = li.querySelector('.pj-more');
     $('cv-p').textContent = more.querySelector('.pm-p').textContent;
     $('cv-s').textContent = more.querySelector('.pm-s').textContent;
@@ -114,8 +111,6 @@ export function initCases(root, ctx) {
     H.classList.add('cv-open');
     dlg.showModal();
     $('cv-x').focus({ preventScroll: true });
-    const st = ctx.stage();
-    if (st) setTimeout(() => { if (dlg.open) st.stop(); }, ctx.reduced ? 0 : 760);
   }
 
   function close() {
@@ -130,8 +125,6 @@ export function initCases(root, ctx) {
     H.classList.remove('cv-open');
     const l = ctx.lenis();
     if (l) l.start();
-    const st = ctx.stage();
-    if (st && !D.hidden) st.start();
     try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* arquivo local */ }
     if (opener && opener.focus) opener.focus({ preventScroll: true });
   });
@@ -156,11 +149,11 @@ export function initCases(root, ctx) {
   function fromHash() {
     const m = /^#projeto-([\w-]+)/.exec(location.hash);
     if (!m) return;
-    const i = items.findIndex((li) => li.dataset.p === m[1]);
+    const i = cur().findIndex((li) => li.dataset.p === m[1]);
     if (i > -1) open(i);
   }
   addEventListener('hashchange', fromHash);
   fromHash();
 
-  return { select, open, close };
+  return { rank, open: (slug) => { const i = cur().findIndex((li) => li.dataset.p === slug); if (i > -1) open(i); }, close };
 }

@@ -1,4 +1,4 @@
-/* Konan Tech 3.0: textos e dados das demonstrações.
+/* Konan Tech 5.0: textos e dados da planta viva e das demonstrações.
    Os textos fixos das seções ficam no index.html (para o Google ler).
    Tudo o que aparece nas demonstrações é fictício e está identificado assim na página. */
 
@@ -7,20 +7,76 @@ export const WA_DEFAULT = 'Olá, vim pelo site da Konan Tech e quero conversar s
 export const waLink = (msg) => `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg || WA_DEFAULT)}`;
 export const waContext = (frase) => `Olá, vim pelo site da Konan Tech: ${frase}`;
 
-/* Abertura: cinco cenas. A última forma a marca e fica.
-   dur = segundos até a próxima cena; k = ajuste de escala; dy = ajuste vertical (no computador). */
-export const HERO_SCENES = [
-  { shape: 'dust', cap: 'Pedidos, notas, planilhas e mensagens espalhados.', dur: 3.4, k: 0.82 },
-  { shape: 'neural', cap: 'A informação começa a se conectar.', dur: 3.8, k: 1.22 },
-  { shape: 'circuit', cap: 'Fluxos e processos que correm sozinhos.', dur: 3.6, k: 0.76, dy: 0.3 },
-  { shape: 'iface', cap: 'Painéis e indicadores para decidir.', dur: 3.6, k: 0.72, dy: 0.25 },
-  { shape: 'logo', cap: 'Tudo isso ganha forma.', dur: 0 }
-];
+/* ---------- planta viva ----------
+   Cada ramo tem cinco áreas dentro da empresa e uma área de fora.
+   in = onde as coisas chegam, ops = operação, sup = apoio, fin = financeiro, mgmt = gestão, ext = fora da empresa. */
+export const RAMOS = {
+  obras: { nome: 'Obras e construção', rooms: { in: 'Compras', ops: 'Engenharia', sup: 'Almoxarifado', fin: 'Financeiro', mgmt: 'Diretoria' }, ext: 'Canteiro de obras', auto: 0 },
+  comercio: { nome: 'Comércio e vendas', rooms: { in: 'Atendimento', ops: 'Vendas', sup: 'Estoque', fin: 'Financeiro', mgmt: 'Gestão' }, ext: 'Entregas', auto: 2 },
+  campo: { nome: 'Serviços em campo', rooms: { in: 'Atendimento', ops: 'Agenda e rotas', sup: 'Materiais', fin: 'Financeiro', mgmt: 'Gestão' }, ext: 'Equipe em campo', auto: 1 },
+  escritorio: { nome: 'Escritório e serviços', rooms: { in: 'Documentos', ops: 'Contas a pagar', sup: 'Arquivo', fin: 'Contas a receber', mgmt: 'Diretoria' }, ext: 'Visitas a clientes', auto: 3 },
+  industria: { nome: 'Indústria e produção', rooms: { in: 'Pedidos', ops: 'Produção', sup: 'Estoque', fin: 'Financeiro', mgmt: 'Gestão' }, ext: 'Expedição', auto: 2 },
+  outro: { nome: 'Outro ramo', rooms: { in: 'Atendimento', ops: 'Operação', sup: 'Apoio', fin: 'Financeiro', mgmt: 'Gestão' }, ext: 'Equipe externa', auto: 0 }
+};
+export const RAMO_ORDER = ['obras', 'comercio', 'campo', 'escritorio', 'industria', 'outro'];
 
-/* Projetos: forma das partículas quando cada projeto está em destaque */
+export const EQUIPES = ['Até 5 pessoas', '6 a 20 pessoas', '21 a 50 pessoas', 'Mais de 50 pessoas'];
+export const EQUIPES_CURTO = ['Até 5', '6 a 20', '21 a 50', 'Mais de 50'];
+
+/* o que trava: chip (botão), nota (texto vermelho na planta), áreas marcadas e módulos propostos */
+export const DORES = [
+  { k: 'planilhas', chip: 'Tudo em planilhas', nota: 'Planilhas soltas', rooms: ['mgmt', 'fin'], mods: ['base'] },
+  { k: 'documentos', chip: 'Notas digitadas à mão', nota: 'Notas digitadas à mão', rooms: ['in'], mods: ['ia'] },
+  { k: 'whatsapp', chip: 'Pedidos se perdem no WhatsApp', nota: 'Pedidos se perdem', rooms: ['in'], mods: ['pedidos'] },
+  { k: 'equipe', chip: 'Não sei o que a equipe faz fora', nota: 'Sem notícia da equipe', rooms: ['ext'], mods: ['app', 'gestor'] },
+  { k: 'retrabalho', chip: 'Tarefas repetidas todo dia', nota: 'Retrabalho todo dia', rooms: ['ops'], mods: ['auto'] },
+  { k: 'indicadores', chip: 'Decido sem números', nota: 'Decisão sem números', rooms: ['mgmt'], mods: ['painel'] },
+  { k: 'financeiro', chip: 'Contas e cobranças à mão', nota: 'Cobranças à mão', rooms: ['fin'], mods: ['fin'] },
+  { k: 'presenca', chip: 'Cliente não me encontra', nota: 'Cliente não encontra', rooms: ['street'], mods: ['site'] }
+];
+export const DOR = Object.fromEntries(DORES.map((d) => [d.k, d]));
+
+/* módulos da proposta (tinta azul). det = detalhe que mostra o módulo funcionando */
+export const MODULOS = {
+  base: { nome: 'Sistema web com uma base só', room: 'cor', det: 'painel' },
+  ia: { nome: 'Leitura de notas com IA', room: 'in', det: 'ia' },
+  pedidos: { nome: 'Central de pedidos', room: 'in', det: 'auto' },
+  app: { nome: 'Aplicativo da equipe', room: 'ext', det: 'app' },
+  gestor: { nome: 'Painel do gestor', room: 'mgmt', det: 'app' },
+  auto: { nome: 'Automações', room: 'ops', det: 'auto' },
+  painel: { nome: 'Painel de indicadores', room: 'mgmt', det: 'painel' },
+  fin: { nome: 'Financeiro com lembretes', room: 'fin', det: 'auto' },
+  site: { nome: 'Site e WhatsApp', room: 'street', det: 'site' }
+};
+export const MOD_ORDER = ['base', 'ia', 'pedidos', 'auto', 'fin', 'painel', 'gestor', 'app', 'site'];
+
+/* detalhes: o número aparece no círculo azul de cada módulo na planta */
+export const DETALHES = [
+  { k: 'ia', n: 1, nome: 'Leitura de notas com IA' },
+  { k: 'auto', n: 2, nome: 'Automações' },
+  { k: 'painel', n: 3, nome: 'Painel de indicadores' },
+  { k: 'app', n: 4, nome: 'Aplicativo da equipe' },
+  { k: 'site', n: 5, nome: 'Site e WhatsApp' }
+];
+export const DET_N = Object.fromEntries(DETALHES.map((d) => [d.k, d.n]));
+
+/* exemplo que se desenha sozinho ao abrir a página (empresa fictícia) */
+export const EXEMPLO = {
+  texto: 'Tenho uma construtora com 12 pessoas. Tudo é controlado em planilha, as notas da obra são digitadas à mão e eu nunca sei o que está acontecendo em cada obra.',
+  nome: 'Construtora Exemplo'
+};
+
+/* projetos reais: o que cada um tem em comum com a planta do visitante */
+export const PROJ_TAGS = {
+  'obra-em-dia': { ramos: ['obras'], mods: ['base', 'painel', 'ia'] },
+  montacerto: { ramos: ['campo'], mods: ['app', 'gestor', 'base'] },
+  'ultra-obra': { ramos: ['obras'], mods: ['ia', 'base'] },
+  'via-opus': { ramos: ['obras'], mods: ['site'] },
+  'caca-ruidos': { ramos: ['campo'], mods: ['site'] }
+};
 export const STAGE_STEPS = ['Planejamento', 'Desenvolvimento', 'Testes', 'Implantação', 'Em uso'];
 
-/* Laboratório de IA: três documentos fictícios */
+/* ---------- detalhe 1: leitura de notas com IA (três documentos fictícios) ---------- */
 export const AI_DOCS = [
   {
     kind: 'Nota fiscal de venda', num: 'Nº 000.481, série 1',
@@ -59,7 +115,7 @@ export const AI_STEPS = [
   'Pronto para a aprovação de uma pessoa'
 ];
 
-/* Simulador de automação: quatro ramos, cada um com o processo manual e o fluxo automático */
+/* ---------- detalhe 2: automações (quatro ramos, processo manual e fluxo automático) ---------- */
 export const AUTO = [
   {
     ramo: 'Obras e construção',
@@ -83,47 +139,20 @@ export const AUTO = [
   }
 ];
 
-/* Universo dos sistemas: série fictícia de faturamento */
+/* ---------- detalhe 3: painel de indicadores (série fictícia) ---------- */
 export const DASH = {
   months: ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'],
   units: { all: 1, a: 0.58, b: 0.42 },
   cats: ['Produtos', 'Serviços', 'Contratos', 'Outros']
 };
 
-/* Diagnóstico: o que mostramos para cada resposta */
-export const LAB = {
-  dores: [
-    {
-      frase: 'tudo vive em planilhas',
-      blocos: [['Hoje', 'Planilhas soltas e controles paralelos'], ['Base única', 'Cadastros e controles em um sistema web, aproveitando os dados que você já tem'], ['Painel', 'Indicadores atualizados sem montar relatório à mão']],
-      passo: 'Começaríamos mapeando as planilhas de hoje e quem usa cada uma.'
-    },
-    {
-      frase: 'a equipe perde tempo com tarefas repetidas',
-      blocos: [['Gatilho', 'Um pedido, um formulário ou uma mensagem chega'], ['Automação', 'Registros, avisos e tarefas acontecem sozinhos'], ['Resultado', 'A equipe só confere e decide']],
-      passo: 'Começaríamos listando as tarefas que mais tomam tempo da equipe.'
-    },
-    {
-      frase: 'digitamos notas e documentos à mão',
-      blocos: [['Entrada', 'Foto, PDF ou XML enviados pelo WhatsApp ou email'], ['Inteligência artificial', 'Leitura dos campos com conferência por regras'], ['Planilha ou sistema', 'Lançamento pronto para aprovação']],
-      passo: 'Começaríamos com uma amostra dos seus documentos para testar a leitura.'
-    },
-    {
-      frase: 'não sei o que a equipe em campo está fazendo',
-      blocos: [['Aplicativo', 'A equipe atualiza cada ordem pelo celular, até sem internet'], ['Painel do gestor', 'Status, rota e atrasos em tempo real'], ['Avisos', 'O cliente e o gestor são avisados sem ligação']],
-      passo: 'Começaríamos acompanhando um dia da operação para desenhar o aplicativo.'
-    },
-    {
-      frase: 'não tenho indicadores confiáveis',
-      blocos: [['Dados', 'Junção das fontes que já existem, sem duplicidade'], ['Dashboard', 'Indicadores, comparativos e alertas em um só lugar'], ['Rotina', 'Relatório pronto para a reunião da semana']],
-      passo: 'Começaríamos definindo os cinco números que mais importam para você.'
-    },
-    {
-      frase: 'preciso de um site que traga clientes',
-      blocos: [['Conteúdo', 'Texto escrito para o seu cliente entender o que você faz'], ['Site', 'Rápido, claro e completo no celular'], ['Contato', 'WhatsApp a um toque de qualquer página']],
-      passo: 'Começaríamos conversando sobre o seu público e os seus serviços.'
-    }
-  ],
-  areas: ['obras e construção', 'serviços em campo', 'comércio e vendas', 'administrativo e financeiro', 'outra área'],
-  times: ['até 5 pessoas', '6 a 20 pessoas', '21 a 50 pessoas', 'mais de 50 pessoas']
+/* ---------- detalhe 4: aplicativo da equipe (tarefas fictícias por ramo) ---------- */
+export const TEAM = {
+  obras: { quem: 'Mestre de obras', lugar: 'Obra Residencial Aurora', tarefas: ['Conferir entrega de cimento', 'Registrar concretagem da laje', 'Enviar fotos do dia'] },
+  comercio: { quem: 'Entregador', lugar: 'Rota Asa Norte', tarefas: ['Entregar pedido 2318', 'Entregar pedido 2321', 'Retirar uma devolução'] },
+  campo: { quem: 'Técnico', lugar: 'Rota do dia', tarefas: ['OS 1042, instalação', 'OS 1043, manutenção preventiva', 'OS 1044, visita técnica'] },
+  escritorio: { quem: 'Equipe externa', lugar: 'Agenda do dia', tarefas: ['Coletar documentos no cliente', 'Protocolar na prefeitura', 'Reunião com cliente novo'] },
+  industria: { quem: 'Motorista', lugar: 'Expedição', tarefas: ['Carga 118 para Taguatinga', 'Carga 119 para o Gama', 'Coleta de matéria prima'] },
+  outro: { quem: 'Equipe externa', lugar: 'Agenda do dia', tarefas: ['Visita ao cliente', 'Serviço agendado', 'Retorno de garantia'] }
 };
+export const TEAM_PEOPLE = ['Carlos', 'Ana', 'Rafael'];

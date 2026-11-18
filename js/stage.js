@@ -662,7 +662,9 @@ export class Stage {
   }
 
   _loop(now) {
-    const dt = Math.min(this.dtMax, (now - this.last) / 1000 || 0.016);
+    /* o primeiro quadro pode chegar com horário anterior ao start(): tempo negativo faria as transições explodirem */
+    const raw = (now - this.last) / 1000;
+    const dt = raw > 0 ? Math.min(this.dtMax, raw) : 0.016;
     this.last = now;
     this._quality(dt);
     this.update(dt);

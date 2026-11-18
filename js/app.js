@@ -1,27 +1,30 @@
-/* Konan Tech 3.0: comportamento da página.
-   O conteúdo aparece primeiro; o palco 3D e cada demonstração carregam depois, só quando fazem falta.
-   Sem WebGL, tudo funciona com a imagem de reserva. */
+/* Konan Tech 5.0: comportamento da página.
+   A planta viva é o centro: o visitante fala, escreve ou toca nas opções e a planta do sistema
+   é desenhada na hora. O resto da página se adapta ao que ele contou.
+   O 3D pesado (partículas) só carrega no final; sem WebGL, tudo funciona igual. */
 
-import { WA_DEFAULT, waLink, waContext, HERO_SCENES } from './content.js';
-import { initKinetic } from './kinetic.js';
+import { WA_DEFAULT, waLink, waContext, RAMOS, RAMO_ORDER, DORES, MODULOS, DETALHES, EQUIPES, EQUIPES_CURTO, EXEMPLO } from './content.js';
+import { Plan, derive, lc1 } from './plan.js';
+import { parse, highlight, Voice, SR, typeOut } from './listen.js';
 import { probeGL, pickTier, TIERS } from './perf.js';
 
 const D = document, H = D.documentElement;
 const REDUCED = H.classList.contains('rm');
 const FINE = matchMedia('(pointer: fine)').matches;
-const NARROW = () => innerWidth <= 760 || (innerWidth <= 1080 && innerWidth / innerHeight < 0.9);
+const IS_FILE = location.protocol === 'file:';
 const q = (s, r = D) => r.querySelector(s);
 const qa = (s, r = D) => [...r.querySelectorAll(s)];
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const narrow = () => innerWidth <= 760;
 
-let stage = null, lenis = null, chapter = null;
+let lenis = null, stage, stagePromise = null;
 const demos = {};
 
 /* ---------- WhatsApp: todo link [data-wa] recebe a mensagem do contexto ---------- */
-function setWa(a, frase) { a.href = waLink(frase ? waContext(frase) : WA_DEFAULT); }
+function setWa(a, frase) { if (a) a.href = waLink(frase ? waContext(frase) : WA_DEFAULT); }
+function setWaRaw(a, msg) { if (a) a.href = waLink(msg); }
 qa('[data-wa]').forEach((a) => setWa(a, a.dataset.msg));
 
-/* ---------- cabeçalho, menu e trilho de capítulos ---------- */
+/* ---------- cabeçalho e menu ---------- */
 const hd = q('#hd');
 const menuBtn = q('#menu-btn');
 function setMenu(open) {
@@ -31,283 +34,446 @@ function setMenu(open) {
 }
 menuBtn.addEventListener('click', () => setMenu(!hd.classList.contains('open')));
 D.addEventListener('keydown', (e) => { if (e.key === 'Escape' && hd.classList.contains('open')) { setMenu(false); menuBtn.focus(); } });
-const NAV_OF = { solucoes: '#solucoes', projetos: '#projetos', ia: '#ia', automacao: '#ia', sistemas: '#ia', compare: '#ia', processo: '#processo', lab: '#diagnostico' };
-const RAIL = qa('#rail a');
-const RAIL_ORDER = RAIL.map((a) => a.dataset.r);
-function markNav(name) {
-  const href = NAV_OF[name];
-  qa('.hd-nav > a:not(.btn)').forEach((a) => { const on = a.getAttribute('href') === href; a.classList.toggle('cur', on); if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
-  const idx = RAIL_ORDER.indexOf(name === 'duvidas' ? 'lab' : name);
-  RAIL.forEach((a, i) => { a.classList.toggle('cur', i === idx); a.classList.toggle('past', idx > -1 && i < idx); if (i === idx) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
-  q('#rail ol').style.setProperty('--rp', idx > 0 ? (idx / (RAIL.length - 1)).toFixed(3) : 0);
-}
 
 /* ---------- rolagem suave e âncoras ---------- */
 if (!REDUCED && window.Lenis) {
-  lenis = new window.Lenis({ lerp: 0.1, smoothWheel: true, wheelMultiplier: 0.95, prevent: (node) => !!(node && node.closest && node.closest('[data-lenis-prevent], dialog')) });
+  lenis = new window.Lenis({ lerp: 0.1, smoothWheel: true, wheelMultiplier: 0.95, prevent: (node) => !!(node && node.closest && node.closest('[data-lenis-prevent], dialog, textarea')) });
   const raf = (t) => { lenis.raf(t); requestAnimationFrame(raf); };
   requestAnimationFrame(raf);
-  lenis.on('scroll', (e) => { if (stage) stage.velocity(e.velocity * 60); });
 }
-function scrollToTarget(el) {
-  const off = -(hd.offsetHeight + 8);
-  if (lenis) lenis.scrollTo(el, { offset: off, duration: 1.4 });
+function scrollToTarget(el, extra) {
+  const off = -(hd.offsetHeight + (extra === undefined ? 10 : extra));
+  /* o Lenis já desconta o scroll-padding-top do html (cabeçalho + 12px); aqui só entra a diferença */
+  const pad = parseFloat(getComputedStyle(H).scrollPaddingTop) || 0;
+  if (lenis) lenis.scrollTo(el, { offset: off + pad, duration: 1.2 });
   else window.scrollTo({ top: el.getBoundingClientRect().top + scrollY + off, behavior: REDUCED ? 'auto' : 'smooth' });
 }
 D.addEventListener('click', (e) => {
   const a = e.target.closest('a[href^="#"]');
   if (!a) return;
   const id = a.getAttribute('href');
-  const el = id === '#topo' ? D.body : q(id);
+  if (id.startsWith('#detalhe-')) {
+    e.preventDefault();
+    setMenu(false);
+    openDetail(id.slice(9), true);
+    return;
+  }
+  if (id === '#qs') { e.preventDefault(); startTap(); return; }
+  const el = id.length > 1 ? D.getElementById(id.slice(1)) : null;
   if (!el) return;
   e.preventDefault();
   setMenu(false);
-  if (id === '#topo') { if (lenis) lenis.scrollTo(0, { duration: 1.4 }); else scrollTo({ top: 0, behavior: REDUCED ? 'auto' : 'smooth' }); }
-  else scrollToTarget(el);
+  scrollToTarget(el, id === '#planta' ? 200 : 10);
 });
 
-/* ---------- capítulos: forma, posição e ambiente do palco ---------- */
-/* d = computador, m = celular: [x, y, escala, opacidade]. anchor segue um elemento na vertical; ax também na horizontal. */
-const CH = {
-  hero: { anchorM: '.hero-vis', d: [3.4, 0.15, 0.7, 1], m: [0, 0, 0.42, 1] },
-  solucoes: { shape: 'blocks', d: [4.0, -0.1, 0.62, 0.95], m: [0, 2.7, 0.4, 0.22] },
-  projetos: { shape: 'city', anchorD: '#pj-stage', ax: true, d: [0, 0, 0.9, 0.55], m: [0, 3.3, 0.4, 0.12] },
-  ia: { shape: 'brain', anchorD: '#ai-bed', d: [3.0, 0, 0.92, 0.95], m: [0, 0.2, 0.55, 0.45] },
-  automacao: { shape: 'flow', anchorD: '#au', d: [0.6, 0, 0.95, 0.42], m: [0, 2.4, 0.42, 0.28] },
-  sistemas: { ctl: 'universe' },
-  compare: { split: true, anchor: '#cmp', d: [0, 0, 1.12, 1], m: [0, 0, 0.5, 1] },
-  processo: { shape: 'helix', anchorD: '#pr-h', d: [4.5, 0, 0.4, 0.5], m: [2.3, 0.8, 0.36, 0.14] },
-  lab: { shape: 'blocks', d: [4.6, -1.4, 0.5, 0.34], m: [1.7, -2.6, 0.35, 0.22] },
-  duvidas: { shape: 'neural', d: [-4.4, -0.2, 0.62, 0.3], m: [1.6, -2.8, 0.4, 0.22] },
-  end: { ctl: 'finale', shape: 'logo', anchor: '#fin-mark', d: [0, 0, 0.86, 1], m: [0, 0, 0.44, 1] }
-};
-let svcShape = null, pjShape = null;
+/* seção atual destacada no menu */
+const NAV = qa('.hd-nav > a:not(.btn)');
+const navIO = new IntersectionObserver((ents) => ents.forEach((e) => {
+  if (!e.isIntersecting) return;
+  NAV.forEach((a) => { const on = a.getAttribute('href') === '#' + e.target.id; a.classList.toggle('cur', on); if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
+}), { rootMargin: '-45% 0px -50% 0px' });
+['planta', 'detalhes', 'projetos', 'processo', 'duvidas'].forEach((id) => { const el = D.getElementById(id); if (el) navIO.observe(el); });
 
-const anchorOf = (c) => c.anchor || (NARROW() ? c.anchorM : c.anchorD) || null;
-const halfH = () => (stage ? stage.halfH() : 3.64);
-/* centro de um elemento da página em coordenadas do mundo 3D */
-function anchorY(sel) {
-  const el = q(sel);
-  if (!el) return 0;
-  const r = el.getBoundingClientRect();
-  return (1 - (r.top + r.bottom) / innerHeight) * halfH();
+/* ============================================================
+   A MESA: conversa + planta
+   ============================================================ */
+const sheet = q('#sheet');
+const sub = q('#sub'), subWho = q('#sub-who'), subT = q('#sub-t'), subStop = q('#sub-stop'), foot = q('#sheet-foot');
+const micBtn = q('#mic'), writeBtn = q('#write'), compW = q('#comp-w'), txt = q('#txt'), txtGo = q('#txt-go');
+const compMsg = q('#comp-msg');
+const live = q('#live');
+const b3d = q('#b3d'), bwa = q('#bwa'), bpdf = q('#bpdf'), blink = q('#blink');
+const qTabs = qa('.q-tabs [role=tab]'), qPanes = [q('#qp-0'), q('#qp-1'), q('#qp-2')];
+const cRamo = qa('#c-ramo [role=radio]'), cDor = qa('#c-dor button'), cEq = qa('#c-eq [role=radio]');
+const nomeIn = q('#nome'), qDone = q('#q-done');
+
+/* o que o visitante escolheu tocando (manual) vale mais do que o que foi entendido da fala ou do texto (spoken) */
+const manual = { ramo: null, equipe: null, on: new Set(), off: new Set(), nome: '' };
+let spoken = { ramo: null, dores: [], equipe: null };
+let mode = 'idle';
+let exCancel = null, exTimers = [];
+let lastAnnounce = { dores: [], mods: [] };
+
+function effective() {
+  const set = new Set(spoken.dores);
+  manual.on.forEach((k) => set.add(k));
+  manual.off.forEach((k) => set.delete(k));
+  return {
+    ramo: manual.ramo || spoken.ramo || null,
+    equipe: manual.equipe !== null ? manual.equipe : spoken.equipe,
+    dores: DORES.map((d) => d.k).filter((k) => set.has(k)),
+    nome: manual.nome,
+    example: mode === 'example'
+  };
 }
-function anchorX(sel) {
-  const el = q(sel);
-  if (!el) return 0;
-  const r = el.getBoundingClientRect();
-  return ((r.left + r.right) / innerWidth - 1) * halfH() * (innerWidth / innerHeight);
+
+const plan = new Plan(sheet, { reduced: REDUCED, onChange: onPlanChange });
+function apply() { plan.set(effective()); }
+
+/* tudo o que depende da planta: opções marcadas, resumo das abas, WhatsApp, detalhes e projetos */
+function onPlanChange(st, Dv) {
+  cRamo.forEach((b) => { const on = b.dataset.v === st.ramo; b.setAttribute('aria-checked', String(on)); });
+  cDor.forEach((b) => b.setAttribute('aria-pressed', String(st.dores.includes(b.dataset.v))));
+  cEq.forEach((b) => b.setAttribute('aria-checked', String(+b.dataset.v === st.equipe)));
+  rovingFix(cRamo); rovingFix(cEq);
+  q('#qv-0').textContent = st.ramo ? RAMOS[st.ramo].nome : 'A definir';
+  q('#qv-1').textContent = st.dores.length ? (st.dores.length === 1 ? '1 marcado' : st.dores.length + ' marcados') : 'Nada marcado';
+  q('#qv-2').textContent = st.equipe !== null ? EQUIPES_CURTO[st.equipe] + ' pessoas' : 'A definir';
+  qTabs[0].classList.toggle('set', !!st.ramo);
+  qTabs[1].classList.toggle('set', st.dores.length > 0);
+  qTabs[2].classList.toggle('set', st.equipe !== null);
+  qDone.hidden = !(st.ramo && st.dores.length && st.equipe !== null) || st.example;
+  /* WhatsApp com o resumo da planta */
+  const msg = planMessage(st, Dv);
+  setWaRaw(bwa, msg);
+  const fwa = q('#fin-wa');
+  setWaRaw(fwa, msg);
+  q('#fin-wa span').textContent = Dv.any && !st.example ? 'Enviar a minha planta' : 'Conversar no WhatsApp';
+  /* detalhes: as partes que estão na planta ganham a etiqueta */
+  const detIn = new Set(st.example ? [] : Dv.mods.map((m) => MODULOS[m].det));
+  qa('.det-tabs [role=tab]').forEach((b) => b.classList.toggle('in-plan', detIn.has(b.dataset.d)));
+  if (!detUser && detIn.size) { const first = DETALHES.find((d) => detIn.has(d.k)); if (first && first.k !== detCur) openDetail(first.k, false, true); }
+  if (demos.auto && demos.auto.setRamo && st.ramo && !st.example) demos.auto.setRamo(RAMOS[st.ramo].auto);
+  if (demos.app && demos.app.setRamo && st.ramo && !st.example) demos.app.setRamo(st.ramo);
+  if (demos.boards && demos.boards.rank) demos.boards.rank(st, Dv);
+  if (demos.fin && demos.fin.refresh) demos.fin.refresh();
+  if (!st.example) announce(st, Dv);
 }
-function layoutOf(name) {
-  const c = CH[name];
-  const nar = NARROW();
-  const L = nar ? c.m : c.d;
-  const vw = stage.viewWidth();
-  const k = nar ? clamp(vw / 3.7, 1, 1.6) : clamp(vw / 12.9, 0.7, 1.5);
-  const an = anchorOf(c);
-  const out = { x: L[0] * k, y: an ? anchorY(an) : L[1], s: L[2] * (nar ? k : clamp(k, 0.8, 1.15)), o: L[3] };
-  if (an && c.ax && !nar) out.x = anchorX(an);
+
+/* leitor de tela: conta o que mudou na planta */
+let annT = 0;
+function announce(st, Dv) {
+  clearTimeout(annT);
+  annT = setTimeout(() => {
+    const newD = Dv.dores.filter((d) => !lastAnnounce.dores.includes(d.k));
+    const newM = Dv.mods.filter((m) => !lastAnnounce.mods.includes(m));
+    const parts = [];
+    if (newD.length) parts.push('Marcado em vermelho: ' + newD.map((d) => lc1(d.nota)).join(', ') + '.');
+    if (newM.length) parts.push('Proposta em azul: ' + newM.map((m) => lc1(MODULOS[m].nome)).join(', ') + '.');
+    lastAnnounce = { dores: Dv.dores.map((d) => d.k), mods: Dv.mods.slice() };
+    if (parts.length) live.textContent = parts.join(' ');
+  }, 700);
+}
+
+function planMessage(st, Dv) {
+  if (st.example || !Dv.any) return waContext(st.example ? 'vi a planta de exemplo no site e quero desenhar a da minha empresa.' : 'quero conversar sobre uma solução para a minha empresa.');
+  const L = ['Olá, vim pelo site da Konan Tech e desenhei a planta da minha empresa.'];
+  if (st.nome) L.push('Empresa: ' + st.nome);
+  if (st.ramo) L.push('Ramo: ' + RAMOS[st.ramo].nome);
+  if (st.equipe !== null) L.push('Equipe: ' + EQUIPES[st.equipe].toLowerCase());
+  if (Dv.dores.length) L.push('O que trava hoje: ' + Dv.dores.map((d) => lc1(d.chip)).join('; '));
+  if (Dv.mods.length) L.push('Partes da planta: ' + Dv.mods.map((m) => MODULOS[m].nome).join('; '));
+  const link = shareUrl(st);
+  if (link) L.push('Planta: ' + link);
+  L.push('Quero conversar sobre como tirar essa planta do papel.');
+  return L.join('\n');
+}
+
+/* ---------- link da planta: #planta=ramo.dores.equipe.nome ---------- */
+function encodeState(st) {
+  return [st.ramo || 'x', st.dores.join('-') || 'x', st.equipe === null ? 'x' : st.equipe, encodeURIComponent(st.nome || '')].join('.');
+}
+function decodeState(s) {
+  const [r, d, e, n] = (s || '').split('.');
+  const out = { ramo: RAMOS[r] ? r : null, dores: (d || '').split('-').filter((k) => DORES.some((x) => x.k === k)), equipe: /^[0-3]$/.test(e || '') ? +e : null, nome: '' };
+  try { out.nome = decodeURIComponent(n || '').slice(0, 40); } catch (err) { out.nome = ''; }
   return out;
 }
+function shareUrl(st) {
+  if (IS_FILE) return '';
+  const base = location.origin + location.pathname;
+  return base + '#planta=' + encodeState(st);
+}
 
-function applyChapter(name, prev) {
-  if (!stage || !CH[name]) return;
-  const c = CH[name];
-  if (prev && CH[prev] && CH[prev].ctl && demos[CH[prev].ctl] && demos[CH[prev].ctl].leave) demos[CH[prev].ctl].leave();
-  if (name === 'hero') { heroShape(); return; }
-  if (c.ctl === 'universe') { withDemo('universe', (d) => d.enter && d.enter()); return; }
-  stage.setLayout(layoutOf(name));
-  if (c.split) {
-    withDemo('compare', (cmp) => {
-      if (chapter !== 'compare') return;
-      stage.beginSplit('chaosA', 'panel');
-      cmp.refresh();
-      cmp.invite();
-    });
+/* ---------- legenda sobre a planta ---------- */
+function showSub(who, text, hits, rec) {
+  subWho.textContent = who;
+  let start = 0;
+  if (text.length > 170) { start = text.indexOf(' ', text.length - 170) + 1 || text.length - 170; }
+  const tail = text.slice(start);
+  const th = (hits || []).filter((h) => h.a >= start).map((h) => ({ a: h.a - start, b: h.b - start, kind: h.kind }));
+  subT.innerHTML = text ? (start ? '… ' : '') + highlight(tail, th) : (rec ? 'Pode falar, estou ouvindo.' : 'Digitando…');
+  sub.classList.add('on');
+  sub.classList.toggle('rec', !!rec);
+  foot.classList.add('talk');
+  clearTimeout(subT_hide);
+}
+let subT_hide = 0;
+function hideSub(after) {
+  clearTimeout(subT_hide);
+  const go = () => { sub.classList.remove('on', 'rec'); foot.classList.remove('talk'); };
+  if (after) subT_hide = setTimeout(go, after); else go();
+}
+function msg(t, warn) { compMsg.textContent = t || ''; compMsg.classList.toggle('warn', !!warn); }
+
+/* ---------- exemplo que se desenha sozinho ao abrir a página ---------- */
+function clearTimers() { exTimers.forEach(clearTimeout); exTimers = []; }
+function runExample() {
+  if (mode !== 'idle') return;
+  mode = 'example';
+  if (REDUCED) {
+    const r = parse(EXEMPLO.texto);
+    spoken = { ramo: r.ramo, dores: r.dores, equipe: r.equipe };
+    apply();
+    showSub('Exemplo', EXEMPLO.texto, r.hits);
+    exTimers.push(setTimeout(() => { if (mode === 'example') msg('Este é um exemplo. Agora conte como a sua empresa funciona: fale, escreva ou toque nas opções.'); }, 400));
     return;
   }
-  if (c.ctl === 'finale') { withDemo('finale', (d) => d.enter()); return; }
-  const shape = name === 'solucoes' && svcShape ? svcShape : name === 'projetos' && pjShape ? pjShape : c.shape;
-  stage.setShape(shape, { dur: 2.4, spread: 1.1 });
-}
-
-function setChapter(name) {
-  if (name === chapter) return;
-  const prev = chapter;
-  chapter = name;
-  markNav(name);
-  applyChapter(name, prev);
-}
-const chIO = new IntersectionObserver((ents) => {
-  ents.forEach((e) => { if (e.isIntersecting) setChapter(e.target.dataset.ch); });
-}, { rootMargin: '-50% 0px -50% 0px' });
-qa('[data-ch]').forEach((s) => chIO.observe(s));
-
-/* ambiente escuro: cresce enquanto uma seção .dark cobre o centro da tela */
-const darks = qa('.dark');
-const prog = q('#prog');
-const steps = q('#steps');
-const stepItems = qa('.step');
-function onScroll() {
-  const vh = innerHeight;
-  let env = 0;
-  darks.forEach((s) => {
-    const r = s.getBoundingClientRect();
-    const top = r.top + 160, bot = r.bottom - 160;
-    const ov = Math.min(bot, vh * 0.72) - Math.max(top, vh * 0.28);
-    env = Math.max(env, clamp(ov / (vh * 0.44), 0, 1));
-  });
-  H.classList.toggle('dk', env > 0.5);
-  if (stage) {
-    stage.setEnv(env);
-    const c = chapter && CH[chapter];
-    const an = c && !c.ctl && anchorOf(c);
-    if (c && c.ctl === 'finale') { stage.yK = 10; stage.setLayout({ y: anchorY('#fin-mark') }); }
-    else if (an) { stage.yK = 10; stage.setLayout({ y: anchorY(an) }); if (c.ax && !NARROW()) stage.setLayout({ x: anchorX(an) }); }
-    else if (!c || !c.ctl) stage.yK = 2.2;
-  }
-  if (demos.universe && demos.universe.scroll) demos.universe.scroll();
-  const max = D.documentElement.scrollHeight - vh;
-  prog.style.transform = `scaleX(${max > 0 ? clamp(scrollY / max, 0, 1) : 0})`;
-  hd.classList.toggle('sc', scrollY > 8);
-  H.classList.toggle('fab-on', scrollY > vh * 0.7);
-  const rs = steps.getBoundingClientRect();
-  const f = clamp((vh * 0.8 - rs.top) / (rs.height + vh * 0.2), 0, 1);
-  steps.style.setProperty('--fill', f.toFixed(3));
-  stepItems.forEach((s, i) => s.classList.toggle('lit', f >= i / (stepItems.length - 1) - 0.02));
-}
-let scrollQueued = false;
-addEventListener('scroll', () => { if (!scrollQueued) { scrollQueued = true; requestAnimationFrame(() => { scrollQueued = false; onScroll(); }); } }, { passive: true });
-
-/* ---------- abertura: cinco cenas, legenda e controles ---------- */
-const cap = q('#scn-cap');
-const scnBtns = qa('#scn-rail button');
-const scnPP = q('#scn-pp');
-const LAST = HERO_SCENES.length - 1;
-let heroIdx = REDUCED ? LAST : 0, heroT = 0, heroPaused = REDUCED, heroLast = 0, heroStarted = false;
-
-function setCap(t) {
-  if (REDUCED) { cap.textContent = t; return; }
-  cap.style.opacity = 0;
-  setTimeout(() => { cap.textContent = t; cap.style.opacity = 1; }, 220);
-}
-function heroShape() {
-  if (!stage) return;
-  const sc = HERO_SCENES[heroIdx];
-  stage.setShape(sc.shape, sc.shape === 'logo' ? { dur: 3, spread: 0.9 } : { dur: 2.3, spread: 1.1 });
-  if (chapter === 'hero' || !chapter) stage.setLayout(heroLayout());
-}
-/* no computador, as partículas ocupam o espaço livre à direita do título, medido na hora */
-function heroLayout() {
-  const L = layoutOf('hero');
-  const sc = HERO_SCENES[heroIdx];
-  if (NARROW()) { L.s *= sc.shape === 'logo' ? 1.1 : (sc.k || 1); return L; }
-  const vw = stage.viewWidth(), half = vw / 2;
-  let right = q('.hero-sub').getBoundingClientRect().right;
-  const rg = D.createRange();
-  rg.selectNodeContents(q('#hero-h'));
-  right = Math.max(right, rg.getBoundingClientRect().right);
-  const xr = (right / innerWidth - 0.5) * vw;
-  const room = half - xr;
-  L.x = (xr + half) / 2 + 0.1;
-  L.y = sc.dy === undefined ? 0.15 : sc.dy;
-  L.s = clamp(room / 7.2, 0.42, 0.8) * (sc.k || 1);
-  if (sc.shape === 'logo') { L.s = clamp((room * 0.84) / 6.6, 0.36, 0.8); L.y = 0.3; }
-  return L;
-}
-function heroScene(i, user) {
-  heroIdx = clamp(i, 0, LAST);
-  heroT = 0;
-  scnBtns.forEach((b, k) => {
-    b.classList.toggle('cur', k === heroIdx);
-    b.classList.toggle('done', k < heroIdx);
-    b.style.setProperty('--f', k === heroIdx && heroIdx === LAST ? 1 : 0);
-    if (k === heroIdx) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
-  });
-  setCap(HERO_SCENES[heroIdx].cap);
-  if (heroIdx === LAST) setPaused(true, true);
-  else if (user && heroPaused && !REDUCED) setPaused(false);
-  if (chapter === 'hero' || !chapter) heroShape();
-}
-function heroTick(now) {
-  const dt = Math.min(0.1, (now - heroLast) / 1000 || 0);
-  heroLast = now;
-  if (heroStarted && !heroPaused && (chapter === 'hero' || !chapter) && !D.hidden && stage) {
-    heroT += dt;
-    const dur = HERO_SCENES[heroIdx].dur;
-    if (dur) {
-      scnBtns[heroIdx].style.setProperty('--f', clamp(heroT / dur, 0, 1).toFixed(3));
-      if (heroT >= dur) heroScene(heroIdx + 1);
+  showSub('Exemplo', '', []);
+  exCancel = typeOut(EXEMPLO.texto, (part, done) => {
+    if (mode !== 'example') return;
+    const r = parse(part);
+    spoken = { ramo: r.ramo, dores: r.dores, equipe: r.equipe };
+    apply();
+    showSub('Exemplo', part, r.hits);
+    if (done) {
+      exTimers.push(setTimeout(() => { if (mode === 'example') { plan.set3D(true, { orbit: true }); b3d.setAttribute('aria-pressed', 'true'); label3d(); } }, 1500));
+      exTimers.push(setTimeout(() => { if (mode === 'example') { plan.set3D(false); b3d.setAttribute('aria-pressed', 'false'); label3d(); hideSub(); } }, 8200));
+      exTimers.push(setTimeout(() => { if (mode === 'example') msg('Este foi um exemplo. Agora conte como a sua empresa funciona: fale, escreva ou toque nas opções.'); }, 9000));
     }
+  }, { cps: 24 });
+}
+/* o visitante começou: o exemplo some e a folha fica em branco */
+function stopExample() {
+  if (mode !== 'example') return;
+  if (exCancel) exCancel();
+  exCancel = null;
+  clearTimers();
+  mode = 'idle';
+  spoken = { ramo: null, dores: [], equipe: null };
+  plan.stopOrbit();
+  if (plan.d3.on) { plan.set3D(false); b3d.setAttribute('aria-pressed', 'false'); label3d(); }
+  hideSub();
+  msg('');
+  apply();
+}
+/* o visitante começou a responder: sai do exemplo; tocar nas opções não interrompe a voz ou o texto */
+function begin(newMode) {
+  const was = mode;
+  stopExample();
+  mode = newMode || (was === 'example' || was === 'idle' ? 'tap' : was);
+}
+
+/* ---------- voz ---------- */
+const voice = new Voice({
+  onText(text) {
+    const r = parse(text);
+    spoken = { ramo: r.ramo, dores: r.dores, equipe: r.equipe };
+    apply();
+    showSub('Você', text, r.hits, true);
+  },
+  onState(on) {
+    micBtn.setAttribute('aria-pressed', String(on));
+    micBtn.querySelector('span').textContent = on ? 'Ouvindo' : 'Falar';
+    subStop.hidden = !on;
+    if (on) { showSub('Você', '', [], true); msg('Fale como se estivesse explicando para um amigo: o ramo, quantas pessoas trabalham e o que mais atrapalha.'); }
+    else {
+      sub.classList.remove('rec');
+      hideSub(2200);
+      nextStep();
+    }
+  },
+  onEnd() {},
+  onError(code) {
+    const M = {
+      'not-allowed': 'O navegador não liberou o microfone. Você pode escrever ou tocar nas opções.',
+      'service-not-allowed': 'O navegador não liberou o reconhecimento de voz. Você pode escrever ou tocar nas opções.',
+      'no-speech': 'Não ouvi nada. Tente de novo mais perto do microfone, ou escreva.',
+      network: 'O reconhecimento de voz precisa de internet. Você pode escrever ou tocar nas opções.',
+      'audio-capture': 'Nenhum microfone encontrado. Você pode escrever ou tocar nas opções.',
+      unsupported: 'Este navegador não reconhece voz. Você pode escrever ou tocar nas opções.'
+    };
+    msg(M[code] || 'Não deu para ouvir agora. Você pode escrever ou tocar nas opções.', true);
   }
-  requestAnimationFrame(heroTick);
-}
-function setPaused(p, ended) {
-  heroPaused = p;
-  scnPP.setAttribute('aria-pressed', String(p && !ended));
-  scnPP.querySelector('use').setAttribute('href', p ? '#i-play' : '#i-pause');
-  scnPP.querySelector('.sr').textContent = ended ? 'Animação concluída. Tocar de novo' : p ? 'Continuar a animação' : 'Pausar a animação';
-  scnPP.classList.toggle('ended', !!ended);
-}
-scnBtns.forEach((b, k) => b.addEventListener('click', () => heroScene(k, true)));
-scnPP.addEventListener('click', () => {
-  if (heroIdx === LAST) { heroScene(0, true); setPaused(false); return; }
-  setPaused(!heroPaused);
 });
-q('#scn-again').addEventListener('click', () => {
-  if (!stage) return;
-  stage.setShape('seed', { instant: true, force: true });
-  heroScene(0, true);
-  if (!REDUCED) setPaused(false);
-  if (chapter !== 'hero') scrollToTarget(D.body);
+if (!SR) {
+  micBtn.hidden = true;
+  writeBtn.classList.replace('btn-ghost', 'btn-pri');
+}
+micBtn.addEventListener('click', () => {
+  if (voice.on) { voice.stop(); return; }
+  begin('voice');
+  setWrite(false);
+  voice.start();
+  if (narrow()) scrollToTarget(sheet, 8);
 });
-setPaused(heroPaused, REDUCED);
-scnBtns.forEach((b, k) => { b.classList.toggle('cur', k === heroIdx); b.classList.toggle('done', k < heroIdx); });
-cap.textContent = HERO_SCENES[heroIdx].cap;
-requestAnimationFrame(heroTick);
+subStop.addEventListener('click', () => voice.stop());
 
-/* ---------- títulos que ganham forma, revelações e números ---------- */
-initKinetic(qa('[data-k]'), { reduced: REDUCED });
-qa('.svc-list, .pj-g, .ai, .au, .steps, .who, .lab-g, .faq').forEach((e) => e.classList.add('rv'));
-const rvIO = new IntersectionObserver((ents) => ents.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); rvIO.unobserve(e.target); } }), { threshold: 0.08, rootMargin: '0px 0px -4% 0px' });
-qa('.rv').forEach((e) => rvIO.observe(e));
-function count(el) {
-  const to = +el.dataset.count, pre = el.dataset.pre || '';
-  if (REDUCED) { el.textContent = pre + to; return; }
-  const t0 = performance.now();
-  const tick = (now) => {
-    const k = Math.min(1, (now - t0) / 1600);
-    el.textContent = pre + Math.round(to * (1 - Math.pow(1 - k, 3)));
-    if (k < 1) requestAnimationFrame(tick);
-  };
-  requestAnimationFrame(tick);
+/* ---------- texto ---------- */
+function setWrite(open) {
+  compW.hidden = !open;
+  writeBtn.setAttribute('aria-expanded', String(open));
 }
-const numIO = new IntersectionObserver((ents) => ents.forEach((e) => { if (e.isIntersecting) { count(e.target); numIO.unobserve(e.target); } }), { threshold: 0.6 });
-qa('[data-count]').forEach((e) => numIO.observe(e));
-
-/* ---------- soluções: cada frente muda a forma dos dados ---------- */
-const svcItems = qa('.svc-i');
-function svcOn(li) {
-  svcItems.forEach((x) => x.classList.toggle('on', x === li));
-  svcShape = li ? li.dataset.shape : null;
-  if (stage && chapter === 'solucoes') stage.setShape(svcShape || CH.solucoes.shape, { dur: 1.7, spread: 0.8 });
-}
-svcItems.forEach((li) => {
-  const a = q('.svc-a', li);
-  a.addEventListener('mouseenter', () => svcOn(li));
-  a.addEventListener('focus', () => svcOn(li));
+writeBtn.addEventListener('click', () => {
+  const open = compW.hidden;
+  if (open) { begin('text'); if (voice.on) voice.stop(); }
+  setWrite(open);
+  if (open) { txt.focus(); msg(''); }
 });
-if (svcItems[0]) svcItems[0].classList.add('on');
-svcShape = svcItems[0] ? svcItems[0].dataset.shape : null;
-if (!FINE) {
-  const svIO = new IntersectionObserver((ents) => ents.forEach((e) => { if (e.isIntersecting) svcOn(e.target); }), { rootMargin: '-45% 0px -45% 0px' });
-  svcItems.forEach((li) => svIO.observe(li));
+let txtT = 0;
+function readText(final) {
+  const v = txt.value.trim();
+  const r = parse(v);
+  spoken = { ramo: r.ramo, dores: r.dores, equipe: r.equipe };
+  apply();
+  if (v) { showSub('Você', v, r.hits); hideSub(final ? 2600 : 4200); } else hideSub();
+  if (final) {
+    if (!r.ramo && !r.dores.length && r.equipe === null) msg('Não reconheci o ramo nem o que trava. Tente contar com outras palavras ou toque nas opções.', true);
+    else msg('');
+    nextStep();
+    if (narrow()) scrollToTarget(sheet, 8);
+  }
 }
+txt.addEventListener('input', () => { begin('text'); clearTimeout(txtT); txtT = setTimeout(() => readText(false), 160); });
+txt.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); readText(true); } });
+txtGo.addEventListener('click', () => readText(true));
 
-/* o botão flutuante sai de cena quando outro botão de WhatsApp grande está na tela */
-const fabSeen = new Set();
-const fabIO = new IntersectionObserver((ents) => { ents.forEach((e) => { if (e.isIntersecting) fabSeen.add(e.target); else fabSeen.delete(e.target); }); H.classList.toggle('fab-hide', fabSeen.size > 0); }, { threshold: 0.2 });
-qa('.fin-msg .hero-cta, .lab-out .btn, .cv-ask').forEach((el) => fabIO.observe(el));
+/* ---------- perguntas: abas e opções ---------- */
+let qCur = 0;
+function setTab(i, focus) {
+  qCur = i;
+  qTabs.forEach((t, k) => { t.setAttribute('aria-selected', String(k === i)); t.tabIndex = k === i ? 0 : -1; });
+  qPanes.forEach((p, k) => { p.hidden = k !== i; });
+  if (focus) qTabs[i].focus();
+}
+qTabs.forEach((t, i) => {
+  t.addEventListener('click', () => setTab(i));
+  t.addEventListener('keydown', (e) => {
+    const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+    if (!d) return;
+    e.preventDefault();
+    setTab((i + d + 3) % 3, true);
+  });
+});
+function nextStep() {
+  const st = effective();
+  if (!st.ramo) setTab(0);
+  else if (!st.dores.length) setTab(1);
+  else if (st.equipe === null) setTab(2);
+}
+function startTap() {
+  begin('tap');
+  if (narrow()) scrollToTarget(q('#qs'), 8);
+  else scrollToTarget(q('#planta'), 200);
+  nextStep();
+  const pane = qPanes[qCur];
+  const first = pane.querySelector('[aria-checked=true], [role=radio], button');
+  if (first) setTimeout(() => first.focus({ preventScroll: true }), REDUCED ? 0 : 500);
+}
+/* grupos de escolha única: setas mudam a opção */
+function rovingFix(btns) {
+  const sel = btns.find((b) => b.getAttribute('aria-checked') === 'true') || btns[0];
+  btns.forEach((b) => { b.tabIndex = b === sel ? 0 : -1; });
+}
+function radios(btns, onPick) {
+  btns.forEach((b, k) => {
+    b.addEventListener('click', () => onPick(b, k));
+    b.addEventListener('keydown', (e) => {
+      const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+      if (!d) return;
+      e.preventDefault();
+      const n = (k + d + btns.length) % btns.length;
+      btns[n].focus();
+      onPick(btns[n], n, true);
+    });
+  });
+}
+let advT = 0;
+radios(cRamo, (b, k, kb) => {
+  begin();
+  manual.ramo = b.dataset.v;
+  apply();
+  clearTimeout(advT);
+  if (!kb) advT = setTimeout(() => { if (!effective().dores.length) setTab(1); }, REDUCED ? 0 : 420);
+});
+cDor.forEach((b) => b.addEventListener('click', () => {
+  begin();
+  const k = b.dataset.v;
+  const on = effective().dores.includes(k);
+  if (on) { manual.on.delete(k); if (spoken.dores.includes(k)) manual.off.add(k); }
+  else { manual.off.delete(k); manual.on.add(k); }
+  apply();
+}));
+q('.q-next').addEventListener('click', () => setTab(2, true));
+radios(cEq, (b) => {
+  begin();
+  manual.equipe = +b.dataset.v;
+  apply();
+});
+let nomeT = 0;
+nomeIn.addEventListener('input', () => { begin(); clearTimeout(nomeT); nomeT = setTimeout(() => { manual.nome = nomeIn.value.trim(); apply(); }, 250); });
+
+/* ---------- barra: 3D, WhatsApp, PDF e link ---------- */
+function label3d() { b3d.querySelector('span').textContent = plan.d3.on ? 'Voltar para a planta' : 'Levantar em 3D'; }
+b3d.addEventListener('click', () => {
+  if (mode === 'example') { plan.stopOrbit(); clearTimers(); hideSub(); }
+  const on = !plan.d3.on;
+  plan.set3D(on);
+  b3d.setAttribute('aria-pressed', String(on));
+  sheet.tabIndex = on ? 0 : -1;
+  label3d();
+});
+bpdf.addEventListener('click', () => { if (mode === 'example') { clearTimers(); plan.stopOrbit(); } window.print(); });
+let titleBefore = D.title;
+addEventListener('beforeprint', () => {
+  titleBefore = D.title;
+  const st = effective();
+  D.title = 'Planta do sistema' + (st.nome ? ', ' + st.nome : '') + ', Konan Tech';
+  plan.forceOrient = 'land';
+  if (plan.d3.on || plan.d3.rise > 0) { plan.set3D(false, { instant: true }); b3d.setAttribute('aria-pressed', 'false'); label3d(); }
+  plan.relayout(true);
+});
+addEventListener('afterprint', () => { D.title = titleBefore; plan.forceOrient = null; plan.relayout(true); });
+if (IS_FILE) blink.hidden = true;
+blink.addEventListener('click', async () => {
+  const url = shareUrl(effective());
+  let ok = false;
+  try { await navigator.clipboard.writeText(url); ok = true; } catch (e) {
+    const t = D.createElement('textarea');
+    t.value = url; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+    D.body.append(t); t.select();
+    try { ok = D.execCommand('copy'); } catch (err) { ok = false; }
+    t.remove();
+  }
+  const s = blink.querySelector('span');
+  s.textContent = ok ? 'Link copiado' : 'Não deu para copiar';
+  blink.classList.toggle('ok', ok);
+  setTimeout(() => { s.textContent = 'Copiar link'; blink.classList.remove('ok'); }, 2400);
+});
+
+/* bolinhas de dados só correm com a planta na tela */
+const deskIO = new IntersectionObserver((ents) => ents.forEach((e) => plan.pause(!e.isIntersecting)), { threshold: 0 });
+deskIO.observe(sheet);
+
+/* ============================================================
+   DETALHES
+   ============================================================ */
+const detTabs = qa('.det-tabs [role=tab]');
+let detCur = 'ia', detUser = false;
+function openDetail(k, scroll, quiet) {
+  if (!detTabs.some((b) => b.dataset.d === k)) return;
+  if (scroll) detUser = true;
+  detCur = k;
+  detTabs.forEach((b) => { const on = b.dataset.d === k; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+  qa('.det-p').forEach((p) => { p.hidden = p.id !== 'detalhe-' + k; });
+  if (!quiet || detNear) loadDetail(k);
+  if (scroll) scrollToTarget(q('#detalhes'), 10);
+}
+detTabs.forEach((b, i) => {
+  b.addEventListener('click', () => { detUser = true; openDetail(b.dataset.d); });
+  b.addEventListener('keydown', (e) => {
+    const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+    if (!d) return;
+    e.preventDefault();
+    const n = detTabs[(i + d + detTabs.length) % detTabs.length];
+    detUser = true;
+    openDetail(n.dataset.d);
+    n.focus();
+  });
+});
+const DET_DEMO = { ia: 'ia', auto: 'auto', painel: 'painel', app: 'app' };
+function loadDetail(k) { if (DET_DEMO[k]) loadDemo(DET_DEMO[k]); }
+let detNear = false;
 
 /* ---------- perguntas frequentes ---------- */
 qa('.fq').forEach((f) => {
@@ -315,107 +481,118 @@ qa('.fq').forEach((f) => {
   b.addEventListener('click', () => { const open = !f.classList.contains('open'); f.classList.toggle('open', open); b.setAttribute('aria-expanded', String(open)); });
 });
 
-/* ---------- demonstrações: cada uma carrega quando a seção se aproxima ---------- */
+/* ---------- botão flutuante do WhatsApp ---------- */
+let fabT = 0;
+addEventListener('scroll', () => { if (!fabT) fabT = requestAnimationFrame(() => { fabT = 0; H.classList.toggle('fab-on', scrollY > innerHeight * 0.75); }); }, { passive: true });
+const fabSeen = new Set();
+const fabIO = new IntersectionObserver((ents) => { ents.forEach((e) => { if (e.isIntersecting) fabSeen.add(e.target); else fabSeen.delete(e.target); }); H.classList.toggle('fab-hide', fabSeen.size > 0); }, { threshold: 0.2 });
+qa('.bar, .fin-msg .cta, .cv-ask, .ft-block').forEach((el) => fabIO.observe(el));
+
+/* ============================================================
+   DEMONSTRAÇÕES E FINAL (carregam quando se aproximam)
+   ============================================================ */
 const ctx = {
-  reduced: REDUCED, fine: FINE, narrow: NARROW, setWa, waLink, waContext,
-  stage: () => stage, lenis: () => lenis, chapter: () => chapter, anchorY, anchorX, scrollTo: (el) => scrollToTarget(el),
-  onProject: (shape) => { pjShape = shape; if (stage && chapter === 'projetos' && !NARROW()) stage.setShape(shape, { dur: 1.8, spread: 0.8 }); },
-  refreshLayout: () => { if (stage && chapter && CH[chapter] && !CH[chapter].ctl) stage.setLayout(layoutOf(chapter)); }
+  reduced: REDUCED, fine: FINE, setWa, waLink, waContext,
+  stage: () => null, chapter: () => null,
+  lenis: () => lenis,
+  scrollTo: (el) => scrollToTarget(el),
+  plan,
+  ramo: () => { const st = effective(); return st.example ? null : st.ramo; },
+  autoRamo: () => { const st = effective(); return st.ramo && !st.example ? RAMOS[st.ramo].auto : 0; },
+  finalState: () => { const st = effective(); const Dv = derive(st); if (Dv.any && !st.example) return st; const r = parse(EXEMPLO.texto); return { ramo: r.ramo, dores: r.dores, equipe: r.equipe, nome: '', example: true }; },
+  getStage
 };
 const LOADERS = {
-  cases: [() => import('./demos/cases.js'), (m) => m.initCases(q('#projetos'), ctx)],
-  ai: [() => import('./demos/ai.js'), (m) => m.initAI(q('#ia'), ctx)],
-  auto: [() => import('./demos/auto.js'), (m) => m.initAuto(q('#automacao'), ctx)],
-  universe: [() => import('./demos/universe.js'), (m) => m.initUniverse(q('#sistemas'), ctx)],
-  compare: [() => import('./demos/compare.js'), (m) => m.initCompare(q('#antes-depois'), { reduced: REDUCED, onMove: (x) => { if (stage) stage.setDivider(x); } })],
-  lab: [() => import('./demos/lab.js'), (m) => m.initLab(q('#diagnostico'), ctx)],
-  finale: [() => import('./demos/finale.js'), (m) => m.initFinale(q('#fim'), ctx)]
+  ia: [() => import('./demos/ai.js'), (m) => m.initAI(q('#detalhe-ia'), ctx)],
+  auto: [() => import('./demos/auto.js'), (m) => m.initAuto(q('#detalhe-auto'), ctx)],
+  painel: [() => import('./demos/dash.js'), (m) => m.initDash(q('#detalhe-painel'), ctx)],
+  app: [() => import('./demos/team.js'), (m) => m.initTeam(q('#detalhe-app'), ctx)],
+  boards: [() => import('./demos/boards.js'), (m) => m.initBoards(q('#projetos'), ctx)],
+  fin: [() => import('./demos/liftoff.js'), (m) => m.initLiftoff(q('#fim'), ctx)]
 };
 const loading = {};
 function loadDemo(name) {
   if (!loading[name]) {
     const [imp, init] = LOADERS[name];
-    loading[name] = imp().then((m) => { demos[name] = init(m) || {}; return demos[name]; }).catch((err) => { console.warn('demo', name, err); demos[name] = {}; return demos[name]; });
+    loading[name] = imp().then((m) => {
+      demos[name] = init(m) || {};
+      const st = effective();
+      const Dv = derive(st);
+      if (name === 'boards' && demos.boards.rank) demos.boards.rank(st, Dv);
+      return demos[name];
+    }).catch((err) => { console.warn('demo', name, err); demos[name] = {}; return demos[name]; });
   }
   return loading[name];
 }
-function withDemo(name, fn) { if (demos[name]) fn(demos[name]); else loadDemo(name).then(fn); }
-const SEC_DEMO = { projetos: 'cases', ia: 'ai', automacao: 'auto', sistemas: 'universe', 'antes-depois': 'compare', diagnostico: 'lab', fim: 'finale' };
-const lzIO = new IntersectionObserver((ents) => ents.forEach((e) => { if (e.isIntersecting) { loadDemo(SEC_DEMO[e.target.id]); lzIO.unobserve(e.target); } }), { rootMargin: '140% 0px 140% 0px' });
-Object.keys(SEC_DEMO).forEach((id) => { const el = q('#' + id); if (el) lzIO.observe(el); });
-if (/^#projeto-/.test(location.hash)) loadDemo('cases');
+const lzIO = new IntersectionObserver((ents) => ents.forEach((e) => {
+  if (!e.isIntersecting) return;
+  const id = e.target.id;
+  if (id === 'detalhes') { detNear = true; loadDetail(detCur); }
+  if (id === 'projetos') loadDemo('boards');
+  if (id === 'fim') loadDemo('fin');
+  lzIO.unobserve(e.target);
+}), { rootMargin: '120% 0px 120% 0px' });
+['detalhes', 'projetos', 'fim'].forEach((id) => lzIO.observe(D.getElementById(id)));
+if (/^#projeto-/.test(location.hash)) loadDemo('boards');
 
-/* ---------- palco 3D (carrega depois do conteúdo) ---------- */
-const PREWARM = ['dust', 'neural', 'circuit', 'iface', 'logo', 'blocks', 'screens', 'flow', 'brain', 'dashboard', 'globe', 'city', 'streams', 'panel', 'chaosA', 'helix', 'vortex'];
-async function initStage() {
-  const canvas = q('#stage');
-  const gl = probeGL();
-  if (!gl.ok) { H.classList.add('no-gl'); return; }
-  const tier = pickTier(gl);
-  H.classList.add('tier-' + tier);
-  try {
-    const { Stage } = await import('./stage.js');
-    stage = new Stage(canvas, { count: TIERS[tier].count, dpr: TIERS[tier].dpr, tier, reduced: REDUCED });
-    await stage.init('assets/konan-logo.png');
-  } catch (err) {
-    console.warn('palco 3D indisponível', err);
-    stage = null;
-    H.classList.add('no-gl');
-    return;
-  }
-  H.classList.add('gl-on');
-  const first = chapter || 'hero';
-  if (first === 'hero' && !REDUCED) stage.setShape('seed', { instant: true });
-  else if (!CH[first].ctl) stage.setShape(first === 'hero' ? 'logo' : CH[first].shape, { instant: true });
-  stage.setLayout(Object.assign(first === 'hero' ? heroLayout() : CH[first].ctl ? { x: 0, y: 0, s: 1 } : layoutOf(first), { o: 0 }), true);
-  stage.start();
-  onScroll();
-  stage.setEnv(stage.envT, true);
-  setTimeout(() => {
-    heroStarted = true;
-    if (!chapter || chapter === 'hero') { stage.setLayout(heroLayout()); heroScene(heroIdx); } else applyChapter(chapter);
-    stage.prewarm(PREWARM);
-  }, REDUCED ? 0 : 420);
-  if (FINE) {
-    addEventListener('pointermove', (e) => stage.pointer((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), { passive: true });
-  }
-  /* toque rápido solta uma onda; clicar e segurar num espaço vazio atrai os dados; soltar reorganiza */
-  let holdT = 0;
-  const free = (t) => !t.closest('a, button, input, select, textarea, label, dialog, .cmp, .dash, .ai, .au, .lab-g, .pj-g, p, h1, h2, h3, li, figure, blockquote');
-  addEventListener('pointerdown', (e) => {
-    const x = (e.clientX / innerWidth) * 2 - 1, y = -(e.clientY / innerHeight) * 2 + 1;
-    stage.pointer(x, y);
-    if (!free(e.target)) return;
-    stage.pulse(x, y);
-    if (FINE && e.button === 0) { clearTimeout(holdT); holdT = setTimeout(() => { stage.attract(true); H.classList.add('attracting'); }, 170); }
-  }, { passive: true });
-  const release = () => { clearTimeout(holdT); if (stage) stage.attract(false); H.classList.remove('attracting'); };
-  addEventListener('pointerup', release, { passive: true });
-  addEventListener('pointercancel', release, { passive: true });
-  addEventListener('blur', release);
-  D.addEventListener('visibilitychange', () => { if (D.hidden) stage.stop(); else if (!H.classList.contains('cv-open')) stage.start(); });
+/* ---------- palco de partículas (só para o final) ---------- */
+function getStage() {
+  if (stagePromise) return stagePromise;
+  stagePromise = (async () => {
+    const gl = probeGL();
+    if (!gl.ok) { H.classList.add('no-gl'); return null; }
+    const tier = pickTier(gl);
+    H.classList.add('tier-' + tier);
+    try {
+      const { Stage } = await import('./stage.js');
+      stage = new Stage(q('#stage'), { count: TIERS[tier].count, dpr: TIERS[tier].dpr, tier, reduced: REDUCED });
+      await stage.init('assets/konan-logo.png');
+      D.addEventListener('visibilitychange', () => { if (D.hidden && stage) stage.stop(); });
+      return stage;
+    } catch (err) {
+      console.warn('palco 3D indisponível', err);
+      stage = null;
+      H.classList.add('no-gl');
+      return null;
+    }
+  })();
+  return stagePromise;
 }
 
-let rzT;
+/* ---------- tamanho da tela ---------- */
+let rzT = 0, lastW = innerWidth;
 addEventListener('resize', () => {
   clearTimeout(rzT);
   rzT = setTimeout(() => {
-    if (stage) {
-      stage.resize();
-      if (chapter === 'hero') stage.setLayout(heroLayout());
-      else if (chapter && CH[chapter] && !CH[chapter].ctl) stage.setLayout(layoutOf(chapter));
-      if (demos.compare && demos.compare.refresh) demos.compare.refresh();
-      if (demos.universe && demos.universe.resize) demos.universe.resize();
-      if (demos.finale && demos.finale.resize) demos.finale.resize();
-    }
-    onScroll();
+    if (innerWidth !== lastW || plan.d3.on) plan.relayout();
+    lastW = innerWidth;
+    if (stage && H.classList.contains('fin-live')) stage.resize();
   }, 140);
 });
 
-window.konan = { stage: () => stage, lenis: () => lenis, chapter: () => chapter, setChapter, demos, loadDemo };
-onScroll();
-markNav('hero');
-const startStage = () => initStage();
-if ('requestIdleCallback' in window) requestIdleCallback(startStage, { timeout: 900 }); else setTimeout(startStage, 200);
-setTimeout(() => loadDemo('cases'), 1200);
+/* ---------- começo: planta por link, ou o exemplo ---------- */
+const hashPlan = /^#planta=(.+)$/.exec(location.hash);
+if (hashPlan) {
+  const st = decodeState(hashPlan[1]);
+  mode = 'tap';
+  manual.ramo = st.ramo;
+  manual.equipe = st.equipe;
+  st.dores.forEach((k) => manual.on.add(k));
+  manual.nome = st.nome;
+  nomeIn.value = st.nome;
+  apply();
+  msg('Esta planta chegou por link. Você pode ajustar as respostas e mandar de volta pelo WhatsApp.');
+  nextStep();
+} else {
+  apply();
+  /* o exemplo espera a fonte carregar, para a planta medir os textos com a letra certa */
+  const fontsReady = D.fonts && D.fonts.status !== 'loaded' ? D.fonts.ready : Promise.resolve();
+  Promise.race([fontsReady, new Promise((r) => setTimeout(r, 2500))]).then(() => {
+    plan.relayout(true);
+    setTimeout(() => { if (scrollY < innerHeight * 0.6 && !D.hidden) runExample(); }, REDUCED ? 200 : 700);
+  });
+}
+setTimeout(() => loadDemo('boards'), 1400);
+
+window.konan = { plan, lenis: () => lenis, demos, loadDemo, state: effective, manual, runExample, stopExample, openDetail, getStage, mode: () => mode };
 window.__ktReady = true;
