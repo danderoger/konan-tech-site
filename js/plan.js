@@ -14,6 +14,10 @@ import { RAMOS, DOR, DORES, MODULOS, MOD_ORDER, DET_N, EQUIPES_CURTO } from './c
 
 const NS = 'http://www.w3.org/2000/svg';
 const ROOM_KEYS = ['fin', 'mgmt', 'in', 'ops', 'sup'];
+/* salas de baixo: a porta do corredor fica no alto, à direita */
+const BOTTOM = ['in', 'ops', 'sup'];
+/* espaço do triângulo de revisão antes de cada nota (em múltiplos do tamanho da letra) */
+const NOTE_BULLET = 1.42;
 const EASE = 'cubic-bezier(.22,.75,.12,1)';
 const EQ_FRASE = ['Equipe de até 5 pessoas', 'Equipe de 6 a 20 pessoas', 'Equipe de 21 a 50 pessoas', 'Equipe de mais de 50 pessoas'];
 
@@ -38,7 +42,10 @@ const GEO = {
     walk: [40, 456, 660, 492], road: [40, 492, 660, 540],
     ext: [690, 82, 960, 318],
     extPath: [[690, 200], [655, 200], [655, 255], [620, 255]], extSide: 'L',
-    cdoor: { fin: 300, mgmt: 560, in: 220, ops: 400, sup: 578 },
+    /* portas para o corredor: nas salas de baixo ficam no canto direito, longe do nome da sala */
+    cdoor: { fin: 300, mgmt: 560, in: 241, ops: 419, sup: 595 }, dw: 34,
+    /* nome do corredor entre as portas de cima (os fluxos que descem não passam por ele) */
+    corX: 430,
     entrance: [175, 456],
     sign: [196, 464, 340, 486], streetCloud: [104, 461, 352, 489], streetNote: [374, 481],
     bubX: [86, 264, 442, 620], bubY: 44, bubR: 12, bubRows: [82, 255, 456], bubRowX: 50,
@@ -55,7 +62,7 @@ const GEO = {
       ],
       I: [
         [86, 236, 620, 236, [[300, 34, 'd', -1, 'a'], [560, 34, 'd', -1, 'b']]],
-        [86, 274, 620, 274, [[220, 34, 'd', 1, 'a'], [400, 34, 'd', 1, 'a'], [578, 34, 'd', 1, 'b']]],
+        [86, 274, 620, 274, [[241, 34, 'd', 1, 'b'], [419, 34, 'd', 1, 'b'], [595, 34, 'd', 1, 'b']]],
         [353, 82, 353, 236, []],
         [264, 274, 264, 456, []],
         [442, 274, 442, 456, []]
@@ -74,7 +81,8 @@ const GEO = {
     walk: [12, 324, 388, 348], road: [12, 348, 388, 374],
     ext: [158, 388, 372, 474],
     extPath: [[372, 431], [381, 431], [381, 162], [372, 162]], extSide: 'R',
-    cdoor: { fin: 160, mgmt: 330, in: 110, ops: 222, sup: 336 },
+    cdoor: { fin: 160, mgmt: 330, in: 127, ops: 241, sup: 353 }, dw: 26,
+    corX: 245,
     entrance: [85, 324],
     sign: [100, 329, 214, 344], streetCloud: [38, 327, 222, 346], streetNote: [240, 340],
     bubX: [28, 143, 258, 372], bubY: 25, bubR: 8, bubRows: null,
@@ -91,14 +99,14 @@ const GEO = {
       ],
       I: [
         [28, 150, 372, 150, [[160, 26, 'd', -1, 'a'], [330, 26, 'd', -1, 'b']]],
-        [28, 174, 372, 174, [[110, 26, 'd', 1, 'a'], [222, 26, 'd', 1, 'a'], [336, 26, 'd', 1, 'b']]],
+        [28, 174, 372, 174, [[127, 26, 'd', 1, 'b'], [241, 26, 'd', 1, 'b'], [353, 26, 'd', 1, 'b']]],
         [200, 42, 200, 150, []],
         [143, 174, 143, 324, []],
         [258, 174, 258, 324, []]
       ]
     },
     t: { E: 6, I: 3.5 }, H: 44, cloudStep: 14,
-    fs: { room: 15, note: 12.5, mod: 12.5, small: 10.5, bub: 10, lab: 9.5, val: 12, carT: 15, dot: 2.8 },
+    fs: { room: 15, note: 12, mod: 12.5, small: 10.5, bub: 10, lab: 9.5, val: 12, carT: 15, dot: 2.8 },
     pad: 9
   }
 };
@@ -179,7 +187,10 @@ class Painter {
     this.links = o.links !== false;
     this.items = new Map();
     this.bldOn = false;
-    this.revAt = {};
+    /* revisão em que cada atrito foi marcado (o triângulo ao lado de cada nota vermelha);
+       vem da planta, para sobreviver quando a folha é refeita (troca de tamanho de tela) */
+    this.revAt = o.revAt || {};
+    this.labCache = {};
     const [w, h] = this.geo.vb;
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
     svg.classList.add('plan', 'pl-' + orient);
@@ -194,6 +205,8 @@ class Painter {
     this.gExt = L('l-ext');
     this.gFlows = L('l-flows');
     this.gBase = L('l-base');
+    /* nomes por cima dos fluxos e das portas: o contorno branco das letras interrompe as linhas que passam atrás */
+    this.gNames = L('l-names');
     this.gMods = L('l-mods');
     this.gMarks = L('l-marks');
     this.gCar = L('l-car');
@@ -356,14 +369,15 @@ class Painter {
       return { g: gg, leaf: S('path', { d: sym.leaf, class: 'door-leaf' }, gg), arc: S('path', { d: sym.arc, class: 'door-arc' }, gg) };
     });
     /* nomes das áreas */
+    const N = this.gNames;
     this.roomT = {};
     ROOM_KEYS.forEach((k) => {
       const [x0, y0] = g.rooms[k];
-      this.roomT[k] = S('text', { x: x0 + g.pad, y: y0 + g.pad + fs.room * 0.82, class: 'room-t', 'font-size': fs.room }, B);
+      this.roomT[k] = S('text', { x: x0 + g.pad, y: y0 + g.pad + fs.room * 0.82, class: 'room-t', 'font-size': fs.room }, N);
     });
-    const [cx0, cy0, cx1, cy1] = g.cor;
-    /* o nome do corredor fica na metade de cima; os fluxos de dados correm na metade de baixo */
-    this.corT = S('text', { x: (cx0 + cx1) / 2, y: cy0 + (cy1 - cy0) * 0.3 + fs.small * 0.36, class: 'cor-t', 'font-size': fs.small, 'text-anchor': 'middle' }, B);
+    const [, cy0, , cy1] = g.cor;
+    /* o nome do corredor fica na metade de cima, entre as portas de cima; os fluxos de dados correm na metade de baixo */
+    this.corT = S('text', { x: g.corX, y: cy0 + (cy1 - cy0) * 0.3 + fs.small * 0.36, class: 'cor-t', 'font-size': fs.small, 'text-anchor': 'middle' }, N);
     this.corT.textContent = 'Circulação';
     /* rua */
     const R = this.gStreet;
@@ -380,7 +394,7 @@ class Painter {
     const X = this.gExt, [ex0, ey0, ex1, ey1] = g.ext;
     this.extR = S('rect', { x: ex0, y: ey0, width: ex1 - ex0, height: ey1 - ey0, class: 'ext-r' }, X);
     this.extP = S('path', { d: 'M' + g.extPath.map((p) => p.join(',')).join(' L'), class: 'ext-p' }, X);
-    this.extT = S('text', { x: ex0 + g.pad, y: ey0 + g.pad + fs.room * 0.82, class: 'room-t', 'font-size': fs.room }, X);
+    this.extT = S('text', { x: ex0 + g.pad, y: ey0 + g.pad + fs.room * 0.82, class: 'room-t', 'font-size': fs.room }, N);
     this.people = S('g', { class: 'people' }, X);
     const pc = this.orient === 'land' ? [[ex1 - 74, ey0 + 98], [ex1 - 50, ey0 + 108], [ex1 - 26, ey0 + 96]] : [[ex1 - 56, ey0 + 32], [ex1 - 38, ey0 + 38], [ex1 - 20, ey0 + 30]];
     const k = this.orient === 'land' ? 1 : 0.75;
@@ -388,13 +402,13 @@ class Painter {
       S('circle', { cx: x, cy: y, r: 3.4 * k }, this.people);
       S('path', { d: `M${f1(x - 6 * k)},${f1(y + 14 * k)} C${f1(x - 6 * k)},${f1(y + 6 * k)} ${f1(x + 6 * k)},${f1(y + 6 * k)} ${f1(x + 6 * k)},${f1(y + 14 * k)}` }, this.people);
     });
-    [this.gBld, this.gStreet, this.gExt].forEach((G) => { G.style.display = 'none'; });
+    [this.gBld, this.gStreet, this.gExt, this.gNames].forEach((G) => { G.style.display = 'none'; });
   }
 
   showBuilding(on) {
     if (on === this.bldOn) return;
     this.bldOn = on;
-    const groups = [this.gBld, this.gStreet, this.gExt];
+    const groups = [this.gBld, this.gStreet, this.gExt, this.gNames];
     if (!on) {
       groups.forEach((G) => { if (this.anim && G.animate) { const an = G.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 320, easing: 'ease-out' }); an.onfinish = () => { if (!this.bldOn) G.style.display = 'none'; }; } else G.style.display = 'none'; });
       this.gEmpty.style.display = '';
@@ -458,27 +472,76 @@ class Painter {
     this.a(el, [{ opacity: 0.15 }, { opacity: 1 }], { duration: 480 });
   }
 
+  /* nome da sala: nas salas de baixo a primeira linha termina antes da porta. Nome comprido quebra em duas linhas;
+     se for uma palavra só, a letra diminui um pouco */
+  labelFit(r, name) {
+    const key = r + '|' + name;
+    if (this.labCache[key]) return this.labCache[key];
+    const g = this.geo, fs = g.fs, pad = g.pad;
+    const [x0, y0, x1] = r === 'ext' ? g.ext : g.rooms[r];
+    const x = x0 + pad, W = x1 - x0 - pad * 2;
+    const avail = BOTTOM.includes(r) ? g.cdoor[r] - g.dw / 2 - 2 - x : W;
+    let size = fs.room, lines = [name];
+    const w = this.measure(name, size, 'room-t');
+    if (w > avail) {
+      let best = null;
+      for (let i = 1; i < name.length - 1; i++) {
+        if (name[i] !== ' ') continue;
+        const a = name.slice(0, i), b = name.slice(i + 1);
+        const wa = this.measure(a, size, 'room-t'), wb = this.measure(b, size, 'room-t');
+        if (wa <= avail && wb <= W) { const sc = Math.max(wa, wb); if (!best || sc < best[0]) best = [sc, a, b]; }
+      }
+      if (best) lines = [best[1], best[2]];
+      else size = Math.max(fs.room * 0.84, fs.room * (avail / w));
+    }
+    const out = { lines, size, x, y: y0 + pad + size * 0.82, lh: size * 1.08 };
+    out.bottom = out.y + (lines.length - 1) * out.lh;
+    this.labCache[key] = out;
+    return out;
+  }
+
+  setLabel(el, lab) {
+    const sig = lab.lines.join('|') + '@' + f1(lab.size);
+    if (!el || el.getAttribute('data-sig') === sig) return;
+    el.setAttribute('data-sig', sig);
+    el.setAttribute('font-size', f1(lab.size));
+    el.setAttribute('y', f1(lab.y));
+    el.textContent = '';
+    /* o espaço no fim da linha não aparece, mas mantém o nome inteiro para leitores de tela ("Agenda e rotas") */
+    lab.lines.forEach((l, i) => { const t = S('tspan', { x: f1(lab.x), dy: i ? f1(lab.lh) : null }, el); t.textContent = l + (i < lab.lines.length - 1 ? ' ' : ''); });
+    this.a(el, [{ opacity: 0.15 }, { opacity: 1 }], { duration: 480 });
+  }
+
   /* posição de notas e módulos em cada área */
   layout(D) {
-    const g = this.geo, fs = g.fs, pad = g.pad, out = { notes: {}, mods: {} };
+    const g = this.geo, fs = g.fs, pad = g.pad, out = { notes: {}, mods: {}, labels: {} };
+    const R = RAMOS[D.ramo || 'outro'];
     const areaRect = (r) => (r === 'ext' ? g.ext : g.rooms[r]);
     const rooms = ['fin', 'mgmt', 'in', 'ops', 'sup', 'ext'];
     rooms.forEach((r) => {
-      const [x0, y0, x1, y1] = areaRect(r);
+      const [x0, , x1, y1] = areaRect(r);
       const notes = D.marks[r] || [];
       const W = x1 - x0 - pad * 2;
       const mods = D.mods.filter((m) => MODULOS[m].room === r);
-      /* com duas notas e dois módulos na mesma área, as notas ficam um pouco menores */
-      const nfs = notes.length > 1 && mods.length > 1 ? fs.note * 0.88 : fs.note;
-      let ny = y0 + pad + fs.room + nfs * 0.95 + 4;
-      notes.forEach((d) => {
-        const lines = this.wrap(d.nota, W - 4, nfs, 'note-t');
-        out.notes[d.k + '@' + r] = { x: x0 + pad, y: ny, r, lines, fsz: nfs };
-        ny += lines.length * nfs * 1.12 + nfs * 0.18;
-      });
-      const notesBottom = notes.length ? ny - nfs * 0.9 : y0 + pad + fs.room + 4;
-      if (!mods.length) return;
-      /* módulos empilhados de baixo para cima; se não couberem, letra menor; por último, lado a lado */
+      const lab = this.labelFit(r, r === 'ext' ? R.ext : R.rooms[r]);
+      out.labels[r] = lab;
+      const top = lab.bottom + fs.room * 0.18;
+      /* nas salas de baixo os fluxos sobem pela porta: se der, as notas terminam antes deles */
+      const nFlows = BOTTOM.includes(r) ? mods.length + (r === 'in' && D.mods.includes('site') && !mods.includes('pedidos') ? 1 : 0) : 0;
+      const laneLeft = nFlows ? g.cdoor[r] - ((nFlows - 1) / 2) * (this.orient === 'land' ? 5 : 4) - 3 : Infinity;
+      /* notas embaixo do nome; cada uma começa com o triângulo da revisão em que foi marcada */
+      const placeNotes = (nfs, clear) => {
+        const bw = nfs * NOTE_BULLET, res = {};
+        const maxW = clear ? Math.min(W - 1 - bw, laneLeft - (x0 + pad + bw)) : W - 1 - bw;
+        let ny = top + nfs * 0.95 + 4;
+        notes.forEach((d) => {
+          const lines = this.wrap(d.nota, maxW, nfs, 'note-t');
+          res[d.k + '@' + r] = { x: x0 + pad, y: ny, r, k: d.k, rev: this.revAt[d.k] || 1, lines, fsz: nfs };
+          ny += lines.length * nfs * 1.12 + nfs * 0.18;
+        });
+        return { res, bottom: notes.length ? ny - nfs * 0.9 : top + 4 };
+      };
+      /* módulos empilhados de baixo para cima */
       const stack = (k) => {
         const fz = fs.mod * k, lh = fz * 1.16, mp = fz * 0.55, mr = fs.mod * 0.62;
         let y = y1 - pad;
@@ -492,47 +555,97 @@ class Painter {
         }
         return res;
       };
-      let res = stack(1);
-      if (mods.length > 1 && res[0].y < notesBottom + 2) {
-        const small = stack(0.86);
-        if (small[0].y >= notesBottom + 2) res = small;
-        else {
-          const fz = fs.mod * 0.9, lh = fz * 1.16, mp = fz * 0.55, mr = fs.mod * 0.62;
-          const gap = fs.mod * 0.5, w = (W - gap * (mods.length - 1)) / mods.length;
-          const ls = mods.map((m) => this.wrap(MODULOS[m].nome, w - mp * 2 - mr * 2 - 4, fz, 'mod-t'));
-          const h = Math.max(...ls.map((l) => l.length)) * lh + mp * 1.5;
-          res = mods.map((m, i) => ({ x: x0 + pad + i * (w + gap), y: y1 - pad - h, w, h, lines: ls[i], fsz: fz }));
+      /* lado a lado: só quando cada nome cabe em duas linhas */
+      const side = () => {
+        if (mods.length < 2) return null;
+        const fz = fs.mod * 0.9, lh = fz * 1.16, mp = fz * 0.55, mr = fs.mod * 0.62;
+        const gap = fs.mod * 0.5, w = (W - gap * (mods.length - 1)) / mods.length;
+        const ls = mods.map((m) => this.wrap(MODULOS[m].nome, w - mp * 2 - mr * 2 - 4, fz, 'mod-t'));
+        if (ls.some((l) => l.length > 2)) return null;
+        const h = Math.max(...ls.map((l) => l.length)) * lh + mp * 1.5;
+        return mods.map((m, i) => ({ x: x0 + pad + i * (w + gap), y: y1 - pad - h, w, h, lines: ls[i], fsz: fz }));
+      };
+      /* com duas notas e dois módulos na mesma área, as notas já começam um pouco menores */
+      const n1 = notes.length > 1 && mods.length > 1 ? fs.note * 0.88 : fs.note;
+      if (!mods.length) { Object.assign(out.notes, placeNotes(n1, false).res); return; }
+      /* tentativas em ordem: letra maior primeiro; em cada tamanho, primeiro sem cruzar os fluxos.
+         Não coube: módulos com letra menor, notas menores, lado a lado, por último tudo um pouco menor */
+      const n2 = fs.note * 0.8;
+      const tries = [[n1, () => stack(1)], [n1, () => stack(0.86)], [n2, () => stack(0.86)], [n2, side], [n2, () => stack(0.78)]];
+      const room = (rr, nn) => (rr ? rr[0].y - (nn.bottom + 2) : -Infinity);
+      let best = null;
+      for (const [nf, mk] of tries) {
+        const rr = mk();
+        for (const clear of nFlows ? [true, false] : [false]) {
+          const NN = placeNotes(nf, clear), m = room(rr, NN);
+          if (!best || m > best.m) best = { N: NN, res: rr, m };
+          if (m >= 0) break;
         }
+        if (best.m >= 0) break;
       }
-      mods.forEach((m, i) => { out.mods[m] = res[i]; });
+      Object.assign(out.notes, best.N.res);
+      mods.forEach((m, i) => { out.mods[m] = best.res[i]; });
     });
     if (D.mods.includes('site')) {
       const [sx0, sy0, sx1, sy1] = g.sign;
       out.mods.site = { x: sx0, y: sy0, w: sx1 - sx0, h: sy1 - sy0, lines: [MODULOS.site.nome], sign: true };
     }
-    if (D.marks.street) out.notes['presenca@street'] = { x: g.streetNote[0], y: g.streetNote[1], r: 'street', street: true, lines: [DOR.presenca.nota] };
+    if (D.marks.street) out.notes['presenca@street'] = { x: g.streetNote[0], y: g.streetNote[1], r: 'street', street: true, k: 'presenca', rev: this.revAt.presenca || 1, lines: [DOR.presenca.nota] };
     return out;
   }
 
-  flowPath(m, box) {
+  /* os dados passam pelas portas: da porta ao módulo em linha reta. Dois fluxos na mesma porta correm lado a lado (off) */
+  flowPath(m, box, off = 0, L = null) {
     const g = this.geo;
     const r = MODULOS[m].room;
     const [, cy0, , cy1] = g.cor;
     const corY = cy0 + (cy1 - cy0) * 0.72, mDoor = g.cdoor.mgmt, hubY = g.rooms.mgmt[3] - (this.orient === 'land' ? 30 : 20);
     const tail = ` V${f1(corY)} H${f1(mDoor)} V${f1(hubY)}`;
-    const cx = box.x + box.w / 2;
-    if (r === 'in' || r === 'ops' || r === 'sup') return `M${f1(cx)},${f1(box.y)} V${f1(cy1 + 12)} H${g.cdoor[r]}` + tail;
-    if (r === 'fin') return `M${f1(cx)},${f1(box.y + box.h)} V${f1(cy0 - 12)} H${g.cdoor.fin}` + tail;
+    const cx = box.x + box.w / 2, jog = g.pad * 0.5;
+    const inside = (x) => x > box.x + 3 && x < box.x + box.w - 3;
+    if (r === 'in' || r === 'ops' || r === 'sup') {
+      const x = g.cdoor[r] + off;
+      if (inside(x)) return `M${f1(x)},${f1(box.y)}` + tail;
+      return `M${f1(cx)},${f1(box.y)} V${f1(box.y - jog)} H${f1(x)}` + tail;
+    }
+    if (r === 'fin') {
+      const x = g.cdoor.fin + off;
+      if (inside(x)) return `M${f1(x)},${f1(box.y + box.h)}` + tail;
+      return `M${f1(cx)},${f1(box.y + box.h)} V${f1(box.y + box.h + jog)} H${f1(x)}` + tail;
+    }
     if (r === 'ext') {
       const sx = g.extSide === 'L' ? box.x : box.x + box.w, cy = box.y + box.h / 2;
       const [ax, ay] = g.extPath[0];
       return `M${f1(sx)},${f1(cy)} H${ax} V${ay} ` + g.extPath.slice(1).map((p) => `L${p[0]},${p[1]}`).join(' ') + ` V${f1(corY)} H${f1(mDoor)} V${f1(hubY)}`;
     }
     if (r === 'street') {
-      const [ex] = g.entrance;
-      return `M${f1(box.x)},${f1(box.y + box.h / 2)} H${ex} V${f1(cy1 + 12)} H${g.cdoor.in}` + tail;
+      const [ex] = g.entrance, y1 = g.rooms.in[3], yb = (y1 - g.pad + y1 - g.t.E / 2) / 2;
+      const start = `M${f1(box.x)},${f1(box.y + box.h / 2)} H${ex}`;
+      /* com central de pedidos, o que chega pelo site e pelo WhatsApp entra pela porta da rua direto nela */
+      const pb = L && L.mods.pedidos;
+      if (pb) {
+        const tx = Math.min(Math.max(ex, pb.x + 6), pb.x + pb.w - 6);
+        return tx === ex ? `${start} V${f1(pb.y + pb.h)}` : `${start} V${f1(yb)} H${f1(tx)} V${f1(pb.y + pb.h)}`;
+      }
+      /* sem ela: entra pela porta da rua, corre rente à parede de baixo e sobe pela porta da sala */
+      return `${start} V${f1(yb)} H${f1(g.cdoor.in + off)}` + tail;
     }
     return null;
+  }
+
+  /* deslocamento de cada fluxo dentro da sua porta */
+  lanes(D, L) {
+    const by = {}, out = {};
+    D.mods.forEach((m) => {
+      if (!L.mods[m]) return;
+      if (m === 'site' && L.mods.pedidos) return;
+      const r = MODULOS[m].room, door = r === 'street' ? 'in' : r;
+      if (!['in', 'ops', 'sup', 'fin'].includes(door)) return;
+      (by[door] = by[door] || []).push(m);
+    });
+    const sp = this.orient === 'land' ? 5 : 4;
+    Object.values(by).forEach((arr) => arr.forEach((m, i) => { out[m] = (i - (arr.length - 1) / 2) * sp; }));
+    return out;
   }
 
   /* reconcilia o desenho com o estado: entra o que é novo, sai o que deixou de existir */
@@ -540,10 +653,13 @@ class Painter {
     const g = this.geo, fs = g.fs;
     const D = derive(st);
     this.showBuilding(D.any);
-    const R = RAMOS[D.ramo || 'outro'];
+    /* revisão em que cada atrito entrou (some quando o atrito sai) */
+    D.dores.forEach((d) => { if (!this.revAt[d.k]) this.revAt[d.k] = Math.max(1, rev); });
+    Object.keys(this.revAt).forEach((k) => { if (!D.dores.some((d) => d.k === k)) delete this.revAt[k]; });
+    const L = this.layout(D);
     if (D.any) {
-      ROOM_KEYS.forEach((k) => this.setText(this.roomT[k], R.rooms[k]));
-      this.setText(this.extT, R.ext);
+      ROOM_KEYS.forEach((k) => this.setLabel(this.roomT[k], L.labels[k]));
+      this.setLabel(this.extT, L.labels.ext);
       this.setText(this.corT, D.mods.includes('base') ? MODULOS.base.nome : 'Circulação');
       this.corT.classList.toggle('on', D.mods.includes('base'));
     }
@@ -558,21 +674,17 @@ class Painter {
     this.gStamp.style.display = st.example ? '' : 'none';
 
     const want = new Map();
-    const L = this.layout(D);
+    const lanes = this.lanes(D, L);
     /* nuvens de revisão por área */
-    Object.keys(D.marks).forEach((r) => {
-      if (!this.revAt[r]) this.revAt[r] = rev;
-      want.set('cloud:' + r, () => this._cloud(r, this.revAt[r]));
-    });
-    Object.keys(this.revAt).forEach((r) => { if (!D.marks[r]) delete this.revAt[r]; });
+    Object.keys(D.marks).forEach((r) => want.set('cloud:' + r, () => this._cloud(r)));
     /* uma nota por área marcada (planilhas aparece na diretoria e no financeiro) */
-    Object.keys(L.notes).forEach((nk) => want.set('note:' + nk, () => this._note(DOR[nk.split('@')[0]], L.notes[nk])));
+    Object.keys(L.notes).forEach((nk) => want.set('note:' + nk, () => this._note(L.notes[nk])));
     D.mods.forEach((m) => {
       if (m === 'base') { want.set('base', () => this._base()); return; }
       const b = L.mods[m];
       if (!b) return;
       want.set('mod:' + m, () => this._mod(m, b));
-      const fp = this.flowPath(m, b);
+      const fp = this.flowPath(m, b, lanes[m] || 0, L);
       if (fp) want.set('flow:' + m, () => this._flow(m, fp));
     });
     /* sai o que não está mais no estado */
@@ -586,52 +698,55 @@ class Painter {
       const it = this.items.get(key);
       if (!it) { this.items.set(key, make()); return; }
       if (key.startsWith('note:')) {
-        const nk = key.slice(5), p = L.notes[nk];
-        if (it.sig !== p.lines.join('|') + (p.fsz || '')) { it.g.remove(); this.items.set(key, this._note(DOR[nk.split('@')[0]], p, true)); }
+        const p = L.notes[key.slice(5)];
+        if (it.sig !== this._noteSig(p)) { it.g.remove(); this.items.set(key, this._note(p, true)); }
         else it.g.style.transform = `translate(${f1(p.x)}px, ${f1(p.y)}px)`;
       }
       else if (key.startsWith('mod:')) {
         const m = key.slice(4), b = L.mods[m];
         if (it.sig !== this._modSig(b)) { it.g.remove(); this.items.set(key, this._mod(m, b, true)); }
       } else if (key.startsWith('flow:')) {
-        const m = key.slice(5), d = this.flowPath(m, L.mods[m]);
+        const m = key.slice(5), d = this.flowPath(m, L.mods[m], lanes[m] || 0, L);
         if (it.d !== d) { it.g.remove(); this.items.set(key, this._flow(m, d, true)); }
       }
     });
     return D;
   }
 
-  _cloud(r, revN) {
-    const g = this.geo, fs = g.fs;
+  _cloud(r) {
+    const g = this.geo;
     const gg = S('g', { class: 'mk-cloud' }, this.gMarks);
     let rect;
     if (r === 'street') rect = g.streetCloud;
     else { const [x0, y0, x1, y1] = r === 'ext' ? g.ext : g.rooms[r]; const k = g.t.E * 0.5 + (this.orient === 'land' ? 7 : 6); rect = [x0 + k, y0 + k, x1 - k, y1 - k]; }
     const p = S('path', { d: cloudPath(rect[0], rect[1], rect[2], rect[3], r === 'street' ? g.cloudStep * 0.6 : g.cloudStep), class: 'cloud' }, gg);
     this.draw(p, 900, 0);
-    if (r !== 'street') {
-      const tx = rect[2] - fs.note * 1.1, ty = rect[1] + fs.note * 1.05, s = fs.note * 0.72;
-      const tg = S('g', { class: 'rev-tag' }, gg);
-      S('path', { d: `M${f1(tx)},${f1(ty - s)} L${f1(tx + s * 0.95)},${f1(ty + s * 0.62)} L${f1(tx - s * 0.95)},${f1(ty + s * 0.62)} Z` }, tg);
-      const t = S('text', { x: f1(tx), y: f1(ty + s * 0.42), 'font-size': f1(fs.note * 0.68), 'text-anchor': 'middle' }, tg);
-      t.textContent = String(revN);
-      this.a(tg, [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 700 });
-      tg.style.transformBox = 'fill-box'; tg.style.transformOrigin = '50% 50%';
-    }
     return { g: gg };
   }
 
-  _note(d, p, quick) {
+  _noteSig(p) { return p.lines.join('|') + (p.fsz || '') + '#' + p.rev; }
+
+  /* nota vermelha: o triângulo traz a revisão em que o atrito foi marcado; o texto vem logo depois */
+  _note(p, quick) {
     const fs = this.geo.fs;
     const gg = S('g', { class: 'mk-note mv' }, this.gMarks);
     gg.style.transform = `translate(${f1(p.x)}px, ${f1(p.y)}px)`;
     const size = p.street ? fs.small + 0.5 : (p.fsz || fs.note);
+    const s = size * 0.6, tx = s * 0.95, ty = size * 0.05 - s * 0.62;
+    const tg = S('g', { class: 'rev-tag' }, gg);
+    S('path', { d: `M${f1(tx)},${f1(ty - s)} L${f1(tx + s * 0.95)},${f1(ty + s * 0.62)} L${f1(tx - s * 0.95)},${f1(ty + s * 0.62)} Z` }, tg);
+    const tt = S('text', { x: f1(tx), y: f1(ty + s * 0.44), 'font-size': f1(s * 0.98), 'text-anchor': 'middle' }, tg);
+    tt.textContent = String(p.rev);
     p.lines.forEach((l, i) => {
-      const t = S('text', { x: 0, y: f1(i * size * 1.12), 'font-size': size, class: 'note-t' }, gg);
+      const t = S('text', { x: f1(size * NOTE_BULLET), y: f1(i * size * 1.12), 'font-size': size, class: 'note-t' }, gg);
       t.textContent = l;
       if (!quick) this.a(t, [{ opacity: 0, transform: 'translateX(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 460, delay: 420 + i * 60 });
     });
-    return { g: gg, sig: p.lines.join('|') + (p.fsz || '') };
+    if (!quick) {
+      tg.style.transformBox = 'fill-box'; tg.style.transformOrigin = '50% 50%';
+      this.a(tg, [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 380 });
+    }
+    return { g: gg, sig: this._noteSig(p) };
   }
 
   _modSig(b) { return [b.x, b.y, b.w, b.h, b.fsz, b.lines.join('|')].map(String).join(';'); }
@@ -717,6 +832,7 @@ export class Plan {
     this.world.append(this.p3);
     this.state = { ramo: null, dores: [], equipe: null, nome: '', example: false };
     this.rev = 0;
+    this.revStore = {};
     this.sig = '';
     this.d3 = { on: false, rise: 0, rx: 0, rz: 0, sc: 1, ty: 0 };
     this.orient = null;
@@ -733,7 +849,7 @@ export class Plan {
       this.orient = o;
       const keep = this.state;
       /* a folha nova nasce já desenhada (sem animação); as próximas mudanças animam */
-      this.painter = new Painter(this.svg, o, { animate: false, dots: !this.reduced });
+      this.painter = new Painter(this.svg, o, { animate: false, dots: !this.reduced, revAt: this.revStore });
       this.painter.render(keep, this.rev);
       this.painter.anim = !this.reduced;
       this._title();
@@ -785,7 +901,7 @@ export class Plan {
   snapshot(orient, st, suffix, host) {
     const svg = S('svg', { 'aria-hidden': 'true', focusable: 'false' });
     if (host) host.append(svg);
-    const P = new Painter(svg, orient || 'land', { animate: false, dots: false, links: false, suffix: suffix || '-s' });
+    const P = new Painter(svg, orient || 'land', { animate: false, dots: false, links: false, suffix: suffix || '-s', revAt: st ? {} : { ...this.revStore } });
     P.render(st || this.state, st ? Math.max(1, this.rev) : this.rev);
     return svg;
   }

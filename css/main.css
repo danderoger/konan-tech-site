@@ -275,8 +275,12 @@ html:not(.js) .sheet-poster { display: block; }
 .base-rail { fill: none; stroke: var(--blue); stroke-width: 2.2; stroke-opacity: 0.75; }
 .mv { transition: transform 0.5s var(--ease); }
 .meas { pointer-events: none; }
+/* contorno da cor do papel nas letras: porta, fluxo ou grade que passe atrás some em volta do texto (como no desenho técnico) */
+.room-t, .note-t, .cor-t { paint-order: stroke fill; stroke: #fff; stroke-width: 4.5px; stroke-linejoin: round; }
+.cor-t.on { stroke: #eef3fc; }
 .pl-port text { font-stretch: 74%; }
 .pl-port .room-t { font-stretch: 78%; }
+.pl-port .room-t, .pl-port .note-t, .pl-port .cor-t { stroke-width: 3.2px; }
 .pl-port .fr-i { stroke-width: 1.6; }
 .pl-port .cloud { stroke-width: 1.4; }
 .pl-port .mod-r { stroke-width: 1.3; }

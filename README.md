@@ -11,8 +11,8 @@ O site deixa de mostrar o que a Konan sabe fazer e passa a fazer o que a Konan f
 Logo na primeira tela, o visitante conta como a empresa funciona: falando (como um áudio de WhatsApp), escrevendo ou tocando em opções. Enquanto ele conta, a planta do sistema é desenhada na hora, no estilo de uma planta de arquitetura:
 
 - cada área da empresa vira um cômodo, com paredes, portas e janelas;
-- o que trava hoje ganha nuvem de revisão em vermelho, com o número da revisão em que foi marcado;
-- a proposta entra em azul (módulos com hachura) e os dados correm pelos fluxos;
+- o que trava hoje ganha nuvem de revisão em vermelho, e cada nota leva o triângulo com o número da revisão em que foi marcada;
+- a proposta entra em azul (módulos com hachura) e os dados correm pelos fluxos, passando pelas portas;
 - o carimbo técnico registra empresa, ramo, equipe, atritos, proposta, data e revisão.
 
 Com um toque, as paredes sobem em 3D (maquete de papel) e dá para girar arrastando. A planta vai embora com o visitante: resumo no WhatsApp, PDF em A4 com carimbo, ou link (`#planta=...`) para mostrar ao sócio.
@@ -104,7 +104,15 @@ O botão Falar usa o reconhecimento de voz do próprio navegador (no Chrome, o �
 ## Observações técnicas
 
 - Sem WebGL no topo: a planta e a maquete 3D são SVG e CSS, leves até em celular simples. O Three.js só carrega perto do final.
-- A quebra de linha dos textos da planta é medida com a fonte real, então os nomes cabem nos cômodos em qualquer tela.
+- A quebra de linha dos textos da planta é medida com a fonte real, então os nomes cabem nos cômodos em qualquer tela. Nas salas de baixo, o nome termina antes da porta (nome comprido quebra em duas linhas no celular).
+- Nomes e notas têm um contorno da cor do papel, como no desenho técnico: porta, fluxo ou grade que passe atrás some em volta das letras.
+- `scripts/auditar-planta.cjs` desenha todas as combinações (6 ramos, 256 combinações de atritos, folha deitada e em pé: 3.072 plantas) e procura texto cruzado por porta, fluxo ou triângulo, texto em cima de módulo e texto saindo da sala. Na entrega: nenhum. Rode de novo sempre que mudar nomes de salas, notas ou a geometria:
+
+```
+npm install --no-save playwright && npx playwright install chromium
+python3 -m http.server 8000   (em outro terminal)
+node scripts/auditar-planta.cjs http://localhost:8000
+```
 - Com movimento reduzido: exemplo já desenhado (sem digitação), 3D sem animação, final direto na marca.
 - Sem WebGL: o final mostra a folha e a marca aparece sem partículas.
 - PDF: a impressão mostra só a folha da planta, deitada, em A4, com o nome da empresa no título do arquivo.
