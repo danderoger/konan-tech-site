@@ -1,9 +1,12 @@
 /* Konan Tech 5.0: a conversa que alimenta a planta.
-   parse(texto)  lê o que o visitante falou ou escreveu e devolve ramo, o que trava e tamanho da equipe,
-                 com a posição de cada trecho reconhecido (para destacar na legenda).
+   parse(texto)  lê o que o visitante falou ou escreveu e devolve ramo, o que trava, tamanho da equipe e a obra
+                 (quartos, banheiros, sala, cozinha, metros quadrados), com a posição de cada trecho reconhecido
+                 (para destacar na legenda).
    Voice         reconhecimento de voz do próprio navegador, em português do Brasil.
                  No Chrome o áudio é processado pelo serviço do Google; a página só recebe o texto.
    typeOut       digita um texto aos poucos (usado no exemplo da abertura). */
+
+import { obraClean } from './content.js';
 
 export const SR = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition || null) : null;
 
@@ -52,9 +55,29 @@ const EQ_RX = [
 ];
 const SOLO_RX = /\b(trabalho sozinh[oa]|so eu|eu sozinh[oa]|sou sozinh[oa])\b/g;
 
+/* a obra descrita: "3 quartos, dois banheiros, sala, cozinha, 120 m²". Número é opcional (sem ele vale 1) */
+const NUMW = '(?:' + Object.keys(NUM_WORDS).join('|') + ')(?: e (?:' + Object.keys(NUM_WORDS).join('|') + '))*';
+const OBRA_RX = [
+  ['suite', 'suites?'],
+  ['quarto', 'quartos?|dormitorios?'],
+  ['banheiro', 'banheiros?|wcs?'],
+  ['lavabo', 'lavabos?'],
+  ['sala', 'salas?(?: de (?:estar|jantar|tv))?'],
+  ['cozinha', 'cozinhas?'],
+  ['garagem', 'garagem|garagens|vagas? de garagem'],
+  ['varanda', 'varandas?|sacadas?'],
+  ['servico', 'areas? de servico|lavanderias?']
+].map(([k, w]) => [k, new RegExp('\\b(?:(\\d{1,2}|' + NUMW + ') )?(?:' + w + ')\\b', 'g')]);
+const AREA_RX = new RegExp('\\b(\\d{1,5}(?:[.,]\\d{1,2})?|' + NUMW + ') ?(?:m2|m²|m\\^2|mts?2|metros? quadrados?)(?![a-z0-9])', 'g');
+
 function numFrom(s) {
   if (/^\d+$/.test(s)) return parseInt(s, 10);
   return s.split(' e ').reduce((a, w) => a + (NUM_WORDS[w] || 0), 0);
+}
+/* metros quadrados: "120", "85,5", "1.200" ou por extenso */
+function areaFrom(s) {
+  if (/^\d/.test(s)) return Math.round(parseFloat(/^\d{1,3}\.\d{3}$/.test(s) ? s.replace('.', '') : s.replace(',', '.')));
+  return numFrom(s);
 }
 export function bucket(n) { return n <= 5 ? 0 : n <= 20 ? 1 : n <= 50 ? 2 : 3; }
 
@@ -93,11 +116,41 @@ export function parse(text) {
   }));
   RAMO_RX.slice(1).forEach(([k, rx, w]) => scan(rx, ramoHit(k, w)));
   scan(SOLO_RX, (m, a, b) => { hits.push({ a, b, kind: 'e' }); if (a > eqAt) { eqAt = a; equipe = 0; } });
+  /* a obra descrita: só vale se tiver quarto, banheiro ou metros quadrados (uma "sala" sozinha pode ser qualquer coisa) */
+  const ob = { area: 0 }, obHits = [];
+  OBRA_RX.forEach(([k, rx]) => {
+    ob[k] = 0;
+    rx.lastIndex = 0;
+    let m;
+    while ((m = rx.exec(t))) {
+      const a = m.index, b = a + m[0].length;
+      if (b === a) { rx.lastIndex++; continue; }
+      if (!free(a, b)) continue;
+      ob[k] += m[1] ? Math.max(1, numFrom(m[1])) : 1;
+      obHits.push({ a, b, kind: 'o' });
+    }
+  });
+  AREA_RX.lastIndex = 0;
+  for (let m; (m = AREA_RX.exec(t));) {
+    const a = m.index, b = a + m[0].length;
+    if (!free(a, b) || ob.area) continue;
+    /* "terreno de 300 m²" não é a área da obra */
+    if (/terreno[^.]{0,16}$/.test(t.slice(Math.max(0, a - 24), a))) continue;
+    const v = areaFrom(m[1]);
+    if (v >= 8) { ob.area = v; obHits.push({ a, b, kind: 'o' }); }
+  }
+  const obra = obraClean(ob);
+  const obraOk = !!obra && (obra.quarto + obra.suite + obra.banheiro > 0 || obra.area > 0);
+  if (obraOk) {
+    obHits.forEach((h) => { hits.push(h); taken.push([h.a, h.b]); });
+    /* quarto e banheiro indicam obra mesmo sem a palavra "obra" (menos que "loja" ou "fábrica", que pesam mais) */
+    if (obra.quarto + obra.suite + obra.banheiro > 0) { score.obras = (score.obras || 0) + 1; if (firstAt.obras === undefined) firstAt.obras = Math.min(...obHits.map((h) => h.a)); }
+  }
   DOR_RX.forEach(([k, rx]) => { if (k !== 'equipe') scan(rx, dorHit(k)); });
   let ramo = null;
   Object.keys(score).forEach((k) => { if (!ramo || score[k] > score[ramo] || (score[k] === score[ramo] && firstAt[k] < firstAt[ramo])) ramo = k; });
   hits.sort((p, q) => p.a - q.a);
-  return { ramo, dores, equipe, hits };
+  return { ramo, dores, equipe, obra: obraOk ? obra : null, hits };
 }
 
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

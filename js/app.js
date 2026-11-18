@@ -3,7 +3,7 @@
    é desenhada na hora. O resto da página se adapta ao que ele contou.
    O 3D pesado (partículas) só carrega no final; sem WebGL, tudo funciona igual. */
 
-import { WA_DEFAULT, waLink, waContext, RAMOS, RAMO_ORDER, DORES, MODULOS, DETALHES, EQUIPES, EQUIPES_CURTO, EXEMPLO } from './content.js';
+import { WA_DEFAULT, waLink, waContext, RAMOS, RAMO_ORDER, DORES, MODULOS, DETALHES, EQUIPES, EQUIPES_CURTO, EXEMPLO, obraFrase, obraSig, obraFromSig } from './content.js';
 import { Plan, derive, lc1 } from './plan.js';
 import { parse, highlight, Voice, SR, typeOut } from './listen.js';
 import { probeGL, pickTier, TIERS } from './perf.js';
@@ -88,11 +88,13 @@ const cRamo = qa('#c-ramo [role=radio]'), cDor = qa('#c-dor button'), cEq = qa('
 const nomeIn = q('#nome'), qDone = q('#q-done');
 
 /* o que o visitante escolheu tocando (manual) vale mais do que o que foi entendido da fala ou do texto (spoken) */
-const manual = { ramo: null, equipe: null, on: new Set(), off: new Set(), nome: '' };
-let spoken = { ramo: null, dores: [], equipe: null };
+const manual = { ramo: null, equipe: null, on: new Set(), off: new Set(), nome: '', obra: null };
+let spoken = { ramo: null, dores: [], equipe: null, obra: null };
+/* o que a conversa entendeu */
+const heard = (r) => ({ ramo: r.ramo, dores: r.dores, equipe: r.equipe, obra: r.obra });
 let mode = 'idle';
 let exCancel = null, exTimers = [];
-let lastAnnounce = { dores: [], mods: [] };
+let lastAnnounce = { dores: [], mods: [], obra: '' };
 
 function effective() {
   const set = new Set(spoken.dores);
@@ -102,6 +104,7 @@ function effective() {
     ramo: manual.ramo || spoken.ramo || null,
     equipe: manual.equipe !== null ? manual.equipe : spoken.equipe,
     dores: DORES.map((d) => d.k).filter((k) => set.has(k)),
+    obra: spoken.obra || manual.obra || null,
     nome: manual.nome,
     example: mode === 'example'
   };
@@ -150,7 +153,9 @@ function announce(st, Dv) {
     const parts = [];
     if (newD.length) parts.push('Marcado em vermelho: ' + newD.map((d) => lc1(d.nota)).join(', ') + '.');
     if (newM.length) parts.push('Proposta em azul: ' + newM.map((m) => lc1(MODULOS[m].nome)).join(', ') + '.');
-    lastAnnounce = { dores: Dv.dores.map((d) => d.k), mods: Dv.mods.slice() };
+    const ob = Dv.obra ? obraSig(Dv.obra) : '';
+    if (ob && ob !== lastAnnounce.obra) parts.push('Casa desenhada no canteiro: ' + obraFrase(Dv.obra) + '.');
+    lastAnnounce = { dores: Dv.dores.map((d) => d.k), mods: Dv.mods.slice(), obra: ob };
     if (parts.length) live.textContent = parts.join(' ');
   }, 700);
 }
@@ -161,6 +166,7 @@ function planMessage(st, Dv) {
   if (st.nome) L.push('Empresa: ' + st.nome);
   if (st.ramo) L.push('Ramo: ' + RAMOS[st.ramo].nome);
   if (st.equipe !== null) L.push('Equipe: ' + EQUIPES[st.equipe].toLowerCase());
+  if (Dv.obra) L.push('Obra: ' + obraFrase(Dv.obra));
   if (Dv.dores.length) L.push('O que trava hoje: ' + Dv.dores.map((d) => lc1(d.chip)).join('; '));
   if (Dv.mods.length) L.push('Partes da planta: ' + Dv.mods.map((m) => MODULOS[m].nome).join('; '));
   const link = shareUrl(st);
@@ -171,12 +177,13 @@ function planMessage(st, Dv) {
 
 /* ---------- link da planta: #planta=ramo.dores.equipe.nome ---------- */
 function encodeState(st) {
-  return [st.ramo || 'x', st.dores.join('-') || 'x', st.equipe === null ? 'x' : st.equipe, encodeURIComponent(st.nome || '')].join('.');
+  return [st.ramo || 'x', st.dores.join('-') || 'x', st.equipe === null ? 'x' : st.equipe, encodeURIComponent(st.nome || ''), obraSig(st.obra) || 'x'].join('.');
 }
 function decodeState(s) {
-  const [r, d, e, n] = (s || '').split('.');
+  const [r, d, e, n, o] = (s || '').split('.');
   const out = { ramo: RAMOS[r] ? r : null, dores: (d || '').split('-').filter((k) => DORES.some((x) => x.k === k)), equipe: /^[0-3]$/.test(e || '') ? +e : null, nome: '' };
   try { out.nome = decodeURIComponent(n || '').slice(0, 40); } catch (err) { out.nome = ''; }
+  out.obra = o && o !== 'x' ? obraFromSig(o) : null;
   return out;
 }
 function shareUrl(st) {
@@ -204,6 +211,18 @@ function hideSub(after) {
   const go = () => { sub.classList.remove('on', 'rec'); foot.classList.remove('talk'); };
   if (after) subT_hide = setTimeout(go, after); else go();
 }
+/* "Entendi: ..." embaixo da caixa de texto: o visitante vê na hora o que a planta aproveitou */
+const hintEl = q('#comp-hint'), HINT0 = hintEl ? hintEl.textContent : '';
+function hint(r, empty) {
+  if (!hintEl) return;
+  const bits = [];
+  if (r && r.ramo) bits.push(RAMOS[r.ramo].nome.toLowerCase());
+  if (r && r.obra) bits.push('obra com ' + obraFrase(r.obra));
+  if (r && r.equipe !== null) bits.push('equipe de ' + EQUIPES_CURTO[r.equipe].toLowerCase() + ' pessoas');
+  if (r && r.dores.length) bits.push(r.dores.length === 1 ? '1 atrito marcado' : r.dores.length + ' atritos marcados');
+  hintEl.textContent = bits.length ? 'Entendi: ' + bits.join('; ') + '.' : (empty ? HINT0 : 'Ainda não reconheci o ramo, a obra ou o que trava. Conte com outras palavras.');
+  hintEl.classList.toggle('ok', bits.length > 0);
+}
 function msg(t, warn) { compMsg.textContent = t || ''; compMsg.classList.toggle('warn', !!warn); }
 
 /* ---------- exemplo que se desenha sozinho ao abrir a página ---------- */
@@ -213,7 +232,7 @@ function runExample() {
   mode = 'example';
   if (REDUCED) {
     const r = parse(EXEMPLO.texto);
-    spoken = { ramo: r.ramo, dores: r.dores, equipe: r.equipe };
+    spoken = heard(r);
     apply();
     showSub('Exemplo', EXEMPLO.texto, r.hits);
     exTimers.push(setTimeout(() => { if (mode === 'example') msg('Este é um exemplo. Agora conte como a sua empresa funciona: fale, escreva ou toque nas opções.'); }, 400));
@@ -223,7 +242,7 @@ function runExample() {
   exCancel = typeOut(EXEMPLO.texto, (part, done) => {
     if (mode !== 'example') return;
     const r = parse(part);
-    spoken = { ramo: r.ramo, dores: r.dores, equipe: r.equipe };
+    spoken = heard(r);
     apply();
     showSub('Exemplo', part, r.hits);
     if (done) {
@@ -240,7 +259,7 @@ function stopExample() {
   exCancel = null;
   clearTimers();
   mode = 'idle';
-  spoken = { ramo: null, dores: [], equipe: null };
+  spoken = { ramo: null, dores: [], equipe: null, obra: null };
   plan.stopOrbit();
   if (plan.d3.on) { plan.set3D(false); b3d.setAttribute('aria-pressed', 'false'); label3d(); }
   hideSub();
@@ -258,9 +277,10 @@ function begin(newMode) {
 const voice = new Voice({
   onText(text) {
     const r = parse(text);
-    spoken = { ramo: r.ramo, dores: r.dores, equipe: r.equipe };
+    spoken = heard(r);
     apply();
     showSub('Você', text, r.hits, true);
+    hint(r);
   },
   onState(on) {
     micBtn.setAttribute('aria-pressed', String(on));
@@ -314,11 +334,12 @@ let txtT = 0;
 function readText(final) {
   const v = txt.value.trim();
   const r = parse(v);
-  spoken = { ramo: r.ramo, dores: r.dores, equipe: r.equipe };
+  spoken = heard(r);
   apply();
+  hint(r, !v);
   if (v) { showSub('Você', v, r.hits); hideSub(final ? 2600 : 4200); } else hideSub();
   if (final) {
-    if (!r.ramo && !r.dores.length && r.equipe === null) msg('Não reconheci o ramo nem o que trava. Tente contar com outras palavras ou toque nas opções.', true);
+    if (!r.ramo && !r.dores.length && r.equipe === null && !r.obra) msg('Não reconheci o ramo nem o que trava. Tente contar com outras palavras ou toque nas opções.', true);
     else msg('');
     nextStep();
     if (narrow()) scrollToTarget(sheet, 8);
@@ -582,6 +603,7 @@ if (hashPlan) {
   manual.equipe = st.equipe;
   st.dores.forEach((k) => manual.on.add(k));
   manual.nome = st.nome;
+  manual.obra = st.obra;
   nomeIn.value = st.nome;
   apply();
   msg('Esta planta chegou por link. Você pode ajustar as respostas e mandar de volta pelo WhatsApp.');

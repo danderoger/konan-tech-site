@@ -1,5 +1,6 @@
 /* Auditoria da planta: desenha todas as combinações e procura colisões de desenho.
-   6 ramos x 256 combinações de atritos x 2 folhas (deitada no computador, em pé no celular) = 3.072 plantas.
+   6 ramos x 256 combinações de atritos x 2 folhas (deitada no computador, em pé no celular) = 3.072 plantas,
+   mais 3 casas descritas (média, grande e só com área) no ramo de obras = 1.536 plantas.
    Uso, com o site servido localmente:
      npm install --no-save playwright && npx playwright install chromium
      node scripts/auditar-planta.cjs http://localhost:8000
@@ -38,15 +39,22 @@ const URL = (process.argv[2] || 'http://localhost:8000').replace(/\/$/, '');
     const points = (path, step) => { const L = path.getTotalLength(), out = []; for (let s = 0; s <= L; s += step) { const q = path.getPointAtLength(s); out.push([q.x, q.y]); } return out; };
     const hits = (b, P, pad = 0.5) => P.some(([x, y]) => x > b.x0 - pad && x < b.x1 + pad && y > b.y0 - pad && y < b.y1 + pad);
 
+    const OBRAS = {
+      '': null,
+      'casa de 3 quartos': { quarto: 3, banheiro: 2, sala: 1, cozinha: 1, area: 120 },
+      'casa grande': { quarto: 5, suite: 1, banheiro: 4, lavabo: 1, sala: 2, cozinha: 1, garagem: 2, varanda: 1, servico: 1, area: 240 },
+      'só área e um quarto': { quarto: 1, area: 40 }
+    };
     const found = {};
     const add = (kind, ex) => { const f = (found[kind] = found[kind] || { n: 0, ex: [] }); f.n++; if (f.ex.length < 5 && !f.ex.includes(ex)) f.ex.push(ex); };
     let n = 0;
-    for (const orient of ['land', 'port']) for (const ramo of RAMOS) for (let mask = 0; mask < 256; mask++) {
+    for (const orient of ['land', 'port']) for (const ramo of RAMOS) for (const [oName, obra] of Object.entries(OBRAS)) for (let mask = 0; mask < 256; mask++) {
+      if (obra && ramo !== 'obras') continue;
       const dores = DORES.filter((_, i) => mask & (1 << i));
       host.innerHTML = '';
-      const svg = window.konan.plan.snapshot(orient, { ramo, dores, equipe: 1, nome: '', example: false }, '-a' + n, host);
+      const svg = window.konan.plan.snapshot(orient, { ramo, dores, equipe: 1, nome: '', example: false, obra }, '-a' + n, host);
       n++;
-      const tag = `${orient === 'land' ? 'computador' : 'celular'}/${ramo}/${dores.join('+') || 'nenhum atrito'}`;
+      const tag = `${orient === 'land' ? 'computador' : 'celular'}/${ramo}${oName ? '/' + oName : ''}/${dores.join('+') || 'nenhum atrito'}`;
       const G = GEO[orient];
       const labels = [...svg.querySelectorAll('.room-t')].filter((t) => t.textContent).map((t) => ({ t, b: box(t), s: t.textContent }));
       const corT = svg.querySelector('.cor-t');
@@ -57,7 +65,15 @@ const URL = (process.argv[2] || 'http://localhost:8000').replace(/\/$/, '');
       const tags = [...svg.querySelectorAll('.rev-tag')].map((g) => ({ b: box(g), s: g.textContent }));
       const doors = [...svg.querySelectorAll('.door')].map((g) => [...g.querySelectorAll('path')].flatMap((q) => points(q, 1)));
       const flows = [...svg.querySelectorAll('.flow')].map((f) => points(f, 1.5));
-      const texts = [...labels, cor, ...notes];
+      const sums = [...svg.querySelectorAll('.hs-sum')].filter((t) => t.textContent).map((t) => ({ t, b: box(t), s: t.textContent }));
+      const houseT = [...svg.querySelectorAll('.hs-t')].map((t) => ({ t, b: box(t), s: t.textContent }));
+      const houseR = [...svg.querySelectorAll('.mk-house .hs-r')].map((r) => ({ b: box(r) }));
+      const texts = [...labels, cor, ...notes, ...sums, ...houseT];
+      /* a casa não pode cobrir nota, módulo, nome ou resumo; cada nome cabe na sua caixa */
+      houseR.forEach((h) => [...labels, ...notes, ...sums].forEach((l) => { if (overlap(l.b, h.b, 0.5)) add('casa em cima de texto', `${tag}: ${l.s}`); }));
+      houseR.forEach((h) => modR.forEach((m) => { if (overlap(h.b, m.b, 0.5)) add('casa em cima de módulo', tag); }));
+      houseT.forEach((t) => { if (!houseR.some((h) => t.b.x0 >= h.b.x0 - 0.5 && t.b.x1 <= h.b.x1 + 0.5 && t.b.y0 >= h.b.y0 - 0.5 && t.b.y1 <= h.b.y1 + 0.5)) add('nome da casa fora da caixa', `${tag}: ${t.s}`); });
+      if (obra && !houseR.length) add('informativo: casa não coube (só o resumo)', `${orient === 'land' ? 'computador' : 'celular'}/${oName}`);
 
       labels.forEach((l) => doors.forEach((P) => { if (hits(l.b, P, 0.8)) add('nome cruzado por porta', `${tag}: ${l.s}`); }));
       tags.forEach((g) => [...labels, ...notes].forEach((l) => { if (overlap(g.b, l.b, 0.5)) add('triângulo em cima de texto', `${tag}: ${l.s}`); }));
@@ -67,7 +83,7 @@ const URL = (process.argv[2] || 'http://localhost:8000').replace(/\/$/, '');
       for (let i = 0; i < texts.length; i++) for (let j = i + 1; j < texts.length; j++) if (overlap(texts[i].b, texts[j].b)) add('texto em cima de texto', `${tag}: ${texts[i].s} / ${texts[j].s}`);
       modT.forEach((t) => { if (!modR.some((m) => t.b.x0 >= m.b.x0 - 0.5 && t.b.x1 <= m.b.x1 + 0.5 && t.b.y0 >= m.b.y0 - 2 && t.b.y1 <= m.b.y1 + 2)) add('nome de módulo fora da caixa', `${tag}: ${t.s}`); });
       const areas = [...Object.values(G.rooms), G.ext, [G.walk[0], G.walk[1] - 4, G.walk[2] + 40, G.walk[3] + 4]];
-      [...labels, ...notes].forEach((l) => { if (!areas.some(([x0, y0, x1, y1]) => l.b.x0 >= x0 + 1 && l.b.x1 <= x1 - 1 && l.b.y0 >= y0 + 1 && l.b.y1 <= y1 - 1)) add('texto saindo da sala', `${tag}: ${l.s}`); });
+      [...labels, ...notes, ...sums, ...houseT].forEach((l) => { if (!areas.some(([x0, y0, x1, y1]) => l.b.x0 >= x0 + 1 && l.b.x1 <= x1 - 1 && l.b.y0 >= y0 + 1 && l.b.y1 <= y1 - 1)) add('texto saindo da sala', `${tag}: ${l.s}`); });
       labels.forEach((l) => {
         if (l.t.querySelectorAll('tspan').length > 1) add('informativo: nome em duas linhas', `${orient === 'land' ? 'computador' : 'celular'}: ${l.s}`);
         else if (+l.t.getAttribute('font-size') < G.fs.room - 0.01) add('informativo: nome com letra um pouco menor', `${orient === 'land' ? 'computador' : 'celular'}: ${l.s}`);

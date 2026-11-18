@@ -10,7 +10,7 @@
      plan.snapshot('land' | 'port', estado)              cópia estática (usada no final e no PDF)
      plan.relayout()                                      depois de mudar o tamanho da tela */
 
-import { RAMOS, DOR, DORES, MODULOS, MOD_ORDER, DET_N, EQUIPES_CURTO } from './content.js';
+import { RAMOS, DOR, DORES, MODULOS, MOD_ORDER, DET_N, EQUIPES_CURTO, obraClean, obraSig, obraFrase, obraTemComodos } from './content.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const ROOM_KEYS = ['fin', 'mgmt', 'in', 'ops', 'sup'];
@@ -169,9 +169,12 @@ export function derive(st) {
   dores.forEach((d) => d.mods.forEach((m) => modSet.add(m)));
   const mods = MOD_ORDER.filter((m) => modSet.has(m));
   const any = !!(st.ramo || dores.length || st.equipe !== null && st.equipe !== undefined);
-  return { dores, marks, mods, any, ramo: st.ramo || (any ? 'outro' : null) };
+  const ramo = st.ramo || (any ? 'outro' : null);
+  /* a casa que o visitante descreveu só aparece no ramo de obras */
+  return { dores, marks, mods, any, ramo, obra: ramo === 'obras' ? obraClean(st.obra) : null };
 }
 
+const orient2 = (o) => (o === 'land' ? 'L' : 'P');
 const today = () => { const d = new Date(); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; };
 
 /* ---------- o pintor: escreve a planta dentro de um <svg> ---------- */
@@ -395,6 +398,8 @@ class Painter {
     this.extR = S('rect', { x: ex0, y: ey0, width: ex1 - ex0, height: ey1 - ey0, class: 'ext-r' }, X);
     this.extP = S('path', { d: 'M' + g.extPath.map((p) => p.join(',')).join(' L'), class: 'ext-p' }, X);
     this.extT = S('text', { x: ex0 + g.pad, y: ey0 + g.pad + fs.room * 0.82, class: 'room-t', 'font-size': fs.room }, N);
+    /* resumo da obra descrita (área, quartos, banheiros), logo abaixo do nome do canteiro */
+    this.sumT = S('text', { x: ex0 + g.pad, y: ey0 + g.pad + fs.room * 0.82 + fs.small * 1.2, class: 'hs-sum', 'font-size': fs.small }, N);
     this.people = S('g', { class: 'people' }, X);
     const pc = this.orient === 'land' ? [[ex1 - 74, ey0 + 98], [ex1 - 50, ey0 + 108], [ex1 - 26, ey0 + 96]] : [[ex1 - 56, ey0 + 32], [ex1 - 38, ey0 + 38], [ex1 - 20, ey0 + 30]];
     const k = this.orient === 'land' ? 1 : 0.75;
@@ -525,7 +530,17 @@ class Painter {
       const mods = D.mods.filter((m) => MODULOS[m].room === r);
       const lab = this.labelFit(r, r === 'ext' ? R.ext : R.rooms[r]);
       out.labels[r] = lab;
-      const top = lab.bottom + fs.room * 0.18;
+      /* canteiro com obra descrita: uma linha de resumo entra embaixo do nome, e o que sobra de espaço é da casa */
+      let sumH = 0;
+      if (r === 'ext' && D.obra) {
+        const sz = fs.small + (this.orient === 'land' ? 1 : 0), txt = obraFrase(D.obra, true);
+        if (txt) {
+          const lines = this.wrap(txt, W, sz, 'hs-sum');
+          out.sum = { lines, x: x0 + pad, y: lab.bottom + sz * 1.2, size: sz, lh: sz * 1.15 };
+          sumH = sz * 1.45 + (lines.length - 1) * sz * 1.15;
+        }
+      }
+      const top = lab.bottom + sumH + fs.room * 0.18;
       /* nas salas de baixo os fluxos sobem pela porta: se der, as notas terminam antes deles */
       const nFlows = BOTTOM.includes(r) ? mods.length + (r === 'in' && D.mods.includes('site') && !mods.includes('pedidos') ? 1 : 0) : 0;
       const laneLeft = nFlows ? g.cdoor[r] - ((nFlows - 1) / 2) * (this.orient === 'land' ? 5 : 4) - 3 : Infinity;
@@ -567,7 +582,12 @@ class Painter {
       };
       /* com duas notas e dois módulos na mesma área, as notas já começam um pouco menores */
       const n1 = notes.length > 1 && mods.length > 1 ? fs.note * 0.88 : fs.note;
-      if (!mods.length) { Object.assign(out.notes, placeNotes(n1, false).res); return; }
+      if (!mods.length) {
+        const pn = placeNotes(n1, false);
+        Object.assign(out.notes, pn.res);
+        if (r === 'ext' && D.obra) out.free = [x0 + pad, pn.bottom + 4, x1 - pad, y1 - pad];
+        return;
+      }
       /* tentativas em ordem: letra maior primeiro; em cada tamanho, primeiro sem cruzar os fluxos.
          Não coube: módulos com letra menor, notas menores, lado a lado, por último tudo um pouco menor */
       const n2 = fs.note * 0.8;
@@ -585,6 +605,7 @@ class Painter {
       }
       Object.assign(out.notes, best.N.res);
       mods.forEach((m, i) => { out.mods[m] = best.res[i]; });
+      if (r === 'ext' && D.obra) out.free = [x0 + pad, best.N.bottom + 4, x1 - pad, Math.min(...best.res.map((b) => b.y)) - 6];
     });
     if (D.mods.includes('site')) {
       const [sx0, sy0, sx1, sy1] = g.sign;
@@ -660,6 +681,8 @@ class Painter {
     if (D.any) {
       ROOM_KEYS.forEach((k) => this.setLabel(this.roomT[k], L.labels[k]));
       this.setLabel(this.extT, L.labels.ext);
+      this.setSum(L.sum);
+      this.people.style.display = D.obra ? 'none' : '';
       this.setText(this.corT, D.mods.includes('base') ? MODULOS.base.nome : 'Circulação');
       this.corT.classList.toggle('on', D.mods.includes('base'));
     }
@@ -675,6 +698,9 @@ class Painter {
 
     const want = new Map();
     const lanes = this.lanes(D, L);
+    /* a casa descrita pelo visitante, no que sobra do canteiro */
+    const house = D.obra && L.free ? this.planHouse(D.obra, L.free) : null;
+    if (house) want.set('house', () => this._house(house));
     /* nuvens de revisão por área */
     Object.keys(D.marks).forEach((r) => want.set('cloud:' + r, () => this._cloud(r)));
     /* uma nota por área marcada (planilhas aparece na diretoria e no financeiro) */
@@ -705,12 +731,98 @@ class Painter {
       else if (key.startsWith('mod:')) {
         const m = key.slice(4), b = L.mods[m];
         if (it.sig !== this._modSig(b)) { it.g.remove(); this.items.set(key, this._mod(m, b, true)); }
+      } else if (key === 'house') {
+        if (it.sig !== house.sig) { it.g.remove(); this.items.set(key, this._house(house, true)); }
       } else if (key.startsWith('flow:')) {
         const m = key.slice(5), d = this.flowPath(m, L.mods[m], lanes[m] || 0, L);
         if (it.d !== d) { it.g.remove(); this.items.set(key, this._flow(m, d, true)); }
       }
     });
     return D;
+  }
+
+  setSum(s) {
+    const el = this.sumT;
+    const sig = s ? s.lines.join('|') + '@' + f1(s.size) + '@' + f1(s.y) : '';
+    if (!el || el.getAttribute('data-sig') === sig) return;
+    el.setAttribute('data-sig', sig);
+    el.textContent = '';
+    if (!s) return;
+    el.setAttribute('font-size', f1(s.size));
+    el.setAttribute('y', f1(s.y));
+    s.lines.forEach((l, i) => { const t = S('tspan', { x: f1(s.x), dy: i ? f1(s.lh) : null }, el); t.textContent = l; });
+    this.a(el, [{ opacity: 0.15 }, { opacity: 1 }], { duration: 480 });
+  }
+
+  /* a casa: cada cômodo vira uma caixa. Sala, cozinha, varanda e garagem em cima; quartos e banheiros embaixo.
+     Se não couber um cômodo por caixa, agrupa ("3 quartos"); nomes longos viram abreviação; se não couber, não desenha */
+  planHouse(obra, free) {
+    if (!obraTemComodos(obra) || !free) return null;
+    const g = this.geo, fs = g.fs, land = this.orient === 'land';
+    const W = free[2] - free[0], H = free[3] - free[1];
+    const minCW = land ? 52 : 36, minCH = land ? 30 : 24, maxRH = land ? 60 : 40;
+    if (W < minCW * 2 || H < minCH) return null;
+    const WGT = { sala: 3, cozinha: 2.2, varanda: 2, garagem: 2.6, servico: 1.6, suite: 2.8, quarto: 2.4, banheiro: 1.4, lavabo: 1.1 };
+    const NOME = { sala: ['Sala', 'Sa.'], cozinha: ['Cozinha', 'Coz.'], varanda: ['Varanda', 'Var.'], garagem: ['Garagem', 'Gar.'], servico: ['Serviço', 'Serv.'], suite: ['Suíte', 'S'], quarto: ['Quarto', 'Q'], banheiro: ['Banheiro', 'B'], lavabo: ['Lavabo', 'Lav.'] };
+    const PLUR = { suite: 'suítes', quarto: 'quartos', banheiro: 'banheiros', lavabo: 'lavabos', sala: 'salas', cozinha: 'cozinhas', garagem: 'garagens', varanda: 'varandas', servico: 'serviços' };
+    const SOC = ['sala', 'cozinha', 'varanda', 'garagem', 'servico'], INT = ['suite', 'quarto', 'banheiro', 'lavabo'];
+    const build = (grouped) => {
+      const items = [];
+      SOC.concat(INT).forEach((k) => {
+        const n = obra[k];
+        if (!n) return;
+        const soc = SOC.includes(k), [full, short] = NOME[k];
+        if (grouped && n > 1) { items.push({ soc, w: WGT[k] * (1 + 0.35 * (n - 1)), lab: [n + ' ' + PLUR[k], n + short] }); return; }
+        for (let i = 1; i <= n; i++) items.push({ soc, w: WGT[k], lab: n > 1 ? [full + ' ' + i, short + i] : [full, short] });
+      });
+      return items;
+    };
+    const maxPer = Math.max(2, Math.floor(W / minCW));
+    const chunk = (arr) => {
+      if (!arr.length) return [];
+      const n = Math.ceil(arr.length / maxPer), per = Math.ceil(arr.length / n), out = [];
+      for (let i = 0; i < arr.length; i += per) out.push(arr.slice(i, i + per));
+      return out;
+    };
+    const rowsFor = (items) => chunk(items.filter((i) => i.soc)).concat(chunk(items.filter((i) => !i.soc)));
+    let rows = rowsFor(build(false));
+    if (H / rows.length < minCH) rows = rowsFor(build(true));
+    /* ainda apertado (celular): tudo numa fila só, sem separar a parte social da íntima */
+    if (H / rows.length < minCH) rows = chunk(build(true));
+    if (H / rows.length < minCH) return null;
+    const rh = Math.min(maxRH, H / rows.length), cells = [];
+    const size = Math.min(fs.small, Math.max(7.5, rh * 0.36));
+    rows.forEach((row, ri) => {
+      const tot = row.reduce((a, c) => a + c.w, 0);
+      /* cada caixa tem pelo menos a largura do próprio nome; a sobra se reparte pelo peso de cada cômodo */
+      const need = row.map((c) => this.measure(c.lab[0], size, 'hs-t') + 8), spare = W - need.reduce((a, n) => a + n, 0);
+      let x = free[0];
+      row.forEach((c, i) => {
+        const w = spare >= 0 ? need[i] + (spare * c.w) / tot : (W * c.w) / tot;
+        const lab = c.lab.find((t) => this.measure(t, size, 'hs-t') <= w - 5) || '';
+        cells.push({ x: f1(x), y: f1(free[1] + ri * rh), w: f1(w), h: f1(rh), lab });
+        x += w;
+      });
+    });
+    const sig = [orient2(this.orient), size].concat(cells.map((c) => [c.x, c.y, c.w, c.h, c.lab].join(','))).join(';');
+    return { cells, size, box: [free[0], free[1], free[2], free[1] + rh * rows.length], sig };
+  }
+
+  _house(h, quick) {
+    const gg = S('g', { class: 'mk-house' }, this.gExt);
+    const [x0, y0, x1, y1] = h.box;
+    h.cells.forEach((c, i) => {
+      const p = S('path', { d: `M${c.x},${c.y} h${c.w} v${c.h} h${-c.w} Z`, class: 'hs-r' }, gg);
+      if (!quick) this.draw(p, 520, 260 + i * 70);
+      if (c.lab) {
+        const t = S('text', { x: f1(c.x + c.w / 2), y: f1(c.y + c.h / 2 + h.size * 0.36), 'font-size': f1(h.size), class: 'hs-t', 'text-anchor': 'middle' }, gg);
+        t.textContent = c.lab;
+        if (!quick) this.fadeIn(t, 640 + i * 70, 420);
+      }
+    });
+    const o = S('path', { d: `M${f1(x0)},${f1(y0)} H${f1(x1)} V${f1(y1)} H${f1(x0)} Z`, class: 'hs-o' }, gg);
+    if (!quick) this.draw(o, 700, 120); else this.fadeIn(gg, 0, 260);
+    return { g: gg, sig: h.sig };
   }
 
   _cloud(r) {
@@ -830,7 +942,7 @@ export class Plan {
     this.p3.className = 'p3';
     this.p3.setAttribute('aria-hidden', 'true');
     this.world.append(this.p3);
-    this.state = { ramo: null, dores: [], equipe: null, nome: '', example: false };
+    this.state = { ramo: null, dores: [], equipe: null, nome: '', example: false, obra: null };
     this.rev = 0;
     this.revStore = {};
     this.sig = '';
@@ -860,8 +972,8 @@ export class Plan {
 
   /* troca o estado; a revisão sobe a cada mudança real */
   set(st, o = {}) {
-    const next = { ramo: st.ramo || null, dores: (st.dores || []).slice(), equipe: st.equipe === undefined ? null : st.equipe, nome: (st.nome || '').trim().slice(0, 40), example: !!st.example };
-    const sig = [next.ramo, next.dores.slice().sort().join(','), next.equipe].join('|');
+    const next = { ramo: st.ramo || null, dores: (st.dores || []).slice(), equipe: st.equipe === undefined ? null : st.equipe, nome: (st.nome || '').trim().slice(0, 40), example: !!st.example, obra: obraClean(st.obra) };
+    const sig = [next.ramo, next.dores.slice().sort().join(','), next.equipe, obraSig(next.obra)].join('|');
     const sigFull = sig + '|' + next.nome + '|' + next.example;
     if (sigFull === this.sigFull) return derive(next);
     if (sig !== this.sig) {
@@ -890,6 +1002,7 @@ export class Plan {
     const parts = [];
     parts.push(st.ramo ? RAMOS[st.ramo].nome : 'Ramo a definir');
     if (st.equipe !== null) parts.push(EQ_FRASE[st.equipe].toLowerCase());
+    if (D.obra) parts.push('obra descrita: ' + obraFrase(D.obra));
     if (D.dores.length) parts.push('marcado em vermelho: ' + D.dores.map((x) => lc1(x.nota)).join(', '));
     if (D.mods.length) parts.push('proposta em azul: ' + D.mods.map((m) => lc1(MODULOS[m].nome)).join(', '));
     d.textContent = parts.join('. ') + '.';

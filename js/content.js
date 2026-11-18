@@ -20,6 +20,57 @@ export const RAMOS = {
 };
 export const RAMO_ORDER = ['obras', 'comercio', 'campo', 'escritorio', 'industria', 'outro'];
 
+/* ---------- a obra que o visitante descreve (quartos, banheiros, sala, cozinha, metros quadrados) ----------
+   Vira uma casa desenhada dentro do canteiro de obras da planta. Tudo é número inteiro; 0 = não falou. */
+export const OBRA_KEYS = ['quarto', 'suite', 'banheiro', 'lavabo', 'sala', 'cozinha', 'garagem', 'varanda', 'servico'];
+/* letra de cada item no link da planta (m = metros quadrados) */
+const OBRA_LETRA = { quarto: 'q', suite: 'u', banheiro: 'b', lavabo: 'l', sala: 's', cozinha: 'c', garagem: 'g', varanda: 'v', servico: 'w' };
+const OBRA_NOME = {
+  quarto: ['quarto', 'quartos'], suite: ['suíte', 'suítes'], banheiro: ['banheiro', 'banheiros'], lavabo: ['lavabo', 'lavabos'],
+  sala: ['sala', 'salas'], cozinha: ['cozinha', 'cozinhas'], garagem: ['garagem', 'garagens'], varanda: ['varanda', 'varandas'], servico: ['área de serviço', 'áreas de serviço']
+};
+const OBRA_MAX = { quarto: 12, suite: 6, banheiro: 10, lavabo: 4, sala: 3, cozinha: 3, garagem: 3, varanda: 3, servico: 2 };
+/* limpa o que veio da conversa ou do link: números inteiros dentro de limites; devolve null se não sobrou nada */
+export function obraClean(o) {
+  if (!o || typeof o !== 'object') return null;
+  const out = { area: 0 };
+  let any = false;
+  OBRA_KEYS.forEach((k) => {
+    const n = Math.floor(Number(o[k]) || 0);
+    out[k] = Math.max(0, Math.min(OBRA_MAX[k], n));
+    if (out[k]) any = true;
+  });
+  const a = Math.round(Number(o.area) || 0);
+  out.area = a >= 8 && a <= 99999 ? a : 0;
+  return any || out.area ? out : null;
+}
+export function obraSig(o) {
+  const c = obraClean(o);
+  if (!c) return '';
+  return OBRA_KEYS.filter((k) => c[k]).map((k) => OBRA_LETRA[k] + c[k]).concat(c.area ? ['m' + c.area] : []).join('');
+}
+export function obraFromSig(s) {
+  const o = {};
+  String(s || '').replace(/([a-z])(\d{1,5})/g, (_, l, n) => {
+    if (l === 'm') o.area = +n;
+    else { const k = OBRA_KEYS.find((x) => OBRA_LETRA[x] === l); if (k) o[k] = +n; }
+    return '';
+  });
+  return obraClean(o);
+}
+const obraItem = (k, n) => (n === 1 && ['sala', 'cozinha', 'garagem', 'varanda', 'servico'].includes(k) ? OBRA_NOME[k][0] : n + ' ' + OBRA_NOME[k][n === 1 ? 0 : 1]);
+/* frase da obra. curto = só área, quartos e banheiros (cabe na folha); completo = tudo o que foi entendido */
+export function obraFrase(o, curto) {
+  const c = obraClean(o);
+  if (!c) return '';
+  const keys = curto ? ['quarto', 'suite', 'banheiro'] : OBRA_KEYS;
+  const parts = keys.filter((k) => c[k]).map((k) => obraItem(k, c[k]));
+  const area = c.area ? c.area.toLocaleString('pt-BR') + ' m²' : '';
+  return (curto ? [area].concat(parts) : parts.concat([area])).filter(Boolean).join(', ');
+}
+/* a casa só pode ser desenhada se tem pelo menos um cômodo */
+export const obraTemComodos = (o) => { const c = obraClean(o); return !!c && OBRA_KEYS.some((k) => c[k]); };
+
 export const EQUIPES = ['Até 5 pessoas', '6 a 20 pessoas', '21 a 50 pessoas', 'Mais de 50 pessoas'];
 export const EQUIPES_CURTO = ['Até 5', '6 a 20', '21 a 50', 'Mais de 50'];
 
