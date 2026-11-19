@@ -1,10 +1,10 @@
-/* Konan Tech 7.0: navegação, laboratório e carregamento das demonstrações. */
+/* Konan Tech 8.0: navegação, laboratório e carregamento das demonstrações. */
 import { WA_DEFAULT, waLink, waContext, RAMOS, RAMO_ORDER, DORES, MODULOS, DETALHES, EQUIPES, EQUIPES_CURTO, EXEMPLO, obraFrase, obraSig, obraFromSig } from './content.js';
 import { Plan, derive, lc1 } from './plan.js';
 import { parse, highlight, Voice, SR } from './listen.js';
 import { probeGL, pickTier, TIERS } from './perf.js';
 import { initSolutions, renderLabFlow } from './solutions.js';
-import { initSignal } from './signal.js';
+import { initAssembly } from './assembly.js';
 
 const D = document, H = D.documentElement;
 const REDUCED = H.classList.contains('rm');
@@ -37,7 +37,18 @@ D.addEventListener('click', (event) => {
 });
 initSolutions(track);
 
-initSignal(q('#signal-studio'), track);
+initAssembly(q('#assembly'), track);
+if (!REDUCED) {
+  const arrive = new IntersectionObserver((entries) => {
+    for (const { target, isIntersecting } of entries) {
+      if (!isIntersecting) continue;
+      target.animate([{ opacity: .72, transform: 'translateY(9px)' }, { opacity: 1, transform: 'none' }],
+        { duration: 415, easing: 'cubic-bezier(.21,.7,.22,1)' });
+      arrive.unobserve(target);
+    }
+  }, { threshold: .18 });
+  qa('#solucoes .section-split, .sec-head, .founder-grid').forEach((element) => arrive.observe(element));
+}
 
 /* ---------- cabeçalho e menu ---------- */
 const hd = q('#hd');

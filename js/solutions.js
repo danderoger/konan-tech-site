@@ -107,7 +107,11 @@ export function initSolutions(track) {
     link.href = '#detalhe-' + item.detail;
     lab.dataset.labPain = key;
     labels.forEach((label, i) => { label.textContent = item.steps[i]; });
-    if (!motion.matches) diagram.animate([{ opacity: 0.4, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 330 });
+    if (!motion.matches) {
+      [...diagram.children].forEach((node, index) => node.animate(
+        [{ opacity: .5, transform: 'translateY(7px)' }, { opacity: 1, transform: 'none' }],
+        { duration: 300, delay: index * 65, easing: 'ease-out', fill: 'backwards' }));
+    }
     track('problem_select', key);
   });
 

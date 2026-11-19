@@ -1,6 +1,10 @@
-/* Ponto de entrada do pacote Three.js usado pelo site (só o que o palco de partículas usa).
-   Gere de novo com: sh scripts/build-vendor.sh */
+/* Ponto de entrada do Three.js usado pelos dois palcos do site. */
 export {
   Scene, PerspectiveCamera, WebGLRenderer, BufferGeometry, BufferAttribute, Points, LineSegments, Group,
-  ShaderMaterial, Color, Vector2, Vector3, CustomBlending, AddEquation, OneFactor, OneMinusSrcAlphaFactor
+  ShaderMaterial, Color, Vector2, Vector3, CustomBlending, AddEquation, OneFactor, OneMinusSrcAlphaFactor,
+  Mesh, MeshStandardMaterial, LineBasicMaterial, EdgesGeometry, BoxGeometry, CylinderGeometry,
+  GridHelper, HemisphereLight, DirectionalLight, CanvasTexture, EquirectangularReflectionMapping,
+  SRGBColorSpace, ACESFilmicToneMapping, MathUtils
 } from 'three';
+export { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+export { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';

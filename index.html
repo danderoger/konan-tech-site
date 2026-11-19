@@ -6,23 +6,23 @@
 <title>Konan Tech, sistemas, automação e inteligência artificial para empresas</title>
 <meta name="description" content="Sistemas sob medida, automação de processos e inteligência artificial para empresas. Conheça os projetos da Konan Tech e explore soluções para a sua operação.">
 <link rel="canonical" href="https://www.konantech.com.br/">
-<meta name="theme-color" content="#f8f7f0">
+<meta name="theme-color" content="#08111f">
 <meta name="color-scheme" content="light">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:site_name" content="Konan Tech">
 <meta property="og:url" content="https://www.konantech.com.br/">
-<meta property="og:title" content="Konan Tech | Do ruído ao controle">
+<meta property="og:title" content="Konan Tech | Sua operação, conectada">
 <meta property="og:description" content="Sistemas sob medida, automação de processos e inteligência artificial para empresas. Conheça os projetos da Konan Tech e explore soluções para a sua operação.">
 <meta property="og:image" content="https://www.konantech.com.br/assets/og-image.png">
 <meta property="og:image:width" content="1200">
-<meta property="og:image:alt" content="Konan Tech, do ruído ao controle">
+<meta property="og:image:alt" content="Konan Tech, sua operação conectada">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/favicon.png">
-<link rel="preload" as="image" href="assets/processador-7-mobile.webp" media="(max-width: 600px)" fetchpriority="high">
-<link rel="preload" as="image" href="assets/processador-7.webp" media="(width > 600px)" fetchpriority="high">
+<link rel="preload" as="image" href="assets/central-mobile.webp" media="(max-width: 600px)" fetchpriority="high">
+<link rel="preload" as="image" href="assets/central.webp" media="(width > 600px)" fetchpriority="high">
 <link rel="preload" href="assets/fonts/bricolage-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/main.css">
 <link rel="stylesheet" href="css/redesign.css">
@@ -76,7 +76,7 @@
   <div class="hd-in">
     <a class="hd-logo" href="#inicio" aria-label="Konan Tech, voltar ao início"><img src="assets/konan-logo-header.webp" alt="Konan Tech" width="208" height="32"></a>
     <nav class="hd-nav" id="nav" aria-label="Seções do site">
-      <a href="#detalhes">Soluções</a>
+      <a href="#solucoes">Soluções</a>
       <a href="#projetos">Projetos</a>
       <a href="#planta">Laboratório</a>
       <a href="#processo">Como trabalhamos</a>
@@ -92,42 +92,41 @@
 <section class="hero" id="inicio" aria-labelledby="hero-title">
   <div class="wrap hero-inner">
     <div class="hero-copy">
-      <p class="eyebrow hero-eyebrow">Sistemas, automação e IA para empresas</p>
-      <h1 id="hero-title">Do ruído<br><em>ao controle.</em></h1>
-      <p class="hero-lead">Transformamos planilhas, mensagens e tarefas soltas em sistemas que a sua equipe consegue usar e acompanhar.</p>
+      <p class="eyebrow hero-eyebrow">Sistemas sob medida, IA e automação</p>
+      <h1 id="hero-title">Sua operação,<br><em>conectada.</em></h1>
+      <p class="hero-lead">Um lugar para o financeiro, a equipe de campo e a gestão trabalharem com as mesmas informações, mesmo fora do escritório.</p>
       <div class="hero-actions">
-        <a class="btn btn-pri" href="#detalhes" data-track="solucoes">Conheça as soluções</a>
-        <a class="btn btn-ghost" href="#planta" data-track="laboratorio">Teste o laboratório</a>
+        <a class="btn btn-pri" href="#solucoes" data-track="solucoes">Veja o que podemos conectar</a>
+        <a class="btn btn-ghost" href="#projetos" data-track="projetos">Explore casos reais</a>
       </div>
     </div>
-    <figure class="signal-studio" id="signal-studio" data-phase="entrada" aria-label="Da entrada de dados ao controle da operação">
-      <div class="signal-picture">
-        <picture>
-          <source media="(max-width: 600px)" srcset="assets/processador-7-mobile.webp">
-          <img class="signal-image" src="assets/processador-7.webp" alt="Ilustração de um processador em camadas, com sinais luminosos que entram separados e saem alinhados" width="1120" height="840" fetchpriority="high" decoding="async">
+    <figure class="assembly" id="assembly" data-view="final" aria-label="Central de operações que se monta em três dimensões">
+      <div class="assembly-visual">
+        <picture class="assembly-picture">
+          <source media="(max-width: 600px)" srcset="assets/central-mobile.webp">
+          <img class="assembly-image" src="assets/central.webp" alt="Central de operações em vidro e metal com módulos conectados por trilhas luminosas" width="1320" height="960" fetchpriority="high" decoding="async">
         </picture>
-        <svg class="signal-trace" viewBox="0 0 600 400" preserveAspectRatio="none" aria-hidden="true">
-          <path data-trace="entrada" d="M0 305 H86 L128 263 H189 L210 243 H274"/>
-          <path data-trace="processo" d="M162 342 H232 L281 293 H331 L389 235 H457"/>
-          <path data-trace="controle" d="M336 237 H395 L438 194 H510 L536 168 H600"/>
-        </svg>
-        <div class="signal-caption" aria-live="polite">
-          <p class="signal-label" id="signal-label">Dados de entrada</p>
-          <p id="signal-text">Pedidos, documentos e registros chegam por diferentes canais.</p>
-        </div>
+        <canvas width="1320" height="960" role="img" aria-label="Central 3D. Use as setas para girar." aria-hidden="true" tabindex="-1"></canvas>
       </div>
-      <figcaption class="signal-controls" role="group" aria-label="Explore as etapas do fluxo">
-        <button type="button" data-phase="entrada" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg>Entrada</button>
-        <button type="button" data-phase="processo" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-cpu"/></svg>Processamento</button>
-        <button type="button" data-phase="controle" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-bars"/></svg>Controle</button>
+      <figcaption class="assembly-caption">
+        <div class="assembly-description" aria-live="polite">
+          <p id="assembly-title">Operação conectada</p>
+          <p id="assembly-hint">Uma central para registrar, acompanhar e decidir.</p>
+        </div>
+        <div class="assembly-controls" role="group" aria-label="Controles da cena">
+          <button type="button" data-assembly="build" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg>Montagem</button>
+          <button type="button" data-assembly="final" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#i-scan"/></svg>Realismo</button>
+          <button type="button" data-assembly="orbit" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-cube"/></svg>Girar em 3D</button>
+        </div>
+        <div class="assembly-progress" aria-hidden="true"></div>
       </figcaption>
     </figure>
   </div>
   <div class="hero-index">
-    <nav class="wrap" aria-label="Acesso direto aos serviços">
-      <a href="#detalhe-sistema" data-track="sistemas"><svg class="ic" aria-hidden="true"><use href="#i-cube"/></svg>Sistemas sob medida</a>
-      <a href="#detalhe-auto" data-track="automacao"><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg>Automação de processos</a>
-      <a href="#detalhe-ia" data-track="ia"><svg class="ic" aria-hidden="true"><use href="#i-scan"/></svg>IA aplicada ao negócio</a>
+    <nav class="wrap" aria-label="Acesso direto às demonstrações">
+      <a href="#detalhe-sistema" data-track="sistemas"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg><span><strong>Unifique os registros</strong><small>Sistemas sob medida</small></span></a>
+      <a href="#detalhe-auto" data-track="automacao"><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg><span><strong>Reduza etapas manuais</strong><small>Automação de processos</small></span></a>
+      <a href="#detalhe-ia" data-track="ia"><svg class="ic" aria-hidden="true"><use href="#i-scan"/></svg><span><strong>Confira em vez de digitar</strong><small>IA aplicada ao negócio</small></span></a>
     </nav>
   </div>
 </section>
@@ -135,8 +134,8 @@
 <section class="sec scenarios" id="solucoes" aria-labelledby="scenarios-title">
   <div class="wrap">
     <div class="section-split">
-      <div><p class="eyebrow">Problemas que resolvemos</p><h2 class="h2" id="scenarios-title">Onde a sua operação trava?</h2></div>
-      <p class="lead">Escolha um problema da sua rotina e veja o caminho da informação até a equipe.</p>
+      <div><p class="eyebrow">Problemas que resolvemos</p><h2 class="h2" id="scenarios-title">Qual tarefa toma mais tempo?</h2></div>
+      <p class="lead">Escolha uma situação para ver o que muda quando as informações passam pelo mesmo sistema.</p>
     </div>
     <div class="scenario-grid">
       <div class="scenario-options" id="scenario-options" role="group" aria-label="Situações da operação">
@@ -171,8 +170,8 @@
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Portfólio</p>
-      <h2 class="h2" id="pj-h">Projetos com contexto.</h2>
-      <p class="lead">Explore a necessidade de cada empresa, a solução desenvolvida e o estágio do projeto.</p>
+      <h2 class="h2" id="pj-h">Soluções feitas para operações reais.</h2>
+      <p class="lead">Veja como cada solução foi desenhada para o trabalho de quem usa.</p>
     </div>
     <ul class="boards" id="boards">
         <li class="pj board" data-p="via-opus" data-step="4" data-done>
@@ -370,7 +369,7 @@
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Soluções digitais</p>
-      <h2 class="h2" id="det-h">Teste como funciona.</h2>
+      <h2 class="h2" id="det-h">Experimente as soluções.</h2>
       <p class="lead">Confira uma nota, acompanhe um pedido ou mude os indicadores do painel. As simulações usam dados fictícios.</p>
     </div>
     <div class="det">
@@ -667,7 +666,7 @@
 
 <section class="sec founder-section" id="sobre" aria-labelledby="founder-title">
   <div class="wrap founder-grid">
-    <div class="founder-intro"><p class="eyebrow">Quem desenvolve com você</p><p class="founder-statement">A tecnologia começa na operação.</p></div>
+    <div class="founder-intro"><p class="eyebrow">Quem desenvolve com você</p><p class="founder-statement">O sistema começa com quem faz o trabalho.</p></div>
     <div>
       <h2 class="h2" id="founder-title">Dande Roger Serrão Lopes</h2>
       <p class="lead">Fundador da Konan Tech, Dande coordenou operações de montagem de móveis em vários estados, acompanhando equipes de campo, ordens de serviço, custos e indicadores. Dessa experiência nasceu o MontaCerto. Hoje, essa vivência orienta o desenho das soluções da Konan Tech.</p>
@@ -699,8 +698,8 @@
       <div class="fin-mark" id="fin-mark"><img class="fin-logo" src="assets/konan-logo-dark.png" alt="" width="208" height="32" loading="lazy"></div>
     </div>
     <div class="fin-msg">
-      <h2 class="h2 h2-xl" id="fin-h">Onde vale a pena começar?</h2>
-      <p class="lead">Conte o que mais toma tempo na sua empresa. A partir daí, podemos desenhar um primeiro passo.</p>
+      <h2 class="h2 h2-xl" id="fin-h">Comece pelo que mais toma tempo.</h2>
+      <p class="lead">Conte como a sua equipe trabalha hoje. A partir daí, podemos desenhar um primeiro passo.</p>
       <div class="cta">
         <a class="btn btn-pri btn-lg" id="fin-wa" data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>Vamos conversar sobre sua empresa</span></a>
         <button type="button" class="btn btn-ghost btn-lg" id="fin-again"><svg class="ic"><use href="#i-redo"/></svg><span>Rever animação da marca</span></button>

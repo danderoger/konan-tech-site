@@ -2,14 +2,14 @@
 // Por quê: ao abrir pelo arquivo (file://), o navegador bloqueia scripts do tipo module
 // e impede a leitura da logo pelas partículas. Aqui tudo vira um script comum e as imagens
 // ficam dentro do próprio arquivo.
-// Uso: ESBUILD_BIN=/caminho/esbuild node scripts/build-offline.mjs saida/konan-tech-7.0.html
+// Uso: ESBUILD_BIN=/caminho/esbuild node scripts/build-offline.mjs saida/konan-tech-8.0.html
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join, extname } from 'node:path';
 import { tmpdir } from 'node:os';
 
 const root = new URL('..', import.meta.url).pathname;
-const out = process.argv[2] || join(root, 'dist-offline', 'konan-tech-7.0.html');
+const out = process.argv[2] || join(root, 'dist-offline', 'konan-tech-8.0.html');
 const esbuild = process.env.ESBUILD_BIN || 'esbuild';
 mkdirSync(dirname(out), { recursive: true });
 
