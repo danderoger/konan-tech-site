@@ -89,7 +89,7 @@ export const DOR = Object.fromEntries(DORES.map((d) => [d.k, d]));
 
 /* módulos da proposta (tinta azul). det = detalhe que mostra o módulo funcionando */
 export const MODULOS = {
-  base: { nome: 'Sistema web com uma base só', room: 'cor', det: 'painel' },
+  base: { nome: 'Sistema web com uma base só', room: 'cor', det: 'sistema' },
   ia: { nome: 'Leitura de notas com IA', room: 'in', det: 'ia' },
   pedidos: { nome: 'Central de pedidos', room: 'in', det: 'auto' },
   app: { nome: 'Aplicativo da equipe', room: 'ext', det: 'app' },
@@ -107,7 +107,8 @@ export const DETALHES = [
   { k: 'auto', n: 2, nome: 'Automações' },
   { k: 'painel', n: 3, nome: 'Painel de indicadores' },
   { k: 'app', n: 4, nome: 'Aplicativo da equipe' },
-  { k: 'site', n: 5, nome: 'Site e WhatsApp' }
+  { k: 'site', n: 5, nome: 'Site e WhatsApp' },
+  { k: 'sistema', n: 6, nome: 'Sistemas sob medida' }
 ];
 export const DET_N = Object.fromEntries(DETALHES.map((d) => [d.k, d.n]));
 

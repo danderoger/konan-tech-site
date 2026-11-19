@@ -1,12 +1,9 @@
-/* Konan Tech 5.0: comportamento da página.
-   A planta viva é o centro: o visitante fala, escreve ou toca nas opções e a planta do sistema
-   é desenhada na hora. O resto da página se adapta ao que ele contou.
-   O 3D pesado (partículas) só carrega no final; sem WebGL, tudo funciona igual. */
-
+/* Konan Tech 6.0: navegação, laboratório e carregamento das demonstrações. */
 import { WA_DEFAULT, waLink, waContext, RAMOS, RAMO_ORDER, DORES, MODULOS, DETALHES, EQUIPES, EQUIPES_CURTO, EXEMPLO, obraFrase, obraSig, obraFromSig } from './content.js';
 import { Plan, derive, lc1 } from './plan.js';
-import { parse, highlight, Voice, SR, typeOut } from './listen.js';
+import { parse, highlight, Voice, SR } from './listen.js';
 import { probeGL, pickTier, TIERS } from './perf.js';
+import { initSolutions, renderLabFlow } from './solutions.js';
 
 const D = document, H = D.documentElement;
 const REDUCED = H.classList.contains('rm');
@@ -16,13 +13,40 @@ const q = (s, r = D) => r.querySelector(s);
 const qa = (s, r = D) => [...r.querySelectorAll(s)];
 const narrow = () => innerWidth <= 760;
 
-let lenis = null, stage, stagePromise = null;
+let stage, stagePromise = null;
 const demos = {};
 
 /* ---------- WhatsApp: todo link [data-wa] recebe a mensagem do contexto ---------- */
 function setWa(a, frase) { if (a) a.href = waLink(frase ? waContext(frase) : WA_DEFAULT); }
 function setWaRaw(a, msg) { if (a) a.href = waLink(msg); }
 qa('[data-wa]').forEach((a) => setWa(a, a.dataset.msg));
+
+/* Eventos locais com categorias predefinidas. Um coletor futuro pode ouvir konan:interaction. */
+function track(event, context) {
+  D.dispatchEvent(new CustomEvent('konan:interaction', { detail: { event, context } }));
+}
+D.addEventListener('click', (event) => {
+  const link = event.target.closest('a');
+  if (!link) return;
+  if (link.dataset.track) track('navigation_click', link.dataset.track);
+  if (link.hasAttribute('data-wa')) {
+    const context = link.closest('.det-p')?.id || link.closest('section')?.id || 'global';
+    track('contact_click', context);
+  }
+});
+initSolutions(track);
+
+const hero = q('#hero-scene');
+if (!REDUCED && !navigator.connection?.saveData) {
+  const enter = new IntersectionObserver(([entry]) => {
+    if (!entry.isIntersecting) return;
+    enter.disconnect();
+    const start = () => import('./hero-scene.js').then(({ initHero }) => initHero(hero, q('#hero-canvas'))).catch(() => {});
+    if ('requestIdleCallback' in window) requestIdleCallback(start, { timeout: 1300 });
+    else setTimeout(start, 250);
+  });
+  enter.observe(hero);
+}
 
 /* ---------- cabeçalho e menu ---------- */
 const hd = q('#hd');
@@ -36,26 +60,19 @@ menuBtn.addEventListener('click', () => setMenu(!hd.classList.contains('open')))
 D.addEventListener('keydown', (e) => { if (e.key === 'Escape' && hd.classList.contains('open')) { setMenu(false); menuBtn.focus(); } });
 
 /* ---------- rolagem suave e âncoras ---------- */
-if (!REDUCED && window.Lenis) {
-  lenis = new window.Lenis({ lerp: 0.1, smoothWheel: true, wheelMultiplier: 0.95, prevent: (node) => !!(node && node.closest && node.closest('[data-lenis-prevent], dialog, textarea')) });
-  const raf = (t) => { lenis.raf(t); requestAnimationFrame(raf); };
-  requestAnimationFrame(raf);
-}
-function scrollToTarget(el, extra) {
-  const off = -(hd.offsetHeight + (extra === undefined ? 10 : extra));
-  /* o Lenis já desconta o scroll-padding-top do html (cabeçalho + 12px); aqui só entra a diferença */
-  const pad = parseFloat(getComputedStyle(H).scrollPaddingTop) || 0;
-  if (lenis) lenis.scrollTo(el, { offset: off + pad, duration: 1.2 });
-  else window.scrollTo({ top: el.getBoundingClientRect().top + scrollY + off, behavior: REDUCED ? 'auto' : 'smooth' });
+function scrollToTarget(el, extra = 10) {
+  const top = el.getBoundingClientRect().top + scrollY - hd.offsetHeight - extra;
+  window.scrollTo({ top, behavior: REDUCED ? 'auto' : 'smooth' });
 }
 D.addEventListener('click', (e) => {
   const a = e.target.closest('a[href^="#"]');
-  if (!a) return;
+  if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
   const id = a.getAttribute('href');
   if (id.startsWith('#detalhe-')) {
     e.preventDefault();
     setMenu(false);
     openDetail(id.slice(9), true);
+    q('.det-tabs [aria-selected=true]')?.focus({ preventScroll: true });
     return;
   }
   if (id === '#qs') { e.preventDefault(); startTap(); return; }
@@ -63,7 +80,15 @@ D.addEventListener('click', (e) => {
   if (!el) return;
   e.preventDefault();
   setMenu(false);
-  scrollToTarget(el, id === '#planta' ? 200 : 10);
+  if (id === '#inicio') window.scrollTo({ top: 0, behavior: REDUCED ? 'auto' : 'smooth' });
+  else scrollToTarget(el);
+  if (a.classList.contains('skip')) {
+    el.focus({ preventScroll: true });
+  } else {
+    const heading = el.querySelector('h1, h2');
+    if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
+  }
+  if (id === '#planta') markLabStart();
 });
 
 /* seção atual destacada no menu */
@@ -77,7 +102,14 @@ const navIO = new IntersectionObserver((ents) => ents.forEach((e) => {
 /* ============================================================
    A MESA: conversa + planta
    ============================================================ */
-const sheet = q('#sheet');
+const sheet = q('#sheet'), flow = q('#lab-flow');
+let flowAvailable = true;
+let labStarted = false, labCompleted = false;
+function markLabStart() {
+  if (labStarted) return;
+  labStarted = true;
+  track('lab_start', 'laboratorio');
+}
 const sub = q('#sub'), subWho = q('#sub-who'), subT = q('#sub-t'), subStop = q('#sub-stop'), foot = q('#sheet-foot');
 const micBtn = q('#mic'), writeBtn = q('#write'), compW = q('#comp-w'), txt = q('#txt'), txtGo = q('#txt-go');
 const compMsg = q('#comp-msg');
@@ -93,7 +125,6 @@ let spoken = { ramo: null, dores: [], equipe: null, obra: null };
 /* o que a conversa entendeu */
 const heard = (r) => ({ ramo: r.ramo, dores: r.dores, equipe: r.equipe, obra: r.obra });
 let mode = 'idle';
-let exCancel = null, exTimers = [];
 let lastAnnounce = { dores: [], mods: [], obra: '' };
 
 function effective() {
@@ -125,13 +156,26 @@ function onPlanChange(st, Dv) {
   qTabs[0].classList.toggle('set', !!st.ramo);
   qTabs[1].classList.toggle('set', st.dores.length > 0);
   qTabs[2].classList.toggle('set', st.equipe !== null);
-  qDone.hidden = !(st.ramo && st.dores.length && st.equipe !== null) || st.example;
+  const complete = Boolean(st.ramo && st.dores.length && st.equipe !== null && !st.example);
+  qDone.hidden = !complete;
+  if (complete && !labCompleted && labStarted) {
+    labCompleted = true;
+    track('lab_complete', 'laboratorio');
+  }
+  const nextFlow = st.ramo !== 'obras';
+  if (nextFlow !== flowAvailable && plan.d3.on) {
+    plan.set3D(false, { instant: true });
+    sheet.tabIndex = -1;
+    b3d.setAttribute('aria-pressed', 'false');
+  }
+  const viewChanged = nextFlow !== flowAvailable;
+  flowAvailable = nextFlow;
+  if (flowAvailable) renderLabFlow(flow, st, Dv);
+  syncLabView();
+  if (viewChanged && !flowAvailable) plan.relayout(true);
   /* WhatsApp com o resumo da planta */
   const msg = planMessage(st, Dv);
   setWaRaw(bwa, msg);
-  const fwa = q('#fin-wa');
-  setWaRaw(fwa, msg);
-  q('#fin-wa span').textContent = Dv.any && !st.example ? 'Enviar a minha planta' : 'Conversar no WhatsApp';
   /* detalhes: as partes que estão na planta ganham a etiqueta */
   const detIn = new Set(st.example ? [] : Dv.mods.map((m) => MODULOS[m].det));
   qa('.det-tabs [role=tab]').forEach((b) => b.classList.toggle('in-plan', detIn.has(b.dataset.d)));
@@ -161,27 +205,30 @@ function announce(st, Dv) {
 }
 
 function planMessage(st, Dv) {
-  if (st.example || !Dv.any) return waContext(st.example ? 'vi a planta de exemplo no site e quero desenhar a da minha empresa.' : 'quero conversar sobre uma solução para a minha empresa.');
-  const L = ['Olá, vim pelo site da Konan Tech e desenhei a planta da minha empresa.'];
+  if (st.example || !Dv.any) return waContext(st.example ? 'vi o exemplo de construção no laboratório e quero conversar sobre a minha empresa.' : 'quero conversar sobre uma solução para a minha empresa.');
+  const L = ['Olá, vim pelo site da Konan Tech e explorei uma solução no laboratório.'];
   if (st.nome) L.push('Empresa: ' + st.nome);
   if (st.ramo) L.push('Ramo: ' + RAMOS[st.ramo].nome);
   if (st.equipe !== null) L.push('Equipe: ' + EQUIPES[st.equipe].toLowerCase());
   if (Dv.obra) L.push('Obra: ' + obraFrase(Dv.obra));
   if (Dv.dores.length) L.push('O que trava hoje: ' + Dv.dores.map((d) => lc1(d.chip)).join('; '));
-  if (Dv.mods.length) L.push('Partes da planta: ' + Dv.mods.map((m) => MODULOS[m].nome).join('; '));
+  if (Dv.mods.length) L.push('Módulos sugeridos: ' + Dv.mods.map((m) => MODULOS[m].nome).join('; '));
   const link = shareUrl(st);
-  if (link) L.push('Planta: ' + link);
-  L.push('Quero conversar sobre como tirar essa planta do papel.');
+  if (link) L.push('Simulação: ' + link);
+  L.push('Quero conversar sobre essa solução para a minha empresa.');
   return L.join('\n');
 }
 
 /* ---------- link da planta: #planta=ramo.dores.equipe.nome ---------- */
 function encodeState(st) {
-  return [st.ramo || 'x', st.dores.join('-') || 'x', st.equipe === null ? 'x' : st.equipe, encodeURIComponent(st.nome || ''), obraSig(st.obra) || 'x'].join('.');
+  return [st.ramo || 'x', st.dores.join('-') || 'x', st.equipe === null ? 'x' : st.equipe, encodeURIComponent(st.nome || '').replace(/\./g, '%2E'), obraSig(st.obra) || 'x'].join('.');
 }
 function decodeState(s) {
-  const [r, d, e, n, o] = (s || '').split('.');
-  const out = { ramo: RAMOS[r] ? r : null, dores: (d || '').split('-').filter((k) => DORES.some((x) => x.k === k)), equipe: /^[0-3]$/.test(e || '') ? +e : null, nome: '' };
+  const [r, d, e, ...tail] = (s || '').split('.');
+  const last = tail.at(-1);
+  const o = tail.length > 1 && (last === 'x' || (/^(?:[qublscgvwm]\d{1,5})+$/.test(last) && obraFromSig(last))) ? tail.pop() : null;
+  const n = tail.join('.');
+  const out = { ramo: Object.hasOwn(RAMOS, r) ? r : null, dores: (d || '').split('-').filter((k) => DORES.some((x) => x.k === k)), equipe: /^[0-3]$/.test(e || '') ? +e : null, nome: '' };
   try { out.nome = decodeURIComponent(n || '').slice(0, 40); } catch (err) { out.nome = ''; }
   out.obra = o && o !== 'x' ? obraFromSig(o) : null;
   return out;
@@ -225,49 +272,30 @@ function hint(r, empty) {
 }
 function msg(t, warn) { compMsg.textContent = t || ''; compMsg.classList.toggle('warn', !!warn); }
 
-/* ---------- exemplo que se desenha sozinho ao abrir a página ---------- */
-function clearTimers() { exTimers.forEach(clearTimeout); exTimers = []; }
+/* O exemplo fica disponível no laboratório e só é aberto por escolha do visitante. */
 function runExample() {
   if (mode !== 'idle') return;
   mode = 'example';
-  if (REDUCED) {
-    const r = parse(EXEMPLO.texto);
-    spoken = heard(r);
-    apply();
-    showSub('Exemplo', EXEMPLO.texto, r.hits);
-    exTimers.push(setTimeout(() => { if (mode === 'example') msg('Este é um exemplo. Agora conte como a sua empresa funciona: fale, escreva ou toque nas opções.'); }, 400));
-    return;
-  }
-  showSub('Exemplo', '', []);
-  exCancel = typeOut(EXEMPLO.texto, (part, done) => {
-    if (mode !== 'example') return;
-    const r = parse(part);
-    spoken = heard(r);
-    apply();
-    showSub('Exemplo', part, r.hits);
-    if (done) {
-      exTimers.push(setTimeout(() => { if (mode === 'example') { plan.set3D(true, { orbit: true }); b3d.setAttribute('aria-pressed', 'true'); label3d(); } }, 1500));
-      exTimers.push(setTimeout(() => { if (mode === 'example') { plan.set3D(false); b3d.setAttribute('aria-pressed', 'false'); label3d(); hideSub(); } }, 8200));
-      exTimers.push(setTimeout(() => { if (mode === 'example') msg('Este foi um exemplo. Agora conte como a sua empresa funciona: fale, escreva ou toque nas opções.'); }, 9000));
-    }
-  }, { cps: 24 });
+  spoken = heard(parse(EXEMPLO.texto));
+  apply();
+  msg('Exemplo fictício de construção. Para criar sua simulação, escolha um ramo ou escreva sobre a empresa.');
 }
-/* o visitante começou: o exemplo some e a folha fica em branco */
 function stopExample() {
   if (mode !== 'example') return;
-  if (exCancel) exCancel();
-  exCancel = null;
-  clearTimers();
   mode = 'idle';
   spoken = { ramo: null, dores: [], equipe: null, obra: null };
   plan.stopOrbit();
-  if (plan.d3.on) { plan.set3D(false); b3d.setAttribute('aria-pressed', 'false'); label3d(); }
+  if (plan.d3.on) {
+    plan.set3D(false);
+    b3d.setAttribute('aria-pressed', 'false');
+    sheet.tabIndex = -1;
+  }
   hideSub();
   msg('');
   apply();
 }
-/* o visitante começou a responder: sai do exemplo; tocar nas opções não interrompe a voz ou o texto */
 function begin(newMode) {
+  markLabStart();
   const was = mode;
   stopExample();
   mode = newMode || (was === 'example' || was === 'idle' ? 'tap' : was);
@@ -339,6 +367,7 @@ function readText(final) {
   hint(r, !v);
   if (v) { showSub('Você', v, r.hits); hideSub(final ? 2600 : 4200); } else hideSub();
   if (final) {
+    clearTimeout(txtT);
     if (!r.ramo && !r.dores.length && r.equipe === null && !r.obra) msg('Não reconheci o ramo nem o que trava. Tente contar com outras palavras ou toque nas opções.', true);
     else msg('');
     nextStep();
@@ -374,8 +403,7 @@ function nextStep() {
 }
 function startTap() {
   begin('tap');
-  if (narrow()) scrollToTarget(q('#qs'), 8);
-  else scrollToTarget(q('#planta'), 200);
+  scrollToTarget(q('#qs'), 8);
   nextStep();
   const pane = qPanes[qCur];
   const first = pane.querySelector('[aria-checked=true], [role=radio], button');
@@ -405,7 +433,7 @@ radios(cRamo, (b, k, kb) => {
   manual.ramo = b.dataset.v;
   apply();
   clearTimeout(advT);
-  if (!kb) advT = setTimeout(() => { if (!effective().dores.length) setTab(1); }, REDUCED ? 0 : 420);
+  if (!kb) advT = setTimeout(() => { if (!effective().dores.length) setTab(1, D.activeElement === b); }, REDUCED ? 0 : 420);
 });
 cDor.forEach((b) => b.addEventListener('click', () => {
   begin();
@@ -425,26 +453,64 @@ let nomeT = 0;
 nomeIn.addEventListener('input', () => { begin(); clearTimeout(nomeT); nomeT = setTimeout(() => { manual.nome = nomeIn.value.trim(); apply(); }, 250); });
 
 /* ---------- barra: 3D, WhatsApp, PDF e link ---------- */
-function label3d() { b3d.querySelector('span').textContent = plan.d3.on ? 'Voltar para a planta' : 'Levantar em 3D'; }
+function label3d() {
+  b3d.querySelector('span').textContent = plan.d3.on
+    ? (flowAvailable ? 'Voltar ao fluxo' : 'Voltar à planta')
+    : (flowAvailable ? 'Ver maquete 3D' : 'Levantar em 3D');
+}
+function syncLabView() {
+  const showFlow = flowAvailable && !plan.d3.on;
+  flow.hidden = !showFlow;
+  sheet.classList.toggle('flow-mode', showFlow);
+  label3d();
+}
 b3d.addEventListener('click', () => {
-  if (mode === 'example') { plan.stopOrbit(); clearTimers(); hideSub(); }
+  if (mode === 'example') { plan.stopOrbit(); hideSub(); }
   const on = !plan.d3.on;
+  if (on && flowAvailable) { sheet.classList.remove('flow-mode'); plan.relayout(true); }
   plan.set3D(on);
   b3d.setAttribute('aria-pressed', String(on));
   sheet.tabIndex = on ? 0 : -1;
-  label3d();
+  syncLabView();
 });
-bpdf.addEventListener('click', () => { if (mode === 'example') { clearTimers(); plan.stopOrbit(); } window.print(); });
-let titleBefore = D.title;
+q('#lab-example').addEventListener('click', () => {
+  if (mode !== 'idle') {
+    stopExample();
+    manual.ramo = null;
+    manual.equipe = null;
+    manual.on.clear();
+    manual.off.clear();
+    manual.nome = '';
+    manual.obra = null;
+    nomeIn.value = '';
+    txt.value = '';
+    mode = 'idle';
+  }
+  if (voice.on) voice.stop();
+  runExample();
+});
+bpdf.addEventListener('click', () => { window.print(); });
+let titleBefore = D.title, printedFrom3D = false;
 addEventListener('beforeprint', () => {
   titleBefore = D.title;
   const st = effective();
-  D.title = 'Planta do sistema' + (st.nome ? ', ' + st.nome : '') + ', Konan Tech';
+  D.title = (flowAvailable ? 'Mapa da operação' : 'Planta do sistema') + (st.nome ? ', ' + st.nome : '') + ', Konan Tech';
+  printedFrom3D = plan.d3.on;
   plan.forceOrient = 'land';
   if (plan.d3.on || plan.d3.rise > 0) { plan.set3D(false, { instant: true }); b3d.setAttribute('aria-pressed', 'false'); label3d(); }
+  syncLabView();
   plan.relayout(true);
 });
-addEventListener('afterprint', () => { D.title = titleBefore; plan.forceOrient = null; plan.relayout(true); });
+addEventListener('afterprint', () => {
+  D.title = titleBefore;
+  plan.forceOrient = null;
+  plan.relayout(true);
+  if (printedFrom3D) {
+    plan.set3D(true, { instant: true });
+    b3d.setAttribute('aria-pressed', 'true');
+  }
+  syncLabView();
+});
 if (IS_FILE) blink.hidden = true;
 blink.addEventListener('click', async () => {
   const url = shareUrl(effective());
@@ -479,6 +545,7 @@ function openDetail(k, scroll, quiet) {
   qa('.det-p').forEach((p) => { p.hidden = p.id !== 'detalhe-' + k; });
   if (!quiet || detNear) loadDetail(k);
   if (scroll) scrollToTarget(q('#detalhes'), 10);
+  if (!quiet) track('solution_select', k);
 }
 detTabs.forEach((b, i) => {
   b.addEventListener('click', () => { detUser = true; openDetail(b.dataset.d); });
@@ -515,7 +582,7 @@ qa('.bar, .fin-msg .cta, .cv-ask, .ft-block').forEach((el) => fabIO.observe(el))
 const ctx = {
   reduced: REDUCED, fine: FINE, setWa, waLink, waContext,
   stage: () => null, chapter: () => null,
-  lenis: () => lenis,
+  track,
   scrollTo: (el) => scrollToTarget(el),
   plan,
   ramo: () => { const st = effective(); return st.example ? null : st.ramo; },
@@ -554,7 +621,21 @@ const lzIO = new IntersectionObserver((ents) => ents.forEach((e) => {
   lzIO.unobserve(e.target);
 }), { rootMargin: '120% 0px 120% 0px' });
 ['detalhes', 'projetos', 'fim'].forEach((id) => lzIO.observe(D.getElementById(id)));
+function openSharedDetail() {
+  const match = /^#detalhe-(\w+)$/.exec(location.hash);
+  if (match && detTabs.some((tab) => tab.dataset.d === match[1])) openDetail(match[1], true, true);
+}
+q('#boards').addEventListener('click', (event) => {
+  const button = event.target.closest('.pj-btn');
+  if (!button || demos.boards) return;
+  loadDemo('boards').then((boards) => boards.open?.(button.closest('[data-p]').dataset.p));
+});
 if (/^#projeto-/.test(location.hash)) loadDemo('boards');
+openSharedDetail();
+addEventListener('hashchange', () => {
+  if (/^#projeto-/.test(location.hash)) loadDemo('boards');
+  openSharedDetail();
+});
 
 /* ---------- palco de partículas (só para o final) ---------- */
 function getStage() {
@@ -595,29 +676,32 @@ addEventListener('resize', () => {
 /* a planta mede os textos com a fonte: quando ela termina de carregar, a folha é refeita */
 const fontsReady = D.fonts && D.fonts.status !== 'loaded' ? D.fonts.ready : Promise.resolve();
 const fontsOrTimeout = Promise.race([fontsReady, new Promise((r) => setTimeout(r, 2500))]);
-const hashPlan = /^#planta=(.+)$/.exec(location.hash);
-if (hashPlan) {
-  const st = decodeState(hashPlan[1]);
+function restoreSharedLab() {
+  const hash = /^#planta=(.+)$/.exec(location.hash);
+  if (!hash) return;
+  stopExample();
+  const state = decodeState(hash[1]);
   mode = 'tap';
-  manual.ramo = st.ramo;
-  manual.equipe = st.equipe;
-  st.dores.forEach((k) => manual.on.add(k));
-  manual.nome = st.nome;
-  manual.obra = st.obra;
-  nomeIn.value = st.nome;
+  manual.ramo = state.ramo;
+  manual.equipe = state.equipe;
+  manual.on = new Set(state.dores);
+  manual.off.clear();
+  manual.nome = state.nome;
+  manual.obra = state.obra;
+  spoken = { ramo: null, dores: [], equipe: null, obra: null };
+  nomeIn.value = state.nome;
   apply();
-  msg('Esta planta chegou por link. Você pode ajustar as respostas e mandar de volta pelo WhatsApp.');
+  msg('Esta simulação chegou por link. Você pode ajustar as respostas e compartilhar um novo resumo.');
   nextStep();
-  fontsOrTimeout.then(() => plan.relayout(true));
-} else {
-  apply();
-  /* o exemplo espera a fonte carregar, para a planta medir os textos com a letra certa */
-  fontsOrTimeout.then(() => {
-    plan.relayout(true);
-    setTimeout(() => { if (scrollY < innerHeight * 0.6 && !D.hidden) runExample(); }, REDUCED ? 200 : 700);
+  requestAnimationFrame(() => {
+    const lab = q('#planta');
+    window.scrollTo({ top: lab.getBoundingClientRect().top + scrollY - hd.offsetHeight - 10 });
   });
 }
-setTimeout(() => loadDemo('boards'), 1400);
+apply();
+fontsOrTimeout.then(() => plan.relayout(true));
+restoreSharedLab();
+addEventListener('hashchange', restoreSharedLab);
 
-window.konan = { plan, lenis: () => lenis, demos, loadDemo, state: effective, manual, runExample, stopExample, openDetail, getStage, mode: () => mode };
+window.konan = { plan, demos, loadDemo, state: effective, manual, runExample, stopExample, openDetail, getStage, mode: () => mode };
 window.__ktReady = true;

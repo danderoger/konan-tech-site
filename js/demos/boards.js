@@ -12,7 +12,7 @@ export function initBoards(root, ctx) {
   const dlg = root.querySelector('#cv');
   const cin = dlg.querySelector('#cv-in');
   const $ = (id) => dlg.querySelector('#' + id);
-  let viewing = 0, opener = null, closing = false;
+  let current = null, opener = null, closing = false, previousHash = '';
 
   const vis = (li) => li.querySelector('template.pj-vis').content.cloneNode(true);
   const host = (li) => { const h = D.createElement('div'); h.className = 'mk-host'; h.append(vis(li)); return h; };
@@ -24,8 +24,7 @@ export function initBoards(root, ctx) {
     th.append(vis(li));
     const btn = li.querySelector('.pj-btn');
     btn.setAttribute('aria-controls', 'cv');
-    btn.setAttribute('aria-label', 'Abrir projeto ' + li.querySelector('.pj-n').textContent);
-    btn.addEventListener('click', (e) => open(items.indexOf(li), e));
+    btn.addEventListener('click', (e) => open(cur().indexOf(li), e));
   });
 
   /* ordem pelas partes em comum com a planta */
@@ -49,6 +48,7 @@ export function initBoards(root, ctx) {
     /* troca de lugar com uma transição curta (as pranchas deslizam para a nova posição) */
     const first = new Map(order.map((li) => [li, li.getBoundingClientRect()]));
     order.forEach((li) => list.append(li));
+    if (dlg.open && current) $('cv-i').textContent = order.indexOf(current) + 1;
     if (ctx.reduced) return;
     order.forEach((li) => {
       const a = first.get(li), b = li.getBoundingClientRect();
@@ -62,8 +62,9 @@ export function initBoards(root, ctx) {
   const cur = () => [...list.children];
   function fill(i) {
     const arr = cur();
-    viewing = (i + arr.length) % arr.length;
-    const li = arr[viewing];
+    const index = (i + arr.length) % arr.length;
+    const li = arr[index];
+    current = li;
     const name = li.querySelector('.pj-n').textContent;
     const stg = li.querySelector('.stg');
     const st = $('cv-stg');
@@ -76,6 +77,7 @@ export function initBoards(root, ctx) {
     v.append(host(li));
     const more = li.querySelector('.pj-more');
     $('cv-p').textContent = more.querySelector('.pm-p').textContent;
+    $('cv-benefit').textContent = more.querySelector('.pm-b').textContent;
     $('cv-s').textContent = more.querySelector('.pm-s').textContent;
     $('cv-f').innerHTML = more.querySelector('.pm-f').innerHTML;
     $('cv-n').textContent = more.querySelector('.pm-n').textContent;
@@ -91,23 +93,25 @@ export function initBoards(root, ctx) {
       m.textContent = k === 4 && done ? 'Entregue' : STAGE_STEPS[k];
       if (k === step) m.setAttribute('aria-current', 'step'); else m.removeAttribute('aria-current');
     });
-    $('cv-i').textContent = viewing + 1;
+    $('cv-i').textContent = index + 1;
     const msg = `vi o projeto ${name} no site e quero algo parecido para a minha empresa.`;
     ctx.setWa($('cv-wa'), msg);
     ctx.setWa($('cv-wa2'), msg);
     cin.scrollTop = 0;
+    ctx.track('case_open', li.dataset.p);
     try { history.replaceState(null, '', '#projeto-' + li.dataset.p); } catch (e) { /* arquivo local */ }
   }
+
+  function move(by) { fill(cur().indexOf(current) + by); }
 
   function open(i, e) {
     if (dlg.open) { fill(i); return; }
     opener = D.activeElement;
+    previousHash = location.hash.startsWith('#projeto-') ? '#projetos' : location.hash;
     const x = e && e.clientX ? e.clientX : innerWidth / 2, y = e && e.clientY ? e.clientY : innerHeight / 2;
     dlg.style.setProperty('--ox', x + 'px');
     dlg.style.setProperty('--oy', y + 'px');
     fill(i);
-    const l = ctx.lenis();
-    if (l) l.stop();
     H.classList.add('cv-open');
     dlg.showModal();
     $('cv-x').focus({ preventScroll: true });
@@ -123,19 +127,17 @@ export function initBoards(root, ctx) {
 
   dlg.addEventListener('close', () => {
     H.classList.remove('cv-open');
-    const l = ctx.lenis();
-    if (l) l.start();
-    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* arquivo local */ }
+    try { history.replaceState(null, '', location.pathname + location.search + previousHash); } catch (e) { /* arquivo local */ }
     if (opener && opener.focus) opener.focus({ preventScroll: true });
   });
   dlg.addEventListener('cancel', (e) => { e.preventDefault(); close(); });
   $('cv-x').addEventListener('click', close);
-  $('cv-prev').addEventListener('click', () => fill(viewing - 1));
-  $('cv-next').addEventListener('click', () => fill(viewing + 1));
+  $('cv-prev').addEventListener('click', () => move(-1));
+  $('cv-next').addEventListener('click', () => move(1));
   dlg.addEventListener('keydown', (e) => {
     if (e.target.matches('input, textarea, select')) return;
-    if (e.key === 'ArrowRight') { e.preventDefault(); fill(viewing + 1); }
-    if (e.key === 'ArrowLeft') { e.preventDefault(); fill(viewing - 1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); move(1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); move(-1); }
   });
   /* deslizar para o lado troca de projeto no celular */
   let sx = 0, sy = 0;
@@ -143,7 +145,7 @@ export function initBoards(root, ctx) {
   top.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
   top.addEventListener('touchend', (e) => {
     const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.4) fill(viewing + (dx < 0 ? 1 : -1));
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.4) move(dx < 0 ? 1 : -1);
   }, { passive: true });
 
   function fromHash() {

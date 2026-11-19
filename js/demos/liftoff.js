@@ -160,17 +160,21 @@ export function initLiftoff(root, ctx) {
       st.start();
       st.setLayout({ o: 1 });
       root.classList.add('lift');
-      await wait(650, t);
-      st.setShape('finLift', { dur: 1.6, spread: 0.7, arc: 0.5 });
-      await wait(1650, t);
-      st.setShape('finLogo', { dur: 2.6, spread: 1, sweep: 1, arc: 0.9 });
-      await wait(3000, t);
+      await wait(420, t);
+      st.setShape('finLift', { dur: 1.05, spread: 0.7, arc: 0.5 });
+      await wait(1050, t);
+      st.setShape('finLogo', { dur: 1.5, spread: 1, sweep: 1, arc: 0.9 });
+      await wait(1570, t);
       root.classList.add('done');
-      await wait(700, t);
+      await wait(460, t);
       st.setLayout({ o: 0 });
-      await wait(1300, t);
+      await wait(750, t);
       stopStage(st);
-    } catch (e) { /* interrompido */ }
+    } catch (error) {
+      if (t !== token) return;
+      stopStage(st);
+      finishFlat();
+    }
     running = false;
   }
 
@@ -198,10 +202,11 @@ export function initLiftoff(root, ctx) {
   out.observe(root);
 
   again.addEventListener('click', () => {
-    played = false;
-    if (live) ctx.getStage().then((st) => stopStage(st));
+    played = true;
+    const replay = ++token;
+    if (live) ctx.getStage().then(stopStage);
     if (ctx.scrollTo) ctx.scrollTo(stageBox);
-    setTimeout(play, reduced ? 0 : 500);
+    setTimeout(() => { if (replay === token) play(); }, reduced ? 0 : 500);
   });
 
   snap();
