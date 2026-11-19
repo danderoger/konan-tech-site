@@ -96,6 +96,7 @@ export function initSolutions(track) {
   const diagram = document.querySelector('#scenario-flow');
   const labels = [...diagram.querySelectorAll('li span')];
   const link = document.querySelector('#scenario-demo');
+  const lab = document.querySelector('#scenario-lab');
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   for (const button of buttons) button.addEventListener('click', () => {
     const key = button.dataset.scenario;
@@ -104,6 +105,7 @@ export function initSolutions(track) {
     title.textContent = item.title;
     benefit.textContent = item.benefit;
     link.href = '#detalhe-' + item.detail;
+    lab.dataset.labPain = key;
     labels.forEach((label, i) => { label.textContent = item.steps[i]; });
     if (!motion.matches) diagram.animate([{ opacity: 0.4, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 330 });
     track('problem_select', key);

@@ -1,9 +1,10 @@
-/* Konan Tech 6.0: navegação, laboratório e carregamento das demonstrações. */
+/* Konan Tech 7.0: navegação, laboratório e carregamento das demonstrações. */
 import { WA_DEFAULT, waLink, waContext, RAMOS, RAMO_ORDER, DORES, MODULOS, DETALHES, EQUIPES, EQUIPES_CURTO, EXEMPLO, obraFrase, obraSig, obraFromSig } from './content.js';
 import { Plan, derive, lc1 } from './plan.js';
 import { parse, highlight, Voice, SR } from './listen.js';
 import { probeGL, pickTier, TIERS } from './perf.js';
 import { initSolutions, renderLabFlow } from './solutions.js';
+import { initSignal } from './signal.js';
 
 const D = document, H = D.documentElement;
 const REDUCED = H.classList.contains('rm');
@@ -36,17 +37,7 @@ D.addEventListener('click', (event) => {
 });
 initSolutions(track);
 
-const hero = q('#hero-scene');
-if (!REDUCED && !navigator.connection?.saveData) {
-  const enter = new IntersectionObserver(([entry]) => {
-    if (!entry.isIntersecting) return;
-    enter.disconnect();
-    const start = () => import('./hero-scene.js').then(({ initHero }) => initHero(hero, q('#hero-canvas'))).catch(() => {});
-    if ('requestIdleCallback' in window) requestIdleCallback(start, { timeout: 1300 });
-    else setTimeout(start, 250);
-  });
-  enter.observe(hero);
-}
+initSignal(q('#signal-studio'), track);
 
 /* ---------- cabeçalho e menu ---------- */
 const hd = q('#hd');
@@ -88,7 +79,17 @@ D.addEventListener('click', (e) => {
     const heading = el.querySelector('h1, h2');
     if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
   }
-  if (id === '#planta') markLabStart();
+  if (id === '#planta') {
+    markLabStart();
+    const pain = a.dataset.labPain;
+    if (pain && cDor.some((button) => button.dataset.v === pain)) {
+      begin();
+      manual.off.delete(pain);
+      manual.on.add(pain);
+      apply();
+      nextStep();
+    }
+  }
 });
 
 /* seção atual destacada no menu */
@@ -97,7 +98,7 @@ const navIO = new IntersectionObserver((ents) => ents.forEach((e) => {
   if (!e.isIntersecting) return;
   NAV.forEach((a) => { const on = a.getAttribute('href') === '#' + e.target.id; a.classList.toggle('cur', on); if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
 }), { rootMargin: '-45% 0px -50% 0px' });
-['planta', 'detalhes', 'projetos', 'processo', 'duvidas'].forEach((id) => { const el = D.getElementById(id); if (el) navIO.observe(el); });
+['inicio', 'solucoes', 'planta', 'detalhes', 'projetos', 'processo', 'duvidas'].forEach((id) => { const el = D.getElementById(id); if (el) navIO.observe(el); });
 
 /* ============================================================
    A MESA: conversa + planta
@@ -433,7 +434,15 @@ radios(cRamo, (b, k, kb) => {
   manual.ramo = b.dataset.v;
   apply();
   clearTimeout(advT);
-  if (!kb) advT = setTimeout(() => { if (!effective().dores.length) setTab(1, D.activeElement === b); }, REDUCED ? 0 : 420);
+  if (!kb) {
+    advT = setTimeout(() => {
+      if (qCur !== 0) return;
+      const st = effective();
+      const focus = D.activeElement === b;
+      if (!st.dores.length) setTab(1, focus);
+      else if (st.equipe === null) setTab(2, focus);
+    }, REDUCED ? 0 : 420);
+  }
 });
 cDor.forEach((b) => b.addEventListener('click', () => {
   begin();

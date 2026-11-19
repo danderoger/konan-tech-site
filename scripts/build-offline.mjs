@@ -2,14 +2,14 @@
 // Por quê: ao abrir pelo arquivo (file://), o navegador bloqueia scripts do tipo module
 // e impede a leitura da logo pelas partículas. Aqui tudo vira um script comum e as imagens
 // ficam dentro do próprio arquivo.
-// Uso: ESBUILD_BIN=/caminho/esbuild node scripts/build-offline.mjs saida/konan-tech-6.0.html
+// Uso: ESBUILD_BIN=/caminho/esbuild node scripts/build-offline.mjs saida/konan-tech-7.0.html
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join, extname } from 'node:path';
 import { tmpdir } from 'node:os';
 
 const root = new URL('..', import.meta.url).pathname;
-const out = process.argv[2] || join(root, 'dist-offline', 'konan-tech-6.0.html');
+const out = process.argv[2] || join(root, 'dist-offline', 'konan-tech-7.0.html');
 const esbuild = process.env.ESBUILD_BIN || 'esbuild';
 mkdirSync(dirname(out), { recursive: true });
 
@@ -29,17 +29,17 @@ js = js.replace(/<\/script/gi, '<\\/script');
 
 // 2) CSS com a fonte embutida
 let css = ['main.css', 'redesign.css'].map((file) => readFileSync(join(root, 'css', file), 'utf8')).join('\n');
-css = css.split('../assets/fonts/archivo-latin-wdth-normal.woff2').join(uri('assets/fonts/archivo-latin-wdth-normal.woff2'));
+css = css.replace(/\.\.\/(assets\/fonts\/[\w.-]+\.woff2)/g, (_, asset) => uri(asset));
 
 // 3) HTML
 let html = readFileSync(join(root, 'index.html'), 'utf8');
-html = html.replace(/<link rel="preload"[^>]*archivo[^>]*>\n?/, '');
+html = html.replace(/<link rel="preload"[^>]*>\n?/g, '');
 html = html.replace(/<link rel="stylesheet" href="css\/main\.css">/, () => `<style>\n${css}\n</style>`);
 html = html.replace('<link rel="stylesheet" href="css/redesign.css">\n', '');
 html = html.replace(/<script defer src="js\/vendor\/lenis\.min\.js"><\/script>\n?/, '');
 html = html.replace(/<script type="module" src="js\/app\.js"><\/script>/, () => `<script>\n${js}\n</script>`);
 // imagens relativas viram dados dentro do arquivo (as URLs absolutas do og:image e do JSON-LD ficam como estão)
-html = html.replace(/(src|href)="(assets\/[^"]+\.(?:png|jpg|webp|svg))"/g, (_, attr, rel) => `${attr}="${uri(rel)}"`);
+html = html.replace(/(src|srcset|href)="(assets\/[^"]+\.(?:png|jpg|webp|svg))"/g, (_, attr, rel) => `${attr}="${uri(rel)}"`);
 // imagens listadas em atributos de dados (ex.: data-shots)
 html = html.replace(/(?<![\w/.:-])(assets\/projetos\/[\w-]+\.webp)/g, (m, rel) => uri(rel));
 

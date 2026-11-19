@@ -1,8 +1,8 @@
-# Konan Tech 6.0
+# Konan Tech 7.0
 
 Site institucional da Konan Tech. Esta versão apresenta sistemas sob medida, automação e IA aplicada aos negócios e permite experimentar soluções e explorar cinco projetos existentes.
 
-Branch de revisão: `redesign/konan-tech-6`. A referência anterior é a versão 5.0 de `main`, commit `3578e19`. O commit da revisão inclui o prefixo `[CF-Pages-Skip]` para impedir o deploy automático pelo Cloudflare Pages.
+Branch de revisão: `redesign/konan-tech-7`. A versão parte da 6.0, revisão `849cc5e`. A 5.0 de `main` está no commit `3578e19`. O commit da revisão inclui o prefixo `[CF-Pages-Skip]` para impedir o deploy automático pelo Cloudflare Pages.
 
 ## Abrir a prévia
 
@@ -28,7 +28,7 @@ Links para testar:
 
 ```sh
 npm install --no-save esbuild
-ESBUILD_BIN=./node_modules/.bin/esbuild node scripts/build-offline.mjs Konan-Tech-6.0.html
+ESBUILD_BIN=./node_modules/.bin/esbuild node scripts/build-offline.mjs Konan-Tech-7.0.html
 ```
 
 Abra o HTML gerado no navegador. O arquivo contém todos os recursos visuais. A opção de copiar um link de simulação depende de um endereço HTTP compartilhável e fica oculta no arquivo local.
@@ -38,11 +38,13 @@ Abra o HTML gerado no navegador. O arquivo contém todos os recursos visuais. A 
 | Onde | Responsabilidade |
 | --- | --- |
 | `index.html`, `css/redesign.css` | Conteúdo institucional, identidade visual e layout responsivo |
-| `js/hero-scene.js`, `assets/nucleo.svg` | Abertura tridimensional em Canvas e imagem estática de fallback |
+| `js/signal.js`, `assets/processador-7.webp` | Ilustração em camadas com controles de entrada, processamento e controle |
 | `js/app.js`, `js/solutions.js` | Navegação, cenários, demonstração de sistemas, estado do laboratório e fluxos por segmento |
 | `js/plan.js`, `js/listen.js`, `js/content.js` | Planta viva, maquete CSS 3D, reconhecimento de texto e voz, regras locais e dados fictícios |
 | `js/demos/`, `js/stage.js` | Demos, cases e formação da marca com Three.js |
 | `css/main.css` | Estilos dos módulos originais, estados de acessibilidade e folha de impressão |
+
+A direção visual **Do ruído ao controle** usa a ilustração de um processador como representação do caminho dos dados. O simulador de problemas pode levar a dificuldade selecionada diretamente ao laboratório. O portfólio abre com a captura do site Via Opus e reorganiza os projetos conforme o que o visitante informa.
 
 O laboratório adapta a visualização ao ramo. Para construção, o ponto de partida é a planta. Nos demais ramos, o ponto de partida é um mapa com dados de entrada, atividades e acompanhamento. Os fluxos podem abrir uma maquete alternativa. A simulação usa regras locais para combinar o que o visitante informa com módulos de software. A demonstração de IA usa documentos fictícios. Um resumo só é compartilhado quando o visitante aciona o respectivo controle.
 
