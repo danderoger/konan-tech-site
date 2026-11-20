@@ -155,6 +155,8 @@ button { cursor: pointer; background: none; border: 0; padding: 0; }
 .comp-wb { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .comp-wb p { font-size: 0.86rem; color: var(--ink3); }
 .comp-wb p.ok { color: var(--ink2); font-weight: 560; }
+.comp-wb p .hint-3d { color: var(--blue2); font-weight: 650; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
+.comp-wb p .hint-3d:hover { color: var(--blue); }
 .comp-msg { font-size: 0.92rem; color: var(--ink2); min-height: 0; }
 .comp-msg:empty { display: none; }
 .comp-msg.warn { color: var(--red2); }

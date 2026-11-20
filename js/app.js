@@ -3,7 +3,7 @@
    é desenhada na hora. O resto da página se adapta ao que ele contou.
    O 3D pesado (partículas) só carrega no final; sem WebGL, tudo funciona igual. */
 
-import { WA_DEFAULT, waLink, waContext, RAMOS, RAMO_ORDER, DORES, MODULOS, DETALHES, EQUIPES, EQUIPES_CURTO, EXEMPLO, obraFrase, obraSig, obraFromSig } from './content.js';
+import { WA_DEFAULT, waLink, waContext, RAMOS, RAMO_ORDER, DORES, MODULOS, DETALHES, EQUIPES, EQUIPES_CURTO, EXEMPLO, obraFrase, obraSig, obraFromSig, obraTemComodos } from './content.js';
 import { Plan, derive, lc1 } from './plan.js';
 import { parse, highlight, Voice, SR, typeOut } from './listen.js';
 import { probeGL, pickTier, TIERS } from './perf.js';
@@ -222,6 +222,14 @@ function hint(r, empty) {
   if (r && r.dores.length) bits.push(r.dores.length === 1 ? '1 atrito marcado' : r.dores.length + ' atritos marcados');
   hintEl.textContent = bits.length ? 'Entendi: ' + bits.join('; ') + '.' : (empty ? HINT0 : 'Ainda não reconheci o ramo, a obra ou o que trava. Conte com outras palavras.');
   hintEl.classList.toggle('ok', bits.length > 0);
+  /* a casa descrita também pode ser vista em 3D, numa página própria */
+  if (r && r.obra && obraTemComodos(r.obra)) {
+    const a = document.createElement('a');
+    a.href = 'casa-3d/#' + obraSig(r.obra);
+    a.className = 'hint-3d';
+    a.textContent = 'Ver essa casa em 3D';
+    hintEl.append(' ', a);
+  }
 }
 function msg(t, warn) { compMsg.textContent = t || ''; compMsg.classList.toggle('warn', !!warn); }
 
