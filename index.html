@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Konan Tech, sistemas, automação e inteligência artificial para empresas</title>
-<meta name="description" content="Conte como a sua empresa funciona e veja a planta do sistema que resolve ser desenhada na hora. A Konan Tech desenvolve sistemas sob medida, automações, painéis, aplicativos e sites com inteligência artificial.">
+<meta name="description" content="Sistemas sob medida, automação e inteligência artificial para organizar a operação da sua empresa. Experimente as demonstrações e conheça os projetos da Konan Tech.">
 <link rel="canonical" href="https://www.konantech.com.br/">
 <meta name="theme-color" content="#ffffff">
 <meta name="color-scheme" content="light">
@@ -12,8 +12,8 @@
 <meta property="og:locale" content="pt_BR">
 <meta property="og:site_name" content="Konan Tech">
 <meta property="og:url" content="https://www.konantech.com.br/">
-<meta property="og:title" content="Konan Tech: conte como a sua empresa funciona e veja a planta do sistema">
-<meta property="og:description" content="Fale, escreva ou toque nas opções: a planta do sistema que organiza a sua operação é desenhada na hora. Sistemas sob medida, automação, inteligência artificial, painéis e sites.">
+<meta property="og:title" content="Konan Tech, tecnologia para organizar sua operação">
+<meta property="og:description" content="Veja como sistemas, automação e inteligência artificial podem conectar a rotina da sua equipe e melhorar a gestão.">
 <meta property="og:image" content="https://www.konantech.com.br/assets/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -70,13 +70,12 @@
 
 <header class="hd" id="hd">
   <div class="hd-in">
-    <a class="hd-logo" href="#planta" aria-label="Konan Tech, voltar ao início"><img src="assets/konan-logo-dark.png" alt="Konan Tech" width="208" height="32"></a>
+    <a class="hd-logo" href="#inicio" aria-label="Konan Tech, voltar ao início"><img src="assets/konan-logo-dark.png" alt="Konan Tech" width="208" height="32"></a>
     <nav class="hd-nav" id="nav" aria-label="Seções do site">
-      <a href="#planta">Planta</a>
-      <a href="#detalhes">Detalhes</a>
+      <a href="#solucoes">Soluções</a>
+      <a href="#detalhes">Demonstrações</a>
       <a href="#projetos">Projetos</a>
       <a href="#processo">Como trabalhamos</a>
-      <a href="#duvidas">Dúvidas</a>
       <a class="btn btn-pri nav-wa" data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>Conversar no WhatsApp</span></a>
     </nav>
     <a class="btn btn-pri btn-sm hd-cta" data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener" aria-label="Conversar no WhatsApp"><svg class="ic"><use href="#i-chat"/></svg><span>WhatsApp</span></a>
@@ -85,100 +84,78 @@
 </header>
 
 <main id="conteudo">
-<section class="desk" id="planta" aria-labelledby="desk-h">
-  <div class="wrap desk-g">
-    <div class="desk-intro">
-      <h1 class="h1" id="desk-h">Conte como a sua empresa funciona.</h1>
-      <p class="lead">Enquanto você conta, a planta do sistema que resolve vai sendo desenhada. É assim que começa todo projeto da Konan Tech: entendendo a operação antes do código.</p>
+<section class="intro" id="inicio" aria-labelledby="intro-title">
+  <div class="wrap intro-grid">
+    <div class="intro-copy">
+      <p class="intro-label">Sistemas, automação e inteligência artificial</p>
+      <h1 id="intro-title">Tecnologia que faz sua empresa <em>trabalhar melhor.</em></h1>
+      <p class="intro-lead">A Konan Tech desenvolve sistemas sob medida para organizar informações, reduzir tarefas manuais e dar à sua equipe mais clareza sobre a operação.</p>
+      <div class="intro-actions">
+        <a class="btn btn-pri btn-lg" href="#solucoes">Conheça as soluções</a>
+        <a class="btn btn-ghost btn-lg" href="#detalhes"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg>Teste uma demonstração</a>
+      </div>
+      <a class="intro-plant" href="#planta">Desenhar uma solução para minha empresa</a>
     </div>
+    <div class="flow" id="flow">
+      <div class="flow-head">
+        <p>Do trabalho diário à gestão</p>
+        <span>Simulação</span>
+      </div>
 
-    <div class="comp" id="comp">
-      <div class="comp-row">
-        <button type="button" class="btn btn-pri btn-lg" id="mic" aria-pressed="false"><svg class="ic"><use href="#i-mic"/></svg><span>Falar</span></button>
-        <button type="button" class="btn btn-ghost btn-lg" id="write" aria-expanded="false" aria-controls="comp-w"><svg class="ic"><use href="#i-pen"/></svg><span>Escrever</span></button>
-        <a class="comp-tap" id="tap" href="#qs">Prefiro responder tocando</a>
+        <div class="flow-choices" role="group" aria-label="Escolha um exemplo" hidden>
+          <button type="button" aria-pressed="true" data-flow="pedidos">Pedidos</button>
+          <button type="button" aria-pressed="false" data-flow="notas">Notas</button>
+          <button type="button" aria-pressed="false" data-flow="dados">Dados</button>
+        </div>
+      <div class="flow-map" aria-hidden="true">
+        <div class="flow-plane"></div>
+        <canvas id="flow-particles" aria-hidden="true"></canvas>
+        <div class="flow-node flow-source"><svg class="ic"><use id="flow-icon" href="#i-chat"/></svg></div>
+        <div class="flow-node flow-engine"><div class="flow-engine-core"><svg class="ic"><use href="#i-cpu"/></svg></div></div>
+        <div class="flow-node flow-target"><svg class="ic"><use id="flow-target-icon" href="#i-mobile"/></svg></div>
+        <div class="flow-route flow-route-a"></div>
+        <div class="flow-route flow-route-b"></div>
+        <span class="flow-caption flow-caption-a" id="flow-origin">Novo pedido</span>
+        <span class="flow-caption flow-caption-b" id="flow-middle">Organizar</span>
+        <span class="flow-caption flow-caption-c" id="flow-target">Painel da equipe</span>
       </div>
-      <div class="comp-w" id="comp-w" hidden>
-        <label class="sr" for="txt">Conte como a sua empresa funciona</label>
-        <textarea id="txt" rows="3" maxlength="600" spellcheck="true" placeholder="Ex.: tenho uma loja com 8 pessoas, os pedidos chegam pelo WhatsApp e não sei quanto sobra no fim do mês."></textarea>
-        <div class="comp-wb"><p id="comp-hint">A planta muda enquanto você escreve.</p><button type="button" class="btn btn-pri btn-sm" id="txt-go"><svg class="ic"><use href="#i-plan"/></svg><span>Ver a planta</span></button></div>
+      <div class="flow-foot">
+        <div class="flow-result"><p id="flow-summary" aria-live="polite">Um pedido entra e vira uma tarefa para a equipe.</p><a id="flow-demo" href="#detalhe-app">Testar aplicativo</a></div>
       </div>
-      <p class="comp-msg" id="comp-msg" role="status"></p>
     </div>
+  </div>
+</section>
 
-    <div class="sheet-box">
-      <div class="sheet" id="sheet">
-        <div class="world"></div>
-        <img class="sheet-poster" src="assets/planta-exemplo.webp" alt="Exemplo de planta do sistema de uma construtora fictícia" width="1000" height="620" loading="lazy">
-        <button type="button" class="sub-stop" id="sub-stop" hidden><svg class="ic"><use href="#i-stop"/></svg><span>Parar de ouvir</span></button>
-        <p class="hint3d" id="hint3d" aria-hidden="true">Arraste para girar a maquete</p>
-      </div>
-      <div class="sheet-foot" id="sheet-foot">
-      <div class="sub" id="sub" aria-hidden="true"><span class="sub-who" id="sub-who">Exemplo</span><p class="sub-t" id="sub-t"></p></div>
-      <div class="bar" id="bar">
-        <button type="button" class="cb" id="b3d" aria-pressed="false"><svg class="ic"><use href="#i-cube"/></svg><span>Levantar em 3D</span></button>
-        <a class="cb cb-wa" id="bwa" data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>Enviar pelo WhatsApp</span></a>
-        <button type="button" class="cb" id="bpdf"><svg class="ic"><use href="#i-down"/></svg><span>Baixar em PDF</span></button>
-        <button type="button" class="cb" id="blink"><svg class="ic"><use href="#i-link"/></svg><span>Copiar link</span></button>
-      </div>
-      </div>
+<section class="sec solutions" id="solucoes" aria-labelledby="solutions-title">
+  <div class="wrap">
+    <div class="sec-head solutions-head">
+      <h2 class="h2" id="solutions-title">O que podemos fazer pela sua operação</h2>
+      <p class="lead">Escolha o desafio mais próximo da sua rotina e experimente uma solução.</p>
     </div>
-
-    <div class="qs" id="qs">
-      <div class="q-tabs" role="tablist" aria-label="Perguntas da planta">
-        <button type="button" role="tab" id="qt-0" aria-selected="true" aria-controls="qp-0"><b>1</b><span>Ramo</span><em id="qv-0">A definir</em></button>
-        <button type="button" role="tab" id="qt-1" aria-selected="false" aria-controls="qp-1" tabindex="-1"><b>2</b><span>O que trava</span><em id="qv-1">Nada marcado</em></button>
-        <button type="button" role="tab" id="qt-2" aria-selected="false" aria-controls="qp-2" tabindex="-1"><b>3</b><span>Equipe</span><em id="qv-2">A definir</em></button>
-      </div>
-      <div class="q-pane" id="qp-0" role="tabpanel" aria-labelledby="qt-0">
-        <p class="q-h" id="qh-0">Em que ramo a empresa trabalha?</p>
-        <div class="chips" id="c-ramo" role="radiogroup" aria-labelledby="qh-0">
-          <button type="button" role="radio" aria-checked="false" data-v="obras">Obras e construção</button>
-          <button type="button" role="radio" aria-checked="false" data-v="comercio" tabindex="-1">Comércio e vendas</button>
-          <button type="button" role="radio" aria-checked="false" data-v="campo" tabindex="-1">Serviços em campo</button>
-          <button type="button" role="radio" aria-checked="false" data-v="escritorio" tabindex="-1">Escritório e serviços</button>
-          <button type="button" role="radio" aria-checked="false" data-v="industria" tabindex="-1">Indústria e produção</button>
-          <button type="button" role="radio" aria-checked="false" data-v="outro" tabindex="-1">Outro ramo</button>
-        </div>
-      </div>
-      <div class="q-pane" id="qp-1" role="tabpanel" aria-labelledby="qt-1" hidden>
-        <p class="q-h" id="qh-1">O que mais trava a operação hoje? <span>Marque quantos quiser.</span></p>
-        <div class="chips chips-d" id="c-dor" role="group" aria-labelledby="qh-1">
-          <button type="button" aria-pressed="false" data-v="planilhas">Tudo em planilhas</button>
-          <button type="button" aria-pressed="false" data-v="documentos">Notas digitadas à mão</button>
-          <button type="button" aria-pressed="false" data-v="whatsapp">Pedidos se perdem no WhatsApp</button>
-          <button type="button" aria-pressed="false" data-v="equipe">Não sei o que a equipe faz fora</button>
-          <button type="button" aria-pressed="false" data-v="retrabalho">Tarefas repetidas todo dia</button>
-          <button type="button" aria-pressed="false" data-v="indicadores">Decido sem números</button>
-          <button type="button" aria-pressed="false" data-v="financeiro">Contas e cobranças à mão</button>
-          <button type="button" aria-pressed="false" data-v="presenca">Cliente não me encontra</button>
-        </div>
-        <button type="button" class="cb q-next" data-go="2"><span>Continuar</span><svg class="ic"><use href="#i-next"/></svg></button>
-      </div>
-      <div class="q-pane" id="qp-2" role="tabpanel" aria-labelledby="qt-2" hidden>
-        <p class="q-h" id="qh-2">Quantas pessoas trabalham na empresa?</p>
-        <div class="chips" id="c-eq" role="radiogroup" aria-labelledby="qh-2">
-          <button type="button" role="radio" aria-checked="false" data-v="0">Até 5</button>
-          <button type="button" role="radio" aria-checked="false" data-v="1" tabindex="-1">6 a 20</button>
-          <button type="button" role="radio" aria-checked="false" data-v="2" tabindex="-1">21 a 50</button>
-          <button type="button" role="radio" aria-checked="false" data-v="3" tabindex="-1">Mais de 50</button>
-        </div>
-        <label class="q-name"><span>Nome da empresa <em>(opcional, vai para o carimbo)</em></span><input id="nome" maxlength="40" autocomplete="organization"></label>
-      </div>
-      <p class="q-done" id="q-done" hidden>Planta pronta. Levante em 3D, mande pelo WhatsApp ou baixe em PDF.</p>
-    </div>
-    <p class="sr" id="live" aria-live="polite"></p>
+    <ul class="solution-grid">
+      <li class="solution-feature">
+        <a href="#detalhe-app">
+          <span class="solution-icon"><svg class="ic" aria-hidden="true"><use href="#i-mobile"/></svg></span>
+          <span class="solution-copy"><strong>Sistemas e aplicativos sob medida</strong><span>Organize pedidos, tarefas e equipes em um sistema feito para a sua rotina.</span><span class="solution-action">Testar o aplicativo da equipe</span></span>
+          <span class="solution-console" aria-hidden="true"><span><i></i><i></i><i></i></span><span>Serviços de hoje</span><span><i></i>Agendado</span><span><i></i>Em andamento</span><span><i></i>Concluído</span></span>
+        </a>
+      </li>
+      <li><a href="#detalhe-ia"><span class="solution-icon"><svg class="ic" aria-hidden="true"><use href="#i-scan"/></svg></span><span class="solution-copy"><strong>Inteligência artificial</strong><span>Extraia dados de notas e recibos para a equipe conferir.</span><span class="solution-action">Testar a leitura de notas</span></span></a></li>
+      <li><a href="#detalhe-auto"><span class="solution-icon"><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg></span><span class="solution-copy"><strong>Automação de processos</strong><span>Conecte ferramentas e tire tarefas repetitivas do caminho.</span><span class="solution-action">Testar uma automação</span></span></a></li>
+      <li><a href="#detalhe-painel"><span class="solution-icon"><svg class="ic" aria-hidden="true"><use href="#i-bars"/></svg></span><span class="solution-copy"><strong>Painéis de indicadores</strong><span>Acompanhe custos, prazos e resultados com dados reunidos.</span><span class="solution-action">Explorar um painel</span></span></a></li>
+      <li><a href="#experiencia-3d"><span class="solution-icon"><svg class="ic" aria-hidden="true"><use href="#i-cube"/></svg></span><span class="solution-copy"><strong>Sites e experiências 3D</strong><span>Mostre seus espaços, produtos e configurações de forma interativa.</span><span class="solution-action">Conhecer a experiência 3D</span></span></a></li>
+    </ul>
   </div>
 </section>
 
 <section class="sec det-sec" id="detalhes" aria-labelledby="det-h">
   <div class="wrap">
     <div class="sec-head">
-      <h2 class="h2" id="det-h">Cada parte da planta, funcionando.</h2>
-      <p class="lead">Os números nos círculos azuis da planta trazem até aqui. Teste à vontade: todos os dados são fictícios.</p>
+      <h2 class="h2" id="det-h">Experimente a tecnologia na prática</h2>
+      <p class="lead">Escolha o que quer testar. Você pode conferir uma nota, automatizar uma tarefa ou acompanhar o trabalho da equipe. Os dados das simulações são fictícios.</p>
     </div>
     <div class="det">
-      <div class="det-tabs" role="tablist" aria-label="Partes da planta">
+      <div class="det-tabs" role="tablist" aria-label="Demonstrações de soluções">
         <button type="button" role="tab" id="dt-ia" aria-selected="true" aria-controls="detalhe-ia" data-d="ia"><i class="dmk" aria-hidden="true">1</i><span>Leitura de notas com IA</span><em>Na sua planta</em></button>
         <button type="button" role="tab" id="dt-auto" aria-selected="false" aria-controls="detalhe-auto" data-d="auto" tabindex="-1"><i class="dmk" aria-hidden="true">2</i><span>Automações</span><em>Na sua planta</em></button>
         <button type="button" role="tab" id="dt-painel" aria-selected="false" aria-controls="detalhe-painel" data-d="painel" tabindex="-1"><i class="dmk" aria-hidden="true">3</i><span>Painel de indicadores</span><em>Na sua planta</em></button>
@@ -284,7 +261,9 @@
               <div class="kpi"><span>Pedidos atrasados</span><b>15</b><em class="dn">12% abaixo do período anterior</em></div>
             </div>
             <div class="d-row">
-              <figure class="d-card d-line"><figcaption>Faturamento e projeção</figcaption><svg id="d-line" viewBox="0 0 600 220" role="img" aria-label="Gráfico de faturamento com projeção"></svg></figure>
+              <figure class="d-card d-line"><figcaption>Faturamento e projeção</figcaption><svg id="d-line" viewBox="0 0 600 220" role="img" aria-label="Gráfico de faturamento com projeção"></svg>
+                <div class="d-inspect" id="d-inspect" hidden><label for="d-point">Consultar ponto</label><select id="d-point"></select><p id="d-point-value" aria-live="polite"></p></div>
+              </figure>
               <figure class="d-card d-cmp"><figcaption>Por categoria, comparado ao período anterior</figcaption><svg id="d-bars" viewBox="0 0 320 220" role="img" aria-label="Comparativo por categoria"></svg></figure>
             </div>
             <div class="d-row d-row2">
@@ -322,22 +301,23 @@
       </div>
 
       <div class="det-p paper" id="detalhe-site" role="tabpanel" aria-labelledby="dt-site" hidden>
-        <div class="det-top"><i class="dmk" aria-hidden="true">5</i><div><h3 class="det-h">Site e WhatsApp</h3><p class="det-why">Para quando o cliente não encontra a empresa ou não entende o que ela faz. Este é um site real, entregue pela Konan Tech.</p></div></div>
+        <div class="det-top"><i class="dmk" aria-hidden="true">5</i><div><h3 class="det-h">Site e WhatsApp</h3><p class="det-why">Veja como um site pode explicar seus serviços e facilitar o pedido de orçamento. A Via Opus é um projeto entregue pela Konan Tech.</p></div></div>
         <div class="site-g">
           <div class="site-vis">
             <div class="mk mk-duo mk-vo">
-              <div class="mk-browser"><div class="mk-bb"><i></i><i></i><i></i><span>Via Opus</span></div><img src="assets/projetos/viaopus-inicio.webp" alt="Página inicial do site da Via Opus" width="1200" height="750" loading="lazy" decoding="async"></div>
-              <div class="mk-phone mk-ph-img"><img src="assets/projetos/viaopus-celular.webp" alt="Site da Via Opus no celular" width="390" height="664" loading="lazy" decoding="async"></div>
+              <div class="mk-browser via-demo"><div class="mk-bb"><i></i><i></i><i></i><span>Site institucional ilustrativo</span></div><div class="via-cover"><svg class="ic" aria-hidden="true"><use href="#i-cube"/></svg><p>Projetos que ganham forma</p><span>Engenharia e construção</span></div></div>
+              <div class="mk-phone via-phone"><div class="mk-scr"><p class="mk-ph-h">Conheça a empresa</p><p class="mk-li">Veja os serviços</p><p class="mk-li">Explore um projeto</p><p class="mk-btn">Peça um orçamento</p></div></div>
             </div>
           </div>
           <div class="site-tx">
+            <p class="note">Interface ilustrativa. Acesse o projeto para conhecer o site publicado.</p>
             <ul class="site-f">
               <li>Texto escrito para o seu cliente entender o que você faz</li>
               <li>Rápido e completo no celular</li>
               <li>WhatsApp a um toque em qualquer página</li>
               <li>Informações organizadas para aparecer no Google</li>
             </ul>
-            <a class="btn btn-ghost" href="#projeto-via-opus"><svg class="ic"><use href="#i-open"/></svg><span>Abrir o projeto Via Opus</span></a>
+            <a class="btn btn-ghost" href="https://viaopusconstrutora.com.br/" target="_blank" rel="noopener">Visitar o site da Via Opus</a>
           </div>
         </div>
         <div class="demo-cta"><a class="btn btn-pri" data-wa data-msg="vi o site da Via Opus e quero um site assim para a minha empresa." href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>Quero um site assim</span></a></div>
@@ -346,11 +326,123 @@
   </div>
 </section>
 
+<section class="sec house-show" id="experiencia-3d" aria-labelledby="house-show-title">
+  <div class="wrap house-show-grid">
+    <div class="house-show-copy">
+      <h2 class="h2" id="house-show-title">Da descrição à casa em 3D</h2>
+      <p class="lead">Descreva uma casa, veja a planta tomar forma e explore os cômodos. A mesma abordagem pode ajudar seus clientes a visualizar espaços e configurações antes de decidir.</p>
+      <div class="intro-actions">
+        <a class="btn btn-pri" href="casa-3d/#q3b2s1c1m120">Montar uma casa em 3D</a>
+        <a class="btn btn-ghost" data-wa data-msg="quero conversar sobre uma experiência 3D para a minha empresa." href="https://wa.me/5561982270780" target="_blank" rel="noopener">Conversar sobre meu projeto</a>
+      </div>
+    </div>
+    <figure class="house-show-figure" id="house-look">
+      <div class="house-look-controls" role="group" aria-label="Estilos de visualização da casa" hidden>
+        <button type="button" data-house-look="dia" aria-pressed="true">Dia</button>
+        <button type="button" data-house-look="noite" aria-pressed="false">Noite</button>
+        <button type="button" data-house-look="maquete" aria-pressed="false">Maquete</button>
+      </div>
+      <div class="house-look-images">
+        <img data-house-image="dia" src="assets/casa-estudo-dia.webp" width="960" height="638" loading="lazy" decoding="async" alt="Sala com luz natural, sofá claro, pisos de madeira e jardim pela janela">
+        <img data-house-image="noite" src="assets/casa-estudo-luz.webp" width="960" height="638" loading="lazy" decoding="async" alt="A mesma sala ao anoitecer, com luz quente vinda das luminárias" hidden>
+        <img data-house-image="maquete" src="assets/casa-estudo-maquete.webp" width="960" height="638" loading="lazy" decoding="async" alt="A mesma sala em maquete arquitetônica branca e azul" hidden>
+      </div>
+      <figcaption id="house-look-caption" aria-live="polite">Estudo ilustrativo da sala com luz natural.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="desk" id="planta" aria-labelledby="desk-h">
+  <div class="wrap desk-g">
+    <div class="desk-intro">
+      <h2 class="h2" id="desk-h">Desenhe uma solução para sua empresa</h2>
+      <p class="lead">Conte como sua equipe trabalha e o que dá mais trabalho hoje. A planta mostra como um sistema poderia organizar essa rotina.</p>
+    </div>
+
+    <div class="comp" id="comp">
+      <div class="comp-row">
+        <button type="button" class="btn btn-pri btn-lg" id="mic" aria-pressed="false"><svg class="ic"><use href="#i-mic"/></svg><span>Falar</span></button>
+        <button type="button" class="btn btn-ghost btn-lg" id="write" aria-expanded="false" aria-controls="comp-w"><svg class="ic"><use href="#i-pen"/></svg><span>Escrever</span></button>
+        <a class="comp-tap" id="tap" href="#qs">Prefiro responder tocando</a>
+      </div>
+      <div class="comp-w" id="comp-w" hidden>
+        <label class="sr" for="txt">Conte como a sua empresa funciona</label>
+        <textarea id="txt" rows="3" maxlength="600" spellcheck="true" placeholder="Ex.: tenho uma loja com 8 pessoas, os pedidos chegam pelo WhatsApp e não sei quanto sobra no fim do mês."></textarea>
+        <div class="comp-wb"><p id="comp-hint">A planta muda enquanto você escreve.</p><button type="button" class="btn btn-pri btn-sm" id="txt-go"><svg class="ic"><use href="#i-plan"/></svg><span>Ver a planta</span></button></div>
+      </div>
+      <p class="comp-msg" id="comp-msg" role="status"></p>
+    </div>
+
+    <div class="sheet-box">
+      <div class="sheet" id="sheet">
+        <div class="world"></div>
+        <img class="sheet-poster" src="assets/planta-exemplo.webp" alt="Exemplo de planta do sistema de uma construtora fictícia" width="1000" height="620" loading="lazy">
+        <button type="button" class="sub-stop" id="sub-stop" hidden><svg class="ic"><use href="#i-stop"/></svg><span>Parar de ouvir</span></button>
+        <p class="hint3d" id="hint3d" aria-hidden="true">Arraste para girar a maquete</p>
+      </div>
+      <div class="sheet-foot" id="sheet-foot">
+      <div class="sub" id="sub" aria-hidden="true"><span class="sub-who" id="sub-who">Exemplo</span><p class="sub-t" id="sub-t"></p></div>
+      <div class="bar" id="bar">
+        <button type="button" class="cb" id="b3d" aria-pressed="false"><svg class="ic"><use href="#i-cube"/></svg><span>Levantar em 3D</span></button>
+        <a class="cb cb-wa" id="bwa" data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>Enviar pelo WhatsApp</span></a>
+        <button type="button" class="cb" id="bpdf"><svg class="ic"><use href="#i-down"/></svg><span>Baixar em PDF</span></button>
+        <button type="button" class="cb" id="blink"><svg class="ic"><use href="#i-link"/></svg><span>Copiar link</span></button>
+      </div>
+      </div>
+    </div>
+
+    <div class="qs" id="qs">
+      <div class="q-tabs" role="tablist" aria-label="Perguntas da planta">
+        <button type="button" role="tab" id="qt-0" aria-selected="true" aria-controls="qp-0"><b>1</b><span>Ramo</span><em id="qv-0">A definir</em></button>
+        <button type="button" role="tab" id="qt-1" aria-selected="false" aria-controls="qp-1" tabindex="-1"><b>2</b><span>O que trava</span><em id="qv-1">Nada marcado</em></button>
+        <button type="button" role="tab" id="qt-2" aria-selected="false" aria-controls="qp-2" tabindex="-1"><b>3</b><span>Equipe</span><em id="qv-2">A definir</em></button>
+      </div>
+      <div class="q-pane" id="qp-0" role="tabpanel" aria-labelledby="qt-0">
+        <p class="q-h" id="qh-0">Em que ramo a empresa trabalha?</p>
+        <div class="chips" id="c-ramo" role="radiogroup" aria-labelledby="qh-0">
+          <button type="button" role="radio" aria-checked="false" data-v="obras">Obras e construção</button>
+          <button type="button" role="radio" aria-checked="false" data-v="comercio" tabindex="-1">Comércio e vendas</button>
+          <button type="button" role="radio" aria-checked="false" data-v="campo" tabindex="-1">Serviços em campo</button>
+          <button type="button" role="radio" aria-checked="false" data-v="escritorio" tabindex="-1">Escritório e serviços</button>
+          <button type="button" role="radio" aria-checked="false" data-v="industria" tabindex="-1">Indústria e produção</button>
+          <button type="button" role="radio" aria-checked="false" data-v="outro" tabindex="-1">Outro ramo</button>
+        </div>
+      </div>
+      <div class="q-pane" id="qp-1" role="tabpanel" aria-labelledby="qt-1" hidden>
+        <p class="q-h" id="qh-1">O que mais trava a operação hoje? <span>Marque quantos quiser.</span></p>
+        <div class="chips chips-d" id="c-dor" role="group" aria-labelledby="qh-1">
+          <button type="button" aria-pressed="false" data-v="planilhas">Tudo em planilhas</button>
+          <button type="button" aria-pressed="false" data-v="documentos">Notas digitadas à mão</button>
+          <button type="button" aria-pressed="false" data-v="whatsapp">Pedidos se perdem no WhatsApp</button>
+          <button type="button" aria-pressed="false" data-v="equipe">Não sei o que a equipe faz fora</button>
+          <button type="button" aria-pressed="false" data-v="retrabalho">Tarefas repetidas todo dia</button>
+          <button type="button" aria-pressed="false" data-v="indicadores">Decido sem números</button>
+          <button type="button" aria-pressed="false" data-v="financeiro">Contas e cobranças à mão</button>
+          <button type="button" aria-pressed="false" data-v="presenca">Cliente não me encontra</button>
+        </div>
+        <button type="button" class="cb q-next" data-go="2"><span>Continuar</span><svg class="ic"><use href="#i-next"/></svg></button>
+      </div>
+      <div class="q-pane" id="qp-2" role="tabpanel" aria-labelledby="qt-2" hidden>
+        <p class="q-h" id="qh-2">Quantas pessoas trabalham na empresa?</p>
+        <div class="chips" id="c-eq" role="radiogroup" aria-labelledby="qh-2">
+          <button type="button" role="radio" aria-checked="false" data-v="0">Até 5</button>
+          <button type="button" role="radio" aria-checked="false" data-v="1" tabindex="-1">6 a 20</button>
+          <button type="button" role="radio" aria-checked="false" data-v="2" tabindex="-1">21 a 50</button>
+          <button type="button" role="radio" aria-checked="false" data-v="3" tabindex="-1">Mais de 50</button>
+        </div>
+        <label class="q-name"><span>Nome da empresa <em>(opcional, vai para o carimbo)</em></span><input id="nome" maxlength="40" autocomplete="organization"></label>
+      </div>
+      <p class="q-done" id="q-done" hidden>Planta pronta. Levante em 3D, mande pelo WhatsApp ou baixe em PDF.</p>
+    </div>
+    <p class="sr" id="live" aria-live="polite"></p>
+  </div>
+</section>
+
 <section class="sec pj-sec" id="projetos" aria-labelledby="pj-h">
   <div class="wrap">
     <div class="sec-head">
-      <h2 class="h2" id="pj-h">Plantas que já saíram do papel.</h2>
-      <p class="lead">Projetos reais da Konan Tech, cada um no seu estágio. Os mais parecidos com a sua planta aparecem primeiro. Abra um projeto para ver o problema, a solução e as telas.</p>
+      <h2 class="h2" id="pj-h">Conheça o que já desenvolvemos</h2>
+      <p class="lead">Veja como a Konan Tech aplica tecnologia em empresas de montagem, construção e outros setores. Abra um projeto para conhecer o desafio, o que foi desenvolvido e o estágio atual.</p>
     </div>
     <ul class="boards" id="boards">
         <li class="pj board" data-p="obra-em-dia" data-step="3">
@@ -413,7 +505,7 @@
           <div class="pj-more" hidden>
             <p class="pm-p">Coordenar montadores, ordens de serviço e planilhas que não conversavam entre si, todos os dias.</p>
             <p class="pm-s">Aplicativo para os montadores em campo e painel para o gestor acompanhar as ordens de serviço do dia, da distribuição até a conclusão.</p>
-            <ul class="pm-f"><li>Painel do gestor e aplicativo do montador</li><li>Status de cada ordem em tempo real</li><li>Distribuição por região e rota do dia</li><li>Notificações e funcionamento sem internet</li><li>Mais de 200 atendimentos organizados por dia</li></ul>
+            <ul class="pm-f"><li>Painel do gestor e aplicativo do montador</li><li>Status de cada ordem em tempo real</li><li>Distribuição por região e rota do dia</li><li>Notificações e funcionamento sem internet</li></ul>
             <p class="pm-n">Telas ilustrativas. As telas reais pertencem ao cliente.</p>
           </div>
         </li>
@@ -463,16 +555,15 @@
           </button>
           <template class="pj-vis">
             <div class="mk mk-duo mk-vo">
-              <div class="mk-browser"><div class="mk-bb"><i></i><i></i><i></i><span>Via Opus</span></div><img src="assets/projetos/viaopus-inicio.webp" alt="Página inicial do site da Via Opus" width="1200" height="750" decoding="async"></div>
-              <div class="mk-phone mk-ph-img"><img src="assets/projetos/viaopus-celular.webp" alt="Site da Via Opus no celular" width="390" height="664" decoding="async"></div>
+              <div class="mk-browser via-demo"><div class="mk-bb"><i></i><i></i><i></i><span>Site institucional ilustrativo</span></div><div class="via-cover"><svg class="ic" aria-hidden="true"><use href="#i-cube"/></svg><p>Projetos que ganham forma</p><span>Engenharia e construção</span></div></div>
+              <div class="mk-phone via-phone"><div class="mk-scr"><p class="mk-ph-h">Conheça a empresa</p><p class="mk-li">Veja os serviços</p><p class="mk-li">Explore um projeto</p><p class="mk-btn">Peça um orçamento</p></div></div>
             </div>
           </template>
           <div class="pj-more" hidden>
             <p class="pm-p">Apresentar a construtora com clareza e transformar visitas em pedidos de orçamento.</p>
             <p class="pm-s">Um site institucional com estrutura pensada para gerar contatos, apresentação dos serviços e versão completa para celular.</p>
             <ul class="pm-f"><li>Site institucional</li><li>Estrutura pensada para gerar contatos</li><li>Versão completa para celular</li></ul>
-            <div class="pm-g"><img src="assets/projetos/viaopus-inicio.webp" alt="Página inicial do site da Via Opus" width="1200" height="750" loading="lazy"><img src="assets/projetos/viaopus-estrutura.webp" alt="Seção de serviços do site da Via Opus" width="1200" height="750" loading="lazy"><img src="assets/projetos/viaopus-maquete.webp" alt="Seção de projetos do site da Via Opus" width="1200" height="750" loading="lazy"><img src="assets/projetos/viaopus-celular.webp" alt="Site da Via Opus no celular" width="390" height="664" loading="lazy"></div>
-            <p class="pm-n">Capturas do site publicado.</p>
+            <p class="pm-n">Interface ilustrativa. O site publicado pode ser visitado na demonstração Site e WhatsApp.</p>
           </div>
         </li>
         <li class="pj board" data-p="caca-ruidos" data-step="4" data-done>
@@ -545,11 +636,6 @@
         <blockquote>Eu coordenava montadores, ordens de serviço e planilhas que não conversavam entre si. O MontaCerto nasceu desse dia a dia, e é assim que tratamos cada projeto: processo antes do código.</blockquote>
         <figcaption><b>Dande Roger</b><span>Fundador e desenvolvedor da Konan Tech</span></figcaption>
       </figure>
-      <ul class="nums" aria-label="Números do MontaCerto e da Konan Tech">
-        <li><b>+200</b><span>atendimentos organizados por dia no MontaCerto</span></li>
-        <li><b>30</b><span>montadores usando o aplicativo em campo</span></li>
-        <li><b>5</b><span>projetos desenvolvidos, entre sistemas e sites</span></li>
-      </ul>
     </div>
   </div>
 </section>
@@ -579,7 +665,7 @@
     </div>
     <div class="fin-msg">
       <h2 class="h2 h2-xl" id="fin-h">Vamos tirar a sua planta do papel?</h2>
-      <p class="lead">Mande a planta pelo WhatsApp e converse direto com quem desenvolve. A primeira conversa é sem compromisso.</p>
+      <p class="lead">Conte como funciona a sua operação e onde sua equipe perde mais tempo. Você pode enviar a planta que desenhou ou conversar direto pelo WhatsApp.</p>
       <div class="cta">
         <a class="btn btn-pri btn-lg" id="fin-wa" data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg><span>Enviar a minha planta</span></a>
         <button type="button" class="btn btn-ghost btn-lg" id="fin-again"><svg class="ic"><use href="#i-redo"/></svg><span>Ver de novo</span></button>
@@ -593,7 +679,7 @@
   <div class="wrap">
     <div class="ft-block">
       <div class="ft-c ft-brand">
-        <a href="#planta" aria-label="Konan Tech, voltar ao início"><img src="assets/konan-logo-dark.png" alt="Konan Tech" width="208" height="32" loading="lazy"></a>
+        <a href="#inicio" aria-label="Konan Tech, voltar ao início"><img src="assets/konan-logo-dark.png" alt="Konan Tech" width="208" height="32" loading="lazy"></a>
         <p>Sistemas sob medida, automações, inteligência artificial, painéis, aplicativos e sites para empresas.</p>
       </div>
       <div class="ft-c">
@@ -601,14 +687,14 @@
         <ul><li><a data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener">WhatsApp (61) 98227 0780</a></li><li><a href="tel:+5561982270780">Ligar para (61) 98227 0780</a></li></ul>
       </div>
       <div class="ft-c">
-        <h3>Onde estamos</h3>
-        <ul><li>Base em Brasília, DF</li><li>Atendimento online em todo o Brasil</li></ul>
+        <h3>Atendimento</h3>
+        <ul><li>Atendimento online em todo o Brasil</li></ul>
       </div>
       <div class="ft-c">
         <h3>Navegação</h3>
-        <ul><li><a href="#planta">Desenhar a planta</a></li><li><a href="#detalhes">Detalhes</a></li><li><a href="#projetos">Projetos</a></li><li><a href="#processo">Como trabalhamos</a></li><li><a href="#duvidas">Dúvidas</a></li></ul>
+        <ul><li><a href="#planta">Desenhar a planta</a></li><li><a href="#detalhes">Demonstrações</a></li><li><a href="#projetos">Projetos</a></li><li><a href="#processo">Como trabalhamos</a></li><li><a href="#duvidas">Dúvidas</a></li></ul>
       </div>
-      <div class="ft-c ft-meta"><span>Konan Tech</span><span>© 2026, todos os direitos reservados</span><a href="#planta">Voltar ao topo</a></div>
+      <div class="ft-c ft-meta"><span>Konan Tech</span><span>© 2026, todos os direitos reservados</span><a href="#inicio">Voltar ao topo</a></div>
     </div>
   </div>
   <a class="fab" id="fab" data-wa href="https://wa.me/5561982270780" target="_blank" rel="noopener" aria-label="Conversar no WhatsApp"><svg class="ic"><use href="#i-chat"/></svg></a>

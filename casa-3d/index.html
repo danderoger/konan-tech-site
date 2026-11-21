@@ -37,25 +37,37 @@ a{color:inherit}
 .btn-wa:hover{background:#075c38}
 .btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .btn:focus-visible,.tool:focus-visible,#rooms button:focus-visible,.lab:focus-visible,.top a:focus-visible{outline:3px solid #9dbdf5;outline-offset:2px}
-.ask{padding:14px 16px 10px;display:grid;gap:8px;max-width:980px;width:100%;margin:0 auto}
+.ask{padding:16px 16px 12px;display:grid;gap:8px;max-width:1240px;width:100%;margin:0 auto}
 .ask label{font-weight:700;font-size:15px}
 .row{display:flex;gap:8px}
 .row input{flex:1;min-width:0;font:inherit;font-size:16px;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;color:var(--ink);background:#fff}
 .row input:focus{outline:3px solid #9dbdf5;border-color:var(--blue)}
 .hint{margin:0;font-size:14px;color:var(--ink3);min-height:20px}
 .hint.ok{color:var(--blue2);font-weight:600}
+.house-presets{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.house-presets span{font-size:14px;margin-right:3px;color:var(--ink2)}
+.house-presets .tool{min-height:36px}
+.house-presets .tool[aria-pressed=true]{background:#eaf1fd;color:var(--blue2);border-color:var(--blue)}
 main{flex:1;display:grid;grid-template-columns:1fr 290px;max-width:1240px;width:100%;margin:0 auto;min-height:0}
-#stage{position:relative;min-height:440px;height:min(68vh,720px);background:linear-gradient(#f7faff,#eaf1fd);border-block:1px solid var(--line);overflow:hidden;touch-action:none}
+#stage{position:relative;min-width:0;min-height:440px;height:min(68vh,720px);background:linear-gradient(#f7faff,#eaf1fd);border-block:1px solid var(--line);overflow:hidden}
 #stage.real{background:#dde8f1}
-#cv{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+#stage.night{background:#182a52}
+#lighting[aria-pressed=true]{background:#e7edff;color:#17398a;border-color:#768fd0}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
 #cv:active{cursor:grabbing}
+#plan-view{position:absolute;inset:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;padding:16px 16px 68px;background:linear-gradient(150deg,#f9fbff,#eaf0fa)}
+#plan-view h2{margin:0;font-size:16px}
+#plan-svg{width:100%;height:100%;min-height:0}
+#graphics-status{margin:0;color:var(--ink2);font-size:14px}
+#graphics-status:empty{display:none}
 #labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .lab{position:absolute;left:0;top:0;border:0;background:rgba(255,255,255,.92);box-shadow:0 1px 6px rgba(31,43,56,.18);border-radius:8px;padding:3px 8px;text-align:center;line-height:1.15;color:var(--ink);opacity:0;white-space:nowrap;font:inherit;cursor:pointer}
 .lab b{display:block;font-size:12px;font-weight:700}
 .lab span{font-size:11px;color:var(--ink3)}
-.tools{position:absolute;left:10px;bottom:10px;display:flex;gap:6px;flex-wrap:wrap}
-.tool{background:#fff;border:1.5px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 12px;font:inherit;font-weight:600;font-size:13px;min-height:38px;cursor:pointer}
+.tools{position:absolute;left:10px;bottom:10px;max-width:calc(100% - 20px);display:flex;gap:6px;flex-wrap:wrap}
+.tool{background:#fff;border:1.5px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 12px;font:inherit;font-weight:600;font-size:14px;min-height:40px;cursor:pointer}
 .tool:hover{border-color:var(--blue);color:var(--blue2)}
+.tool[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-w);color:var(--blue2)}
 .tool-main{background:var(--blue);border-color:var(--blue);color:#fff}
 .tool-main:hover{background:var(--blue2);border-color:var(--blue2);color:#fff}
 .tool-main.on{background:#fff;color:var(--blue2);border-color:var(--blue)}
@@ -101,7 +113,10 @@ noscript p{margin:16px;padding:12px;border:1px solid var(--line);border-radius:1
   .top .tag,.top .ttl{display:none}
   .drag{display:none}
   .lab{padding:2px 6px}.lab b{font-size:10.5px}.lab span{display:none}
-  .tools{left:6px;right:6px;bottom:6px}.tools .tool{flex:1;padding:8px 6px;font-size:12px}
+  .house-presets .tool{min-height:44px;padding-inline:10px}
+  .house-presets span{width:100%}
+  .tools{left:6px;right:6px;bottom:6px;max-width:none}.tools .tool{flex:1 1 auto;min-height:44px;padding:7px 8px;font-size:13px}
+  #plan-view{padding-bottom:104px}
   .tip{font-size:12px;padding:6px 12px}
   .roomnav span{min-width:110px;font-size:13px}
   .photo-bar{left:6px;right:6px;bottom:6px}
@@ -122,12 +137,23 @@ noscript p{margin:16px;padding:12px;border:1px solid var(--line);border-radius:1
     <input id="txt" type="text" value="casa de 3 quartos, 2 banheiros, sala, cozinha, varanda e garagem, 120 m²" autocomplete="off" spellcheck="false" enterkeyhint="go">
     <button class="btn" id="build" type="button">Construir</button>
   </div>
+  <div class="house-presets" id="house-presets" role="group" aria-label="Exemplos de casa" hidden>
+    <span aria-hidden="true">Comece com um exemplo</span>
+    <button class="tool" type="button" data-house="casa de 1 quarto, 1 banheiro, sala e cozinha, 55 m²" aria-pressed="false">Compacta</button>
+    <button class="tool" type="button" data-house="casa de 3 quartos, 2 banheiros, sala, cozinha, varanda e garagem, 120 m²" aria-pressed="false">Familiar</button>
+    <button class="tool" type="button" data-house="casa de 2 quartos, 1 suíte, 2 banheiros, sala, cozinha, garagem e varanda, 150 m²" aria-pressed="false">Com suíte</button>
+  </div>
   <p class="hint" id="hint" aria-live="polite"></p>
+  <p id="graphics-status" role="status"></p>
 </section>
 <noscript><p>Para ver a casa em 3D, ative o JavaScript do navegador.</p></noscript>
 <main>
   <div id="stage">
     <canvas id="cv" role="img" aria-label="Casa em 3D construída a partir da descrição. Arraste para girar e role para aproximar. No modo realista, toque no nome de um cômodo para entrar nele e use Foto realista para gerar uma imagem com a luz calculada."></canvas>
+    <div id="plan-view" hidden>
+      <h2 id="plan-title">Planta 2D</h2>
+      <svg id="plan-svg" role="img" aria-labelledby="plan-title"></svg>
+    </div>
     <div id="labels"></div>
     <div class="tip" id="tip" hidden>Toque no nome de um cômodo para entrar nele.</div>
     <div class="roomnav" id="roomnav" hidden>
@@ -149,10 +175,12 @@ noscript p{margin:16px;padding:12px;border:1px solid var(--line);border-radius:1
     </div>
     <div class="tools">
       <button class="tool tool-main" id="modo" type="button">Ver em modo realista</button>
+      <button class="tool" id="lighting" type="button" aria-pressed="false" hidden>Noite</button>
+      <button class="tool" id="facade" type="button" aria-pressed="false" hidden>Fachada</button>
       <button class="tool tool-main" id="foto" type="button" hidden>Foto realista</button>
       <button class="tool" id="replay" type="button">Ver construção de novo</button>
       <button class="tool" id="whole" type="button">Casa inteira</button>
-      <button class="tool" id="top" type="button">Planta 2D</button>
+      <button class="tool" id="top" type="button" aria-pressed="false">Planta 2D</button>
     </div>
     <div class="drag" id="drag">Arraste para girar. Role para aproximar.</div>
   </div>
@@ -168,6 +196,6 @@ noscript p{margin:16px;padding:12px;border:1px solid var(--line);border-radius:1
   </aside>
 </main>
 <footer class="foot">Exemplo ilustrativo gerado por código da Konan Tech, sem modelos de terceiros. O modo realista e a foto realista são calculados no navegador a partir da descrição; não são fotos de uma casa real. Medidas e móveis são aproximados e não substituem um projeto. <a href="/">Konan Tech</a></footer>
-<script src="casa3d.min.js" defer></script>
+<script src="casa3d.min.js?v=20261121" defer></script>
 </body>
 </html>
