@@ -30,14 +30,28 @@ export function initDash(root, ctx) {
   const kpiEls = [...root.querySelectorAll('#d-kpis .kpi')];
   const line = root.querySelector('#d-line');
   const bars = root.querySelector('#d-bars');
+  const point = root.querySelector('#d-point');
+  const pointValue = root.querySelector('#d-point-value');
+  root.querySelector('#d-inspect').hidden = false;
   const alerts = root.querySelector('#d-alerts');
   const repBtn = root.querySelector('#d-rep');
   const repT = root.querySelector('#d-rep-t');
   const reduced = ctx.reduced;
   let period = 90, unit = 'all', data = null, quiet = false, shown = false;
 
+  function inspectPoint() {
+    if (!data) return;
+    const i = Number(point.value);
+    const pin = line.querySelector('#d-pin');
+    pin.setAttribute('cx', data.points[i][0]);
+    pin.setAttribute('cy', data.points[i][1]);
+    pointValue.textContent = `Atual ${brl(data.cur[i])} · Anterior ${brl(data.old[i])}`;
+  }
+  point.addEventListener('change', inspectPoint);
   const anim = (el, kf, o) => (reduced || quiet || !el.animate ? null : el.animate(kf, o));
+  const counts = new WeakMap();
   function countTo(el, text) {
+    cancelAnimationFrame(counts.get(el) || 0);
     const m = /^(R\$ )?([\d.]+)$/.exec(text);
     if (reduced || quiet || !m) { el.textContent = text; return; }
     const to = +m[2].replace(/\./g, ''), pre = m[1] || '';
@@ -45,9 +59,9 @@ export function initDash(root, ctx) {
     const tick = (now) => {
       const k = Math.min(1, (now - t0) / 1100);
       el.textContent = pre + Math.round(to * ease(k)).toLocaleString('pt-BR');
-      if (k < 1) requestAnimationFrame(tick); else el.textContent = text;
+      if (k < 1) counts.set(el, requestAnimationFrame(tick)); else el.textContent = text;
     };
-    requestAnimationFrame(tick);
+    counts.set(el, requestAnimationFrame(tick));
   }
 
   function render(first, q) {
@@ -77,6 +91,7 @@ export function initDash(root, ctx) {
     const slope = (cur[n - 1] - cur[n - 4]) / 3;
     const pj = [cur[n - 1]]; for (let k = 1; k <= proj; k++) pj.push(cur[n - 1] + slope * k * 0.9);
     const P = cur.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`);
+    data.points = P.map((item) => item.split(','));
     const Po = old.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`);
     const Pp = pj.map((v, k) => `${X(n - 1 + k).toFixed(1)},${Y(v).toFixed(1)}`);
     const step = Math.ceil(n / 6);
@@ -86,10 +101,13 @@ export function initDash(root, ctx) {
       `<polyline points="${Po.join(' ')}" fill="none" stroke="#a9b7c8" stroke-width="2" stroke-dasharray="5 6"/>` +
       `<polyline class="ln" points="${P.join(' ')}" fill="none" stroke="#1b5fd9" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>` +
       `<polyline class="pj" points="${Pp.join(' ')}" fill="none" stroke="#6a55f5" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round"/>` +
-      `<circle cx="${X(n - 1)}" cy="${Y(cur[n - 1])}" r="5" fill="#fff" stroke="#1b5fd9" stroke-width="3"/>` +
+      `<circle id="d-pin" cx="${X(n - 1)}" cy="${Y(cur[n - 1])}" r="6" fill="#fff" stroke="#1749bf" stroke-width="3"/>` +
       `<text x="${X(n - 1 + proj) - 4}" y="${Y(pj[proj]) - 12}" text-anchor="end" fill="#6a55f5">projeção</text>` +
       labels.map((l, i) => (i % step === 0 ? `<text x="${X(i)}" y="${Hh - 4}" text-anchor="middle">${l}</text>` : '')).join('') +
       `<text x="${W - pad}" y="${pad - 8}" text-anchor="end">tracejado cinza: período anterior</text>`;
+    point.replaceChildren(...labels.map((label, index) => new Option(label, index)));
+    point.value = String(n - 1);
+    inspectPoint();
     const ln = line.querySelector('.ln');
     if (ln.getTotalLength) {
       const L = ln.getTotalLength();
@@ -110,10 +128,10 @@ export function initDash(root, ctx) {
     bars.querySelectorAll('.b').forEach((b, i) => { b.style.transformBox = 'fill-box'; b.style.transformOrigin = 'bottom'; anim(b, [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], { duration: 800, delay: i * 50, easing: 'cubic-bezier(.22,.75,.12,1)', fill: 'backwards' }); });
     const growth = (sum - sumOld) / sumOld;
     const goal = Math.round((pj[proj] / (cur[n - 1] * 1.05)) * 100);
-    const unitName = unit === 'a' ? 'Unidade Norte' : 'Unidade Sul';
+    const unitName = unit === 'a' ? 'Unidade Norte' : unit === 'b' ? 'Unidade Sul' : 'total das unidades';
     const A = [
       [growth >= 0 ? 'ok' : 'bad', `Faturamento ${pct(growth)}.`],
-      ['', `${late} ${late > 1 ? 'pedidos atrasados' : 'pedido atrasado'} na ${unitName}. Responsável já foi avisado.`],
+      ['', `${late} ${late > 1 ? 'pedidos atrasados' : 'pedido atrasado'} ${unit === 'all' ? 'no' : 'na'} ${unitName}. Responsável já foi avisado.`],
       ['bad', 'Pedido 2297 lançado em duplicidade foi identificado e separado.'],
       ['ok', `Pela projeção, a meta do próximo período chega a ${goal}%.`]
     ];

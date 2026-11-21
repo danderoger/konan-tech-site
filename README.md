@@ -1,14 +1,14 @@
-# Konan Tech: site institucional (versão 5.0, "Planta viva")
+# Konan Tech: site institucional
 
 Site de uma página da Konan Tech, empresa brasileira de soluções digitais, desenvolvimento de sistemas, inteligência artificial, dashboards, sites e automação de processos.
 
-Esta é a **versão 5.0**, na branch `v5` (local). A 3.0 continua na branch `v3`. A versão de produção (www.konantech.com.br) só muda com autorização do Dande.
+A branch `main` publica no domínio oficial pela Cloudflare Pages. Faça alterações em uma branch separada e publique somente com autorização do Dande.
 
 ## A ideia: a planta viva
 
 O site deixa de mostrar o que a Konan sabe fazer e passa a fazer o que a Konan faz: entender a operação e desenhar a solução.
 
-Logo na primeira tela, o visitante conta como a empresa funciona: falando (como um áudio de WhatsApp), escrevendo ou tocando em opções. Enquanto ele conta, a planta do sistema é desenhada na hora, no estilo de uma planta de arquitetura:
+Na abertura, o visitante conhece a empresa e pode simular o fluxo de pedidos, notas ou indicadores. Na Planta Viva, ele conta como a empresa funciona: falando (como um áudio de WhatsApp), escrevendo ou tocando em opções. Enquanto ele conta, a planta do sistema é desenhada na hora, no estilo de uma planta de arquitetura:
 
 - cada área da empresa vira um cômodo, com paredes, portas e janelas;
 - o que trava hoje ganha nuvem de revisão em vermelho, e cada nota leva o triângulo com o número da revisão em que foi marcada;
@@ -22,8 +22,9 @@ Uma família de letras só (Archivo variável): expandida nos títulos, normal n
 
 | Seção | O que acontece |
 | --- | --- |
-| Planta (topo) | Exemplo fictício que se desenha sozinho ao abrir. Voz, texto ou três perguntas (ramo, o que trava, equipe). A planta, o carimbo, o WhatsApp e o resto da página se ajustam na hora |
-| Detalhes | Cada número azul da planta leva a um detalhe funcionando: leitura de notas com IA, automações, painel de indicadores, aplicativo da equipe com painel do gestor, site e WhatsApp. Os que estão na planta do visitante ganham a etiqueta "Na sua planta" |
+| Abertura e soluções | Apresentação da empresa, fluxos interativos e acesso direto às demonstrações |
+| Planta Viva | Exemplo fictício que se desenha ao entrar na seção. Voz, texto ou três perguntas (ramo, o que trava, equipe). A planta, o carimbo, o WhatsApp e o resto da página se ajustam na hora |
+| Demonstrações | Cada número azul da planta leva a um detalhe funcionando: leitura de notas com IA, automações, painel de indicadores, aplicativo da equipe com painel do gestor, site e WhatsApp. Os que estão na planta do visitante ganham a etiqueta "Na sua planta" |
 | Projetos | Os cinco projetos reais como pranchas. Os mais parecidos com a planta do visitante sobem para o começo. Cada um abre em tela cheia. Link direto: `#projeto-obra-em-dia`, `#projeto-montacerto`, `#projeto-ultra-obra`, `#projeto-via-opus`, `#projeto-caca-ruidos` |
 | Como trabalhamos | Quatro etapas numa linha de cota, depoimento do fundador e números |
 | Dúvidas | Nove perguntas, incluindo privacidade da voz e "a planta é orçamento?" |
@@ -61,6 +62,7 @@ Gera um arquivo só (scripts, estilos, fonte e imagens dentro dele) que abre com
 | `js/content.js` | Ramos e cômodos, o que trava, módulos da proposta, exemplo, dados das demonstrações, WhatsApp |
 | `js/plan.js` | Motor da planta: duas folhas (deitada no computador, em pé no celular), paredes, portas, janelas, nuvens, módulos, fluxos, carimbo e maquete 3D em CSS |
 | `js/listen.js` | Conversa: reconhecimento de voz do navegador em português, leitura do texto (ramo, o que trava, tamanho da equipe, obra descrita) e destaques da legenda |
+| `js/intro.js` | Fluxos que animam a abertura e comparação visual dos estudos da Casa 3D |
 | `js/app.js` | Liga tudo: perguntas, exemplo, barra (3D, WhatsApp, PDF, link), detalhes, projetos, carregamento sob demanda |
 | `js/perf.js`, `js/stage.js`, `js/shapes.js` | Partículas do final (Three.js), carregadas só quando o final se aproxima |
 | `js/demos/` | `ai.js` (notas com IA), `auto.js` (automações), `dash.js` (painel), `team.js` (aplicativo da equipe), `boards.js` (projetos), `liftoff.js` (final) |
@@ -70,7 +72,8 @@ Gera um arquivo só (scripts, estilos, fonte e imagens dentro dele) que abre com
 | `assets/planta-exemplo.webp` | Planta de exemplo para quem abre sem JavaScript |
 | `assets/projetos/` | Capturas reais do site da Via Opus |
 | `casa-3d/index.html` | Página da casa em 3D (`/casa-3d/`): o visitante descreve a casa, ela é montada na tela e pode ser vista em modo realista |
-| `casa-3d/src/main.js` | Motor da casa em 3D: planta dos cômodos, portas e janelas, móveis feitos por código, paredes, modo realista (céu, grama, texturas, sombra de contato, corte das paredes, visita por dentro) |
+| `casa-3d/src/main.js` | Motor da casa em 3D: planta dos cômodos, portas e janelas, móveis feitos por código, paredes, modos de iluminação, fachada, texturas e visita por dentro |
+| `casa-3d/src/plan-view.js` | Planta 2D interativa para leitura dos ambientes, inclusive sem WebGL |
 | `casa-3d/casa3d.min.js` | Arquivo servido, gerado por `scripts/build-casa3d.sh` a partir de `casa-3d/src/main.js` (Three.js 0.187 e three-gpu-pathtracer 0.0.28 para a foto realista) |
 
 ## Onde mexer
@@ -109,7 +112,7 @@ O botão Falar usa o reconhecimento de voz do próprio navegador (no Chrome, o �
 
 ## Observações técnicas
 
-- Sem WebGL no topo: a planta e a maquete 3D são SVG e CSS, leves até em celular simples. O Three.js só carrega perto do final.
+- Os efeitos da abertura usam canvas 2D e param fora de tela. A Planta Viva usa SVG e CSS. Na página inicial, o Three.js só carrega perto do final. A Casa 3D tem plano 2D interativo quando o WebGL está indisponível.
 - A quebra de linha dos textos da planta é medida com a fonte real, então os nomes cabem nos cômodos em qualquer tela. Nas salas de baixo, o nome termina antes da porta (nome comprido quebra em duas linhas no celular).
 - Nomes e notas têm um contorno da cor do papel, como no desenho técnico: porta, fluxo ou grade que passe atrás some em volta das letras.
 - `scripts/auditar-planta.cjs` desenha todas as combinações (6 ramos, 256 combinações de atritos, folha deitada e em pé: 3.072 plantas, mais 3 casas descritas no ramo de obras: 4.608 no total) e procura texto cruzado por porta, fluxo ou triângulo, texto em cima de módulo e texto saindo da sala. Na entrega: nenhum. Rode de novo sempre que mudar nomes de salas, notas ou a geometria:

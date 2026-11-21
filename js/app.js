@@ -7,6 +7,7 @@ import { WA_DEFAULT, waLink, waContext, RAMOS, RAMO_ORDER, DORES, MODULOS, DETAL
 import { Plan, derive, lc1 } from './plan.js';
 import { parse, highlight, Voice, SR, typeOut } from './listen.js';
 import { probeGL, pickTier, TIERS } from './perf.js';
+import { initIntro, initHouseLook } from './intro.js';
 
 const D = document, H = D.documentElement;
 const REDUCED = H.classList.contains('rm');
@@ -18,6 +19,8 @@ const narrow = () => innerWidth <= 760;
 
 let lenis = null, stage, stagePromise = null;
 const demos = {};
+initIntro(q('#flow'));
+initHouseLook(q('#house-look'));
 
 /* ---------- WhatsApp: todo link [data-wa] recebe a mensagem do contexto ---------- */
 function setWa(a, frase) { if (a) a.href = waLink(frase ? waContext(frase) : WA_DEFAULT); }
@@ -50,11 +53,14 @@ function scrollToTarget(el, extra) {
 }
 D.addEventListener('click', (e) => {
   const a = e.target.closest('a[href^="#"]');
-  if (!a) return;
+  if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
   const id = a.getAttribute('href');
   if (id.startsWith('#detalhe-')) {
     e.preventDefault();
     setMenu(false);
+    if (location.hash !== id) {
+      try { history.pushState(null, '', id); } catch (e) { /* arquivo local */ }
+    }
     openDetail(id.slice(9), true);
     return;
   }
@@ -63,7 +69,9 @@ D.addEventListener('click', (e) => {
   if (!el) return;
   e.preventDefault();
   setMenu(false);
-  scrollToTarget(el, id === '#planta' ? 200 : 10);
+  el.tabIndex = -1;
+  el.focus({ preventScroll: true });
+  scrollToTarget(el);
 });
 
 /* seção atual destacada no menu */
@@ -72,7 +80,7 @@ const navIO = new IntersectionObserver((ents) => ents.forEach((e) => {
   if (!e.isIntersecting) return;
   NAV.forEach((a) => { const on = a.getAttribute('href') === '#' + e.target.id; a.classList.toggle('cur', on); if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
 }), { rootMargin: '-45% 0px -50% 0px' });
-['planta', 'detalhes', 'projetos', 'processo', 'duvidas'].forEach((id) => { const el = D.getElementById(id); if (el) navIO.observe(el); });
+['solucoes', 'detalhes', 'experiencia-3d', 'planta', 'projetos', 'processo', 'duvidas', 'inicio'].forEach((id) => { const el = D.getElementById(id); if (el) navIO.observe(el); });
 
 /* ============================================================
    A MESA: conversa + planta
@@ -383,7 +391,7 @@ function nextStep() {
 function startTap() {
   begin('tap');
   if (narrow()) scrollToTarget(q('#qs'), 8);
-  else scrollToTarget(q('#planta'), 200);
+  else scrollToTarget(q('#comp'));
   nextStep();
   const pane = qPanes[qCur];
   const first = pane.querySelector('[aria-checked=true], [role=radio], button');
@@ -484,7 +492,12 @@ function openDetail(k, scroll, quiet) {
   if (scroll) detUser = true;
   detCur = k;
   detTabs.forEach((b) => { const on = b.dataset.d === k; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
-  qa('.det-p').forEach((p) => { p.hidden = p.id !== 'detalhe-' + k; });
+  qa('.det-p').forEach((p) => {
+    const active = p.id === 'detalhe-' + k;
+    p.hidden = !active;
+    p.classList.toggle('detail-enter', active && !quiet);
+  });
+  if (scroll) q('#dt-' + k).focus({ preventScroll: true });
   if (!quiet || detNear) loadDetail(k);
   if (scroll) scrollToTarget(q('#detalhes'), 10);
 }
@@ -616,16 +629,29 @@ if (hashPlan) {
   apply();
   msg('Esta planta chegou por link. Você pode ajustar as respostas e mandar de volta pelo WhatsApp.');
   nextStep();
-  fontsOrTimeout.then(() => plan.relayout(true));
+  fontsOrTimeout.then(() => {
+    plan.relayout(true);
+    scrollToTarget(q('#planta'));
+  });
 } else {
   apply();
   /* o exemplo espera a fonte carregar, para a planta medir os textos com a letra certa */
   fontsOrTimeout.then(() => {
     plan.relayout(true);
-    setTimeout(() => { if (scrollY < innerHeight * 0.6 && !D.hidden) runExample(); }, REDUCED ? 200 : 700);
+    const exampleObserver = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting || D.hidden) return;
+      exampleObserver.disconnect();
+      runExample();
+    }, { threshold: 0.2 });
+    exampleObserver.observe(sheet);
   });
 }
-setTimeout(() => loadDemo('boards'), 1400);
+const initialDetail = /^#detalhe-(ia|auto|painel|app|site)$/.exec(location.hash);
+if (initialDetail) openDetail(initialDetail[1], true);
+addEventListener('hashchange', () => {
+  const match = /^#detalhe-(ia|auto|painel|app|site)$/.exec(location.hash);
+  if (match) openDetail(match[1], true);
+});
 
 window.konan = { plan, lenis: () => lenis, demos, loadDemo, state: effective, manual, runExample, stopExample, openDetail, getStage, mode: () => mode };
 window.__ktReady = true;
