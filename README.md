@@ -71,7 +71,7 @@ Gera um arquivo só (scripts, estilos, fonte e imagens dentro dele) que abre com
 | `assets/projetos/` | Capturas reais do site da Via Opus |
 | `casa-3d/index.html` | Página da casa em 3D (`/casa-3d/`): o visitante descreve a casa, ela é montada na tela e pode ser vista em modo realista |
 | `casa-3d/src/main.js` | Motor da casa em 3D: planta dos cômodos, portas e janelas, móveis feitos por código, paredes, modo realista (céu, grama, texturas, sombra de contato, corte das paredes, visita por dentro) |
-| `casa-3d/casa3d.min.js` | Arquivo servido, gerado por `scripts/build-casa3d.sh` a partir de `casa-3d/src/main.js` (Three.js 0.187) |
+| `casa-3d/casa3d.min.js` | Arquivo servido, gerado por `scripts/build-casa3d.sh` a partir de `casa-3d/src/main.js` (Three.js 0.187 e three-gpu-pathtracer 0.0.28 para a foto realista) |
 
 ## Onde mexer
 
@@ -81,7 +81,7 @@ Gera um arquivo só (scripts, estilos, fonte e imagens dentro dele) que abre com
 - **Palavras que a conversa reconhece**: `RAMO_RX`, `DOR_RX`, `OBRA_RX` (cômodos da casa) e os números por extenso em `js/listen.js`. Limites e frases da obra: `obraClean` e `obraFrase` em `js/content.js`.
 - **Casa da obra**: `planHouse` e `_house` em `js/plan.js`. Só aparece no ramo de obras, no espaço que sobra no canteiro (no celular, só quando não há nota nem módulo ocupando o canteiro; o resumo aparece sempre).
 - **Geometria da planta**: `GEO` em `js/plan.js` (`land` é a folha deitada, `port` a folha em pé).
-- **Casa em 3D** (`/casa-3d/`): a página lê o texto com o mesmo `parse` de `js/listen.js`. Distribuição dos cômodos e aberturas em `planHouse`, móveis em `furnish` (cada móvel desvia de portas, janelas e dos outros móveis), paredes em `buildWall`, texturas em `TEXF`, modo realista em `setMode`. Depois de mexer em `casa-3d/src/main.js`, rode `sh scripts/build-casa3d.sh`. O link chega já preenchido: `casa-3d/#q3b2s1c1m120` (mesma assinatura da obra usada no link da planta). Na página principal, o aviso "Entendi" mostra "Ver essa casa em 3D" quando o texto descreve cômodos.
+- **Casa em 3D** (`/casa-3d/`): a página lê o texto com o mesmo `parse` de `js/listen.js`. Distribuição dos cômodos e aberturas em `planHouse`, móveis em `furnish` (cada móvel desvia de portas, janelas e dos outros móveis), paredes em `buildWall`, texturas em `TEXF`, modo realista em `setMode`. No modo realista, o nome de cada cômodo aparece sobre a casa (toque para entrar) e, dentro, a barra do topo passa para o cômodo anterior ou o próximo. O botão Foto realista calcula a luz raio por raio no navegador (path tracing): céu com sol em `skyEquirect`, corte das paredes virando geometria em `cutGeometry`, paredes de dois materiais separadas em `splitMulti` (o cálculo só entende um material por objeto), granulado final tirado em `finishPhoto`; 320 passadas no computador e 96 no celular. Depois de mexer em `casa-3d/src/main.js`, rode `sh scripts/build-casa3d.sh`. O link chega já preenchido: `casa-3d/#q3b2s1c1m120` (mesma assinatura da obra usada no link da planta). Na página principal, o aviso "Entendi" mostra "Ver essa casa em 3D" quando o texto descreve cômodos.
 - **Textos das seções e dos projetos**: `index.html`. Estágio de um projeto: selo `.stg` e `data-step` (0 planejamento a 4 em uso).
 - **WhatsApp**: `WA_NUMBER` em `js/content.js`. Cada botão pode ter `data-msg` com a frase do contexto; a barra e o final mandam o resumo da planta.
 

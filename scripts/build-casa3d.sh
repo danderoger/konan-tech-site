@@ -6,7 +6,7 @@ ROOT=$(pwd)
 TMP=$(mktemp -d)
 cd "$TMP"
 npm init -y >/dev/null
-npm install three@0.187.0 esbuild --no-audit --no-fund >/dev/null
+npm install three@0.187.0 three-mesh-bvh@0.9.18 three-gpu-pathtracer@0.0.28 xatlas-web@0.1.0 esbuild --no-audit --no-fund >/dev/null
 NODE_PATH="$TMP/node_modules" ./node_modules/.bin/esbuild "$ROOT/casa-3d/src/main.js" --bundle --format=iife --minify --legal-comments=eof --target=es2020 --outfile="$ROOT/casa-3d/casa3d.min.js"
 cd "$ROOT"
 echo "Pronto: casa-3d/casa3d.min.js atualizado"

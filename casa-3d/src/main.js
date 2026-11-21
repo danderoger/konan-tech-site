@@ -12,6 +12,8 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
+import { WebGLPathTracer, DenoiseMaterial } from 'three-gpu-pathtracer';
 import { parse } from '../../js/listen.js';
 import { obraFrase, obraSig, obraFromSig, waLink } from '../../js/content.js';
 
@@ -175,6 +177,30 @@ sun.shadow.radius = 3;
 scene.add(sun, sun.target);
 const roomLight = new THREE.PointLight(0xfff1dc, 0, 0, 1.4);
 scene.add(roomLight);
+const SUN_DIR = new THREE.Vector3(-1.3, 1.45, 1.4).normalize();
+/* céu em alta faixa dinâmica: com sol para a foto realista, sem sol para o 3D (que já tem a luz do sol) */
+function skyEquirect(withSun) {
+  const W = 1024, H = 512, data = new Float32Array(W * H * 4);
+  const zen = [0.16, 0.33, 0.74], hor = [0.8, 0.86, 0.94], gnd = [0.3, 0.31, 0.27], K = 0.42;
+  const sunR = THREE.MathUtils.degToRad(1.6), sunCos = Math.cos(sunR), sunL = withSun ? 1650 : 0;
+  for (let j = 0; j < H; j++) {
+    const el = ((j + 0.5) / H - 0.5) * Math.PI, ce = Math.cos(el), se = Math.sin(el);
+    for (let i = 0; i < W; i++) {
+      const ph = ((i + 0.5) / W - 0.5) * 2 * Math.PI, dx = ce * Math.cos(ph), dz = ce * Math.sin(ph);
+      let c;
+      if (se >= 0) { const t = Math.pow(se, 0.45); c = [lerp(hor[0], zen[0], t), lerp(hor[1], zen[1], t), lerp(hor[2], zen[2], t)]; }
+      else { const t = Math.min(1, -se * 5); c = [lerp(hor[0], gnd[0], t) * 0.6, lerp(hor[1], gnd[1], t) * 0.6, lerp(hor[2], gnd[2], t) * 0.6]; }
+      const ca = dx * SUN_DIR.x + se * SUN_DIR.y + dz * SUN_DIR.z;
+      let s = 0;
+      if (withSun) { s = ca > sunCos ? sunL : Math.pow(Math.max(0, ca), 600) * 6 + Math.pow(Math.max(0, ca), 40) * 0.25; }
+      const k = (j * W + i) * 4;
+      data[k] = c[0] * K + s; data[k + 1] = c[1] * K + s * 0.93; data[k + 2] = c[2] * K + s * 0.82; data[k + 3] = 1;
+    }
+  }
+  const t = new THREE.DataTexture(data, W, H, THREE.RGBAFormat, THREE.FloatType);
+  t.mapping = THREE.EquirectangularReflectionMapping; t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.needsUpdate = true;
+  return t;
+}
 
 const grid = new THREE.GridHelper(60, 60, 0xb9c8df, 0xdbe4f1);
 grid.position.y = -0.02;
@@ -235,8 +261,8 @@ const TEXF = {
   }, 512, 1 / 1.2],
   conc: [(g, S) => { g.fillStyle = '#b4b6b8'; g.fillRect(0, 0, S, S); noise(g, S, 9000, 5, (R) => { const v = 120 + R() * 100; return `rgba(${v},${v},${v + 3},${0.08 + R() * 0.14})`; }); }, 512, 1 / 3],
   grass: [(g, S) => {
-    const R = rng(9); g.fillStyle = '#7aa258'; g.fillRect(0, 0, S, S);
-    for (let k = 0; k < 14000; k++) { g.fillStyle = `hsla(${84 + R() * 30},${38 + R() * 22}%,${26 + R() * 28}%,${0.25 + R() * 0.35})`; g.fillRect(R() * S, R() * S, 1 + R() * 1.5, 2 + R() * 4); }
+    const R = rng(9); g.fillStyle = '#8cb269'; g.fillRect(0, 0, S, S);
+    for (let k = 0; k < 14000; k++) { g.fillStyle = `hsla(${82 + R() * 28},${32 + R() * 20}%,${34 + R() * 26}%,${0.22 + R() * 0.3})`; g.fillRect(R() * S, R() * S, 1 + R() * 1.5, 2 + R() * 4); }
   }, 512, 1 / 3],
   pave: [(g, S) => {
     const R = rng(21), n = 4, t = S / n;
@@ -282,6 +308,30 @@ const ART = [
   (g, S) => { g.fillStyle = '#e8e3d9'; g.fillRect(0, 0, S, S); const c = ['#8fa58a', '#c96f4a', '#e3d3b4', '#3d4f63']; for (let i = 0; i < 4; i++) { g.fillStyle = c[i]; g.beginPath(); g.ellipse(S * (0.25 + i * 0.17), S * (0.62 - (i % 2) * 0.2), S * 0.16, S * 0.26, 0.3 * i, 0, Math.PI * 2); g.fill(); } },
   (g, S) => { g.fillStyle = '#f3efe8'; g.fillRect(0, 0, S, S); g.strokeStyle = '#2f3e4e'; g.lineWidth = S * 0.012; for (let i = 0; i < 9; i++) { g.beginPath(); g.arc(S * 0.5, S * 1.05, S * (0.18 + i * 0.07), Math.PI, 0); g.stroke(); } g.fillStyle = '#c96f4a'; g.beginPath(); g.arc(S * 0.7, S * 0.28, S * 0.09, 0, Math.PI * 2); g.fill(); },
 ];
+/* relevo (normal map) tirado do próprio desenho: rejunte, emenda de tábua, veio, trama */
+const NRM = { wood: 2.2, deck: 2.6, tile: 3.2, conc: 1.4, pave: 2.8, subway: 3.4, plaster: 1.6, grain: 1.0, fabric: 1.3, grass: 1.2 };
+const NRMC = {};
+function getNrm(k) {
+  if (NRMC[k]) return NRMC[k];
+  const src = getTex(k).image, S = src.width;
+  const d = src.getContext('2d').getImageData(0, 0, S, S).data;
+  const hgt = new Float32Array(S * S);
+  for (let i = 0; i < S * S; i++) hgt[i] = (d[i * 4] * 0.3 + d[i * 4 + 1] * 0.59 + d[i * 4 + 2] * 0.11) / 255;
+  const c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d'), out = g.createImageData(S, S), o = out.data, k2 = NRM[k] * (S / 512);
+  const at = (x, y) => hgt[((y + S) % S) * S + ((x + S) % S)];
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const dx = (at(x + 1, y - 1) + 2 * at(x + 1, y) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x - 1, y) - at(x - 1, y + 1)) * k2;
+    const dy = (at(x - 1, y + 1) + 2 * at(x, y + 1) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x, y - 1) - at(x + 1, y - 1)) * k2;
+    const nx = -dx, ny = dy, nz = 1, l = Math.hypot(nx, ny, nz), i = (y * S + x) * 4;
+    o[i] = (nx / l * 0.5 + 0.5) * 255; o[i + 1] = (ny / l * 0.5 + 0.5) * 255; o[i + 2] = (nz / l * 0.5 + 0.5) * 255; o[i + 3] = 255;
+  }
+  g.putImageData(out, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.NoColorSpace; t.anisotropy = 8;
+  t.repeat.copy(getTex(k).repeat);
+  return (NRMC[k] = t);
+}
 const TEXC = {};
 function getTex(k) {
   if (TEXC[k]) return TEXC[k];
@@ -297,7 +347,7 @@ function mat(color, o = {}) {
   let m = MATS.get(key);
   if (!m) {
     m = new (o.phys ? THREE.MeshPhysicalMaterial : THREE.MeshStandardMaterial)({ color, roughness: o.r ?? 0.85, metalness: o.m ?? 0 });
-    if (o.tex) m.map = getTex(o.tex);
+    if (o.tex) { m.map = getTex(o.tex); if (NRM[o.tex]) m.normalMap = getNrm(o.tex); }
     if ((o.o ?? 1) < 1) { m.transparent = true; m.opacity = o.o; m.depthWrite = false; }
     if (o.e) { m.emissive = new THREE.Color(o.e); m.emissiveIntensity = o.ei ?? 1; }
     if (o.ds) m.side = THREE.DoubleSide;
@@ -1172,6 +1222,7 @@ function buildYard(plan, root) {
 }
 
 function buildHouse(obra) {
+  if (PH.on) endPhoto();
   disposeHouse();
   const plan = planHouse(obra);
   const root = new THREE.Group();
@@ -1224,16 +1275,14 @@ function buildHouse(obra) {
     const el = document.createElement('button');
     el.className = 'lab'; el.type = 'button';
     el.innerHTML = `<b>${r.name}</b><span>${fmt(r.area)} m²</span>`;
+    el.setAttribute('aria-label', (REAL ? 'Entrar em ' : 'Ver de perto: ') + r.name);
     el.addEventListener('click', () => focusRoom(r.idx));
     labelsEl.append(el);
     return { el, r };
   });
 
   const R = Math.hypot(plan.W, plan.D) / 2;
-  sun.position.set(-R * 1.1, R * 1.9, R * 1.3);
-  sun.target.position.set(0, 0, 0);
-  const sc = sun.shadow.camera, ext = R * (REAL ? 1.9 : 1.25);
-  sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.near = 0.5; sc.far = R * 8; sc.updateProjectionMatrix();
+  aimSun(0, 0, R * (REAL ? 1.9 : 1.25), R);
   house = { root, plan, lines, labels, R, ceils, caps, done: 0, cue: false };
   focusIdx = -1;
   T = 0; userTouched = false; tween = null;
@@ -1244,6 +1293,14 @@ function buildHouse(obra) {
   const instant = REDUCED || REAL;
   applyTime(instant ? 999 : 0);
   if (instant) { T = 999; placeCamera(REAL ? 0.92 : 0.9, R * (REAL ? 3.0 : 3.1) * fitK(), REAL ? Math.PI + 0.7 : 0.55); userTouched = true; }
+}
+
+/* sombra do sol enquadrada: a casa toda por fora, só o cômodo por dentro (fica mais nítida) */
+function aimSun(x, z, ext, R) {
+  sun.target.position.set(x, 0, z);
+  sun.position.copy(SUN_DIR).multiplyScalar(R * 2.6).add(sun.target.position);
+  const sc = sun.shadow.camera;
+  sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.near = 0.5; sc.far = R * 6; sc.updateProjectionMatrix();
 }
 
 /* ---------- 10. a linha do tempo da construção ---------- */
@@ -1281,7 +1338,7 @@ function flyEye(eye, look, r, dur = 1.4) {
   const dir = look.clone().sub(eye).normalize();
   tween = {
     t0: controls.target.clone(), p0: camera.position.clone(), t1: eye.clone().add(dir.multiplyScalar(0.01)), p1: eye.clone(), s: performance.now(), dur: REDUCED ? 1 : dur * 1000, f0: camera.fov, f1: 66, c0: CUT.constant, c1: 3.4,
-    end: () => { setCut(100); house.ceils.forEach((c) => { c.visible = true; }); roomLight.position.set(r.cx, WALL_H - 0.4, r.cz); roomLight.intensity = 5; },
+    end: () => { setCut(100); house.ceils.forEach((c) => { c.visible = true; }); roomLight.position.set(r.cx, WALL_H - 0.4, r.cz); roomLight.intensity = 5; aimSun(r.cx, r.cz, Math.hypot(r.w, r.d) / 2 + 2.5, house.R); setEnv('room'); showNav(); },
   };
 }
 function restoreOrbit() {
@@ -1292,13 +1349,15 @@ function restoreOrbit() {
   if (house) house.ceils.forEach((c) => { c.visible = false; });
   roomLight.intensity = 0;
   setCut(REAL ? CUT_H : 100);
-  setDrag();
+  if (house) aimSun(0, 0, house.R * (REAL ? 1.9 : 1.25), house.R);
+  if (REAL) setEnv('sky');
+  setDrag(); showNav();
 }
 function setCut(v) {
   CUT.constant = v;
   if (house) house.caps.forEach((c) => { c.visible = REAL && v < CUT_H + 0.05; });
 }
-function setDrag() { $('#drag').textContent = REAL && focusIdx >= 0 ? 'Arraste para olhar em volta.' : 'Arraste para girar. Role para aproximar.'; }
+function setDrag() { $('#drag').textContent = REAL && focusIdx >= 0 ? 'Arraste para olhar em volta.' : REAL ? 'Arraste para girar. Toque num cômodo para entrar.' : 'Arraste para girar. Role para aproximar.'; }
 function enterRoom(i) {
   const r = house.plan.rooms[i];
   focusIdx = i; userTouched = true;
@@ -1324,10 +1383,11 @@ function enterRoom(i) {
   else { e = [r.X0 + Math.min(0.45, r.iw * 0.15), clamp(along, r.Z0 + 0.35, r.Z1 - 0.35)]; l = [r.X1 - r.iw * 0.3, -along * 0.4]; }
   const eyeY = r.k === 'garagem' ? 1.75 : 1.6;
   flyEye(new THREE.Vector3(r.cx + e[0], eyeY, r.cz + e[1]), new THREE.Vector3(r.cx + l[0], 0.85, r.cz + l[1]), r);
-  setDrag(); renderList();
+  setDrag(); renderList(); showNav();
 }
 function focusRoom(i) {
   if (!house) return;
+  if (PH.on) endPhoto();
   if (REAL) return enterRoom(i);
   const r = house.plan.rooms[i];
   focusIdx = i; userTouched = true;
@@ -1336,6 +1396,7 @@ function focusRoom(i) {
 }
 function overview(polar = 0.9) {
   if (!house) return;
+  if (PH.on) endPhoto();
   focusIdx = -1; userTouched = true;
   house.ceils.forEach((c) => { c.visible = false; });
   roomLight.intensity = 0;
@@ -1345,7 +1406,12 @@ function overview(polar = 0.9) {
 }
 
 /* ---------- 12. modo montar e modo realista ---------- */
-let envTex = null, ground = null, composer = null, aoPass = null, aoOn = false;
+let envTex = null, envSky = null, ground = null, composer = null, aoPass = null, aoOn = false;
+function setEnv(kind) {
+  if (!REAL || !envTex) return;
+  scene.environment = kind === 'room' ? envTex : envSky;
+  scene.environmentIntensity = kind === 'room' ? 0.75 : 2.1;
+}
 const perf = { n: 0, sum: 0, done: true };
 function makeComposer() {
   const w = stage.clientWidth, h = stage.clientHeight;
@@ -1369,12 +1435,18 @@ function makeComposer() {
   composer.addPass(new OutputPass());
 }
 function setMode(real) {
+  if (PH.on) endPhoto();
   REAL = real; WALL_H = real ? 2.7 : 1.6;
-  renderer.toneMapping = real ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
-  renderer.toneMappingExposure = 1.0;
-  if (real && !envTex) { const pm = new THREE.PMREMGenerator(renderer); envTex = pm.fromScene(new RoomEnvironment(), 0.04).texture; pm.dispose(); }
-  scene.environment = real ? envTex : null;
-  scene.environmentIntensity = 0.75;
+  renderer.toneMapping = real ? THREE.NeutralToneMapping : THREE.NoToneMapping;
+  renderer.toneMappingExposure = real ? 0.92 : 1.0;
+  if (real && !envTex) {
+    const pm = new THREE.PMREMGenerator(renderer);
+    envTex = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+    envSky = pm.fromEquirectangular(skyEquirect(false)).texture;
+    pm.dispose();
+  }
+  scene.environment = real ? envSky : null;
+  scene.environmentIntensity = 2.1;
   hemi.intensity = real ? 0.45 : 0.95;
   hemi.color.set(real ? '#dbe8f6' : '#ffffff'); hemi.groundColor.set(real ? '#b9ab92' : '#c9d6ea');
   sun.intensity = real ? 2.5 : 1.35;
@@ -1393,11 +1465,188 @@ function setMode(real) {
   aoOn = real && !!composer;
   if (real) { perf.n = 0; perf.sum = 0; perf.done = false; }
   $('#modo').textContent = real ? 'Voltar a montar' : 'Ver em modo realista';
+  $('#modo').classList.toggle('tool-main', !real);
+  $('#foto').hidden = !real; $('#replay').hidden = real;
   $('#modo').classList.toggle('on', real);
   $('#modo').classList.remove('cue');
   tween = null; focusIdx = -1;
   buildHouse(lastObra || DEFAULT_OBRA);
 }
+
+
+/* ---------- foto realista: a luz calculada raio por raio, no próprio navegador ---------- */
+const PH = { on: false, ready: false, done: false, stop: false, pt: null, target: 0, skyPT: null, saved: null, area: null, dq: null, url: null, pct: -1 };
+const nextFrame = () => new Promise((res) => requestAnimationFrame(() => res()));
+/* na vista de fora a foto também mostra as paredes cortadas: o corte vira geometria */
+function cutGeometry(on) {
+  house.root.traverse((o) => {
+    if (!o.isMesh) return;
+    const ms = Array.isArray(o.material) ? o.material : [o.material];
+    if (!ms.some((m) => m.clippingPlanes && m.clippingPlanes.length)) return;
+    const pos = o.geometry.attributes.position;
+    if (on) {
+      const lim = CUT_H - o.position.y;
+      let minY = Infinity;
+      for (let i = 0; i < pos.count; i++) minY = Math.min(minY, pos.getY(i));
+      if (minY >= lim - 1e-4) { if (o.visible) { o.visible = false; o.userData.cutHidden = true; } return; }
+      o.userData.pos0 = pos.array.slice();
+      for (let i = 0; i < pos.count; i++) if (pos.getY(i) > lim) pos.setY(i, lim);
+    } else {
+      if (o.userData.cutHidden) { o.visible = true; o.userData.cutHidden = false; }
+      if (!o.userData.pos0) return;
+      pos.array.set(o.userData.pos0); o.userData.pos0 = null;
+    }
+    pos.needsUpdate = true; o.geometry.computeBoundingBox(); o.geometry.computeBoundingSphere();
+  });
+}
+/* o cálculo da foto entende um material por objeto: as paredes (tinta de um lado, reboco do outro) viram uma peça por material */
+function splitMulti(on) {
+  if (on) {
+    PH.split = [];
+    house.root.traverse((o) => { if (o.isMesh && o.visible && Array.isArray(o.material) && o.geometry.index) PH.split.push(o); });
+    PH.split.forEach((o) => {
+      const g = o.geometry, idx = g.index.array, by = new Map();
+      g.groups.forEach((gr) => {
+        const m = o.material[gr.materialIndex];
+        if (!m) return;
+        if (!by.has(m)) by.set(m, []);
+        const arr = by.get(m);
+        for (let k = gr.start; k < gr.start + gr.count; k++) arr.push(idx[k]);
+      });
+      const kids = [];
+      by.forEach((ids, m) => {
+        const ng = new THREE.BufferGeometry();
+        Object.entries(g.attributes).forEach(([n, a]) => ng.setAttribute(n, a));
+        ng.setIndex(ids);
+        const k = new THREE.Mesh(ng, m);
+        k.position.copy(o.position); k.quaternion.copy(o.quaternion); k.scale.copy(o.scale);
+        o.parent.add(k); kids.push(k);
+      });
+      o.userData.ptKids = kids; o.visible = false;
+    });
+  } else {
+    (PH.split || []).forEach((o) => { o.userData.ptKids.forEach((k) => k.parent && k.parent.remove(k)); o.userData.ptKids = null; o.visible = true; });
+    PH.split = null;
+  }
+}
+function photoUI(state, pct = 0) {
+  const box = $('#photo'), msg = $('#photo-msg');
+  stage.classList.toggle('shot', state !== 'off');
+  box.hidden = state === 'off';
+  $('#photo-img').hidden = state !== 'done';
+  $('#photo-stop').hidden = state !== 'run';
+  $('#photo-dl').hidden = state !== 'done';
+  $('#photo-prog').style.width = (state === 'done' ? 100 : Math.round(pct * 100)) + '%';
+  $('#photo-prog').parentElement.hidden = state === 'done' || state === 'fail';
+  if (state === 'prep') msg.textContent = 'Preparando a foto realista. Pode levar alguns segundos.';
+  if (state === 'run') msg.textContent = `Calculando a luz: ${Math.round(pct * 100)}%`;
+  if (state === 'done') msg.textContent = 'Foto pronta. A luz do céu, as sombras e os reflexos foram calculados de verdade.';
+  if (state === 'fail') msg.textContent = 'Este aparelho não conseguiu gerar a foto. O 3D continua funcionando normalmente.';
+  showNav();
+}
+async function startPhoto() {
+  if (!REAL || !house || PH.on) return;
+  if (tween) { const e = tween.end; tween = null; if (e) e(); }
+  PH.on = true; PH.ready = false; PH.done = false; PH.stop = false; PH.pct = -1;
+  controls.enabled = false;
+  labelsEl.style.visibility = 'hidden';
+  photoUI('prep');
+  await nextFrame(); await nextFrame();
+  if (!PH.on) return;
+  try {
+    if (!PH.pt) {
+      const pt = new WebGLPathTracer(renderer);
+      pt.tiles.set(COARSE ? 3 : 2, COARSE ? 3 : 2);
+      pt.bounces = COARSE ? 4 : 6;
+      pt.transmissiveBounces = 3;
+      pt.filterGlossyFactor = 0.6;
+      pt.minSamples = 1; pt.renderDelay = 0; pt.fadeDuration = 0;
+      pt.rasterizeScene = false; pt.dynamicLowRes = false;
+      pt.textureSize.set(COARSE ? 512 : 1024, COARSE ? 512 : 1024);
+      PH.pt = pt;
+      PH.skyPT = skyEquirect(true);
+      PH.dq = new FullScreenQuad(new DenoiseMaterial({ blending: THREE.NoBlending, premultipliedAlpha: renderer.getContextAttributes().premultipliedAlpha }));
+    }
+    const inside = focusIdx >= 0;
+    PH.saved = { env: scene.environment, envI: scene.environmentIntensity, bg: scene.background, exp: renderer.toneMappingExposure, fog: scene.fog, sky: sky.visible };
+    sky.visible = false; sun.visible = false; roomLight.visible = false; scene.fog = null;
+    scene.environment = PH.skyPT; scene.background = PH.skyPT; scene.environmentIntensity = 1; scene.backgroundIntensity = 1;
+    renderer.toneMappingExposure = inside ? 1.55 : 1.0;
+    if (inside) {
+      const r = house.plan.rooms[focusIdx];
+      PH.area = new THREE.RectAreaLight(0xfff6ec, 30, Math.min(1.0, r.w * 0.32), Math.min(1.0, r.d * 0.32));
+      PH.area.position.set(r.cx, WALL_H + 0.02, r.cz); PH.area.lookAt(r.cx, 0, r.cz);
+      scene.add(PH.area);
+    } else cutGeometry(true);
+    splitMulti(true);
+    const db = new THREE.Vector2(); renderer.getDrawingBufferSize(db);
+    PH.pt.renderScale = Math.min(1, (COARSE ? 760 : 1600) / db.x);
+    PH.target = PH.override || (COARSE ? 96 : 320);
+    PH.pt.setScene(scene, camera);
+    PH.ready = true;
+    photoUI('run', 0);
+  } catch (err) {
+    console.error(err);
+    endPhoto();
+    PH.on = true; photoUI('fail');
+  }
+}
+function photoFrame() {
+  if (!PH.ready || PH.done) return;
+  PH.pt.renderSample();
+  const f = clamp(PH.pt.samples / PH.target);
+  const pct = Math.floor(f * 20) / 20;
+  if (pct !== PH.pct) { PH.pct = pct; photoUI('run', pct); }
+  if (f >= 1 || (PH.stop && PH.pt.samples >= 2)) finishPhoto();
+}
+function finishPhoto() {
+  /* um último passe tira o granulado que sobra, sem borrar as bordas */
+  const m = PH.dq.material, spp = PH.pt.samples;
+  m.uniforms.map.value = PH.pt.target.texture;
+  m.uniforms.sigma.value = spp > 200 ? 1.6 : spp > 60 ? 2.6 : 4.0;
+  m.uniforms.kSigma.value = 1.4;
+  if (PH.dn) { m.uniforms.sigma.value = PH.dn[0]; m.uniforms.threshold.value = PH.dn[1]; }
+  m.uniforms.threshold.value = spp > 200 ? 0.05 : spp > 60 ? 0.1 : 0.28;
+  renderer.setRenderTarget(null);
+  PH.dq.render(renderer);
+  const c2 = document.createElement('canvas'); c2.width = cv.width; c2.height = cv.height;
+  const g = c2.getContext('2d');
+  g.drawImage(cv, 0, 0);
+  const fs = Math.max(11, Math.round(c2.width / 70)), label = 'Konan Tech, exemplo ilustrativo';
+  g.font = `600 ${fs}px Archivo, system-ui, sans-serif`;
+  const tw = g.measureText(label).width, pad = fs * 0.6;
+  g.fillStyle = 'rgba(255,255,255,0.82)';
+  g.fillRect(pad, c2.height - fs * 2.2 - pad, tw + pad * 2, fs * 2.2);
+  g.fillStyle = '#1f2b38'; g.fillText(label, pad * 2, c2.height - pad - fs * 0.72);
+  PH.url = c2.toDataURL('image/jpeg', 0.92);
+  $('#photo-img').src = PH.url;
+  $('#photo-dl').href = PH.url;
+  PH.done = true;
+  photoUI('done');
+}
+function endPhoto() {
+  if (!PH.on) return;
+  if (PH.saved) {
+    scene.environment = PH.saved.env; scene.environmentIntensity = PH.saved.envI; scene.background = PH.saved.bg;
+    renderer.toneMappingExposure = PH.saved.exp; scene.fog = PH.saved.fog; sky.visible = PH.saved.sky;
+  }
+  sun.visible = true; roomLight.visible = true;
+  if (PH.area) { scene.remove(PH.area); PH.area.dispose(); PH.area = null; }
+  if (house && PH.split) splitMulti(false);
+  if (house) cutGeometry(false);
+  PH.on = false; PH.ready = false; PH.done = false; PH.stop = false; PH.saved = null;
+  controls.enabled = true;
+  labelsEl.style.visibility = '';
+  $('#photo-img').removeAttribute('src');
+  photoUI('off');
+}
+function showNav() {
+  const inRoom = REAL && house && focusIdx >= 0 && !PH.on;
+  $('#roomnav').hidden = !inRoom;
+  if (inRoom) $('#rn-name').textContent = house.plan.rooms[focusIdx].name;
+  $('#tip').hidden = !(REAL && house && focusIdx === -1 && !PH.on && !tween);
+}
+function stepRoom(d) { if (!house) return; const n = house.plan.rooms.length; enterRoom((focusIdx + d + n) % n); }
 
 /* ---------- 13. painel, link e texto ---------- */
 function renderList() {
@@ -1411,7 +1660,7 @@ function renderList() {
     b.className = i === focusIdx ? 'on' : '';
     b.setAttribute('aria-pressed', i === focusIdx ? 'true' : 'false');
     b.innerHTML = `<span>${r.name}</span><em>${fmt(r.area)} m²</em>`;
-    b.addEventListener('click', () => focusRoom(i));
+    b.addEventListener('click', () => { focusRoom(i); const rc = stage.getBoundingClientRect(); if (rc.top < 0 || rc.bottom > innerHeight) stage.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' }); });
     li.append(b); ul.append(li);
   });
   $('#total').textContent = fmt(house.plan.total) + ' m²';
@@ -1452,6 +1701,13 @@ $('#replay').addEventListener('click', () => {
   if (REDUCED) { T = 999; userTouched = true; applyTime(999); }
 });
 $('#whole').addEventListener('click', () => overview(0.9));
+$('#foto').addEventListener('click', () => startPhoto());
+$('#photo-stop').addEventListener('click', () => { PH.stop = true; });
+$('#photo-close').addEventListener('click', () => endPhoto());
+$('#rn-prev').addEventListener('click', () => stepRoom(-1));
+$('#rn-next').addEventListener('click', () => stepRoom(1));
+cv.addEventListener('pointerdown', () => { if (PH.on) endPhoto(); });
+cv.addEventListener('webglcontextlost', (e) => { e.preventDefault(); PH.on = true; PH.ready = false; photoUI('fail'); });
 $('#top').addEventListener('click', () => overview(0.06));
 let deb;
 $('#txt').addEventListener('input', () => { clearTimeout(deb); deb = setTimeout(() => fromText($('#txt').value), 900); });
@@ -1487,15 +1743,15 @@ function frame() {
       camera.position.lerpVectors(tween.p0, tween.p1, u);
       if (tween.f1 !== camera.fov) { camera.fov = lerp(tween.f0, tween.f1, u); camera.updateProjectionMatrix(); }
       if (tween.c1 !== null && tween.c1 !== undefined) setCut(lerp(tween.c0, tween.c1, u));
-      if (u >= 1) { const e = tween.end; tween = null; if (e) e(); }
+      if (u >= 1) { const e = tween.end; tween = null; if (e) e(); showNav(); }
     }
     controls.update();
     const w = stage.clientWidth, h = stage.clientHeight;
     house.labels.forEach((l) => {
-      v3.set(l.r.cx, WALL_H + 0.3, l.r.cz).project(camera);
-      const vis = !REAL && v3.z < 1 && Math.abs(v3.x) < 1.1 && Math.abs(v3.y) < 1.1;
-      l.el.style.opacity = vis ? String((l.op || 0) * (focusIdx === -1 || focusIdx === l.r.idx ? 1 : 0.55)) : '0';
-      l.el.style.pointerEvents = vis && (l.op || 0) > 0.5 ? 'auto' : 'none';
+      v3.set(l.r.cx, REAL ? CUT_H + 0.55 : WALL_H + 0.3, l.r.cz).project(camera);
+      const vis = (!REAL || (focusIdx === -1 && !tween && !PH.on)) && v3.z < 1 && Math.abs(v3.x) < 1.1 && Math.abs(v3.y) < 1.1;
+      l.el.style.opacity = vis ? String((REAL ? 1 : l.op || 0) * (focusIdx === -1 || focusIdx === l.r.idx ? 1 : 0.55)) : '0';
+      l.el.style.pointerEvents = vis && (REAL || (l.op || 0) > 0.5) ? 'auto' : 'none';
       l.el.tabIndex = vis ? 0 : -1;
       l.el.style.transform = `translate(${(v3.x * 0.5 + 0.5) * w}px, ${(-v3.y * 0.5 + 0.5) * h}px) translate(-50%, -50%)`;
     });
@@ -1509,7 +1765,8 @@ function frame() {
       if (avg > 0.07 && PR > 1) { PR = 1; renderer.setPixelRatio(1); resize(); }
     }
   }
-  if (REAL && aoOn) composer.render(); else renderer.render(scene, camera);
+  if (PH.on) photoFrame();
+  else if (REAL && aoOn) composer.render(); else renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
 
@@ -1522,4 +1779,4 @@ resize();
 }
 fromText($('#txt').value);
 requestAnimationFrame(frame);
-window.__casa = { get house() { return house; }, get T() { return T; }, get real() { return REAL; }, get ao() { return aoOn; }, camera, controls, focusRoom, overview, fromText, setMode, setT: (t) => { T = t; applyTime(t); userTouched = true; } };
+window.__casa = { get photo() { return { on: PH.on, done: PH.done, samples: PH.pt ? PH.pt.samples : 0, target: PH.target }; }, startPhoto, endPhoto, stepRoom, setPhotoTarget: (n) => { PH.override = n; }, setDenoise: (a, b) => { PH.dn = [a, b]; }, tone: (t, e) => { renderer.toneMapping = t; renderer.toneMappingExposure = e; }, get house() { return house; }, get T() { return T; }, get real() { return REAL; }, get ao() { return aoOn; }, camera, controls, focusRoom, overview, fromText, setMode, setT: (t) => { T = t; applyTime(t); userTouched = true; } };
